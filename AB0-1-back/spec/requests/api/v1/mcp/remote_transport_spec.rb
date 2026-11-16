@@ -18,6 +18,7 @@ RSpec.describe 'MCP remote transport preview', type: :request do
     allow(ENV).to receive(:[]).with('MCP_REMOTE_TRANSPORT_ENABLED').and_return('true')
     allow(ENV).to receive(:[]).with('MCP_REMOTE_PREVIEW_TOKEN').and_return(preview_key)
     allow(ENV).to receive(:[]).with('MCP_REMOTE_ALLOWED_ORIGINS').and_return('https://trusted.example')
+    allow(ENV).to receive(:[]).with('MCP_REMOTE_ALLOWED_HOSTS').and_return('www.example.com')
   end
 
   def request_mcp(method:, id: 1, params: {}, extra_headers: {})
@@ -43,6 +44,11 @@ RSpec.describe 'MCP remote transport preview', type: :request do
   it 'is unreachable when the preview key is missing or incorrect' do
     request_mcp(method: 'ping', extra_headers: { 'X-MCP-Preview-Key' => 'invalid-key' })
     expect(response).to have_http_status(:not_found)
+  end
+
+  it 'blocks a non-allowlisted Host even without an Origin header' do
+    request_mcp(method: 'ping', extra_headers: { 'HOST' => 'untrusted.example' })
+    expect(response).to have_http_status(:forbidden)
   end
 
   it 'blocks an untrusted origin even with the correct preview key' do
@@ -74,6 +80,14 @@ RSpec.describe 'MCP remote transport preview', type: :request do
 
     expect(response).to have_http_status(:accepted)
     expect(response.body).to be_blank
+  end
+
+  it 'requires version headers for post-initialize notifications' do
+    post '/mcp',
+         params: { jsonrpc: '2.0', method: 'notifications/initialized' }.to_json,
+         headers: headers.merge('MCP-Protocol-Version' => '')
+
+    expect(response).to have_http_status(:bad_request)
   end
 
   it 'supports JSON-RPC ping' do
@@ -129,7 +143,7 @@ RSpec.describe 'MCP remote transport preview', type: :request do
   end
 
   it 'rejects oversized requests without executing tools' do
-    post '/mcp', params: ('x' * 33_000), headers: headers
+    post '/mcp', params: { data: 'x' * 33_000 }.to_json, headers: headers
     expect(response).to have_http_status(:payload_too_large)
   end
 
