@@ -246,7 +246,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     render(
       <CompanyComparisonModal
         {...defaultProps}
-        companies={[emptyCompany]}
+        companies={[emptyCompany, companyWithoutPaidPlan]}
       />
     );
 
@@ -312,7 +312,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
         after_sales_support: 'não oferece suporte',
       },
     };
-    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany, { ...negativeCompany, id: 404, slug: 'segunda-negativa' }]} />);
     expect(screen.getAllByText('Não oferece').length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText('Oferece')).not.toBeInTheDocument();
     expect(screen.queryByText('Oferece suporte')).not.toBeInTheDocument();
@@ -328,13 +328,13 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
         warranty_confirmed: false,
       },
     };
-    render(<CompanyComparisonModal {...defaultProps} companies={[declared]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[declared, companyWithoutPaidPlan]} />);
     expect(screen.getAllByText('Não confirmada').length).toBeGreaterThan(0);
     expect(screen.queryByText('Declarada pela empresa')).not.toBeInTheDocument();
   });
 
   test('não apresenta cinco estrelas preenchidas para notas inferiores a cinco', () => {
-    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan]} />);
+    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan, companyWithoutPaidPlan]} />);
     expect(screen.getAllByLabelText('Nota 4.8 de 5').length).toBeGreaterThan(0);
     expect(screen.queryByText('★★★★★')).not.toBeInTheDocument();
   });
