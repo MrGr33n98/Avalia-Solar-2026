@@ -14,6 +14,7 @@ module Api
         MAX_BODY_BYTES = 32_768
 
         before_action :deny_unconfigured_preview!
+        before_action :validate_host!
         before_action :validate_origin!
         before_action :require_preview_key!
 
@@ -49,18 +50,18 @@ module Api
           params = message['params'] || {}
           return rpc_error(id, -32602, 'Parameters must be an object.', :bad_request) unless params.is_a?(Hash)
 
-          if !has_id
-            return head(:accepted) if message['method'] == 'notifications/initialized'
-
-            return rpc_error(nil, -32600, 'Unsupported notification.', :bad_request)
-          end
-
           version_header = request.headers['MCP-Protocol-Version'].to_s
           if version_header.present? && version_header != PROTOCOL_VERSION
             return rpc_error(id, -32602, 'Unsupported MCP protocol version.', :bad_request)
           end
           if message['method'] != 'initialize' && version_header != PROTOCOL_VERSION
             return rpc_error(id, -32602, 'MCP-Protocol-Version header required.', :bad_request)
+          end
+
+          unless has_id
+            return head(:accepted) if message['method'] == 'notifications/initialized'
+
+            return rpc_error(nil, -32600, 'Unsupported notification.', :bad_request)
           end
 
           case message['method']
@@ -101,6 +102,13 @@ module Api
                     ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s.bytesize >= 32
 
           head :not_found
+        end
+
+        def validate_host!
+          # Origin validation alone does not cover clients that omit Origin.
+          # Explicit host allowlisting prevents accidental DNS-rebinding entry.
+          allowed_hosts = ENV['MCP_REMOTE_ALLOWED_HOSTS'].to_s.split(',').map(&:strip).reject(&:blank?)
+          head :forbidden unless allowed_hosts.include?(request.host)
         end
 
         def validate_origin!
