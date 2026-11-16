@@ -671,7 +671,7 @@ export default function RegisterCompanyPage() {
             applicant: {
               name: step2.nome_completo.trim(),
               email: step2.email_corporativo.trim(),
-              phone: step2.telefone.replace(/\\D/g, ''),
+              phone: step2.telefone.replace(/\D/g, ''),
               relationship: step2.tipo_vinculo,
             },
             terms_accepted: step2.terms_accepted,
