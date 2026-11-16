@@ -129,8 +129,11 @@ module Api
         rescue ActionController::ParameterMissing => e
           render_tool_error(params[:tool_name], 'invalid_params', e.message, :bad_request)
         rescue StandardError => e
-          Rails.logger.error("[MCP] tool=#{params[:tool_name]} request_id=#{request.request_id} error=#{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
-          render_tool_error(params[:tool_name], 'internal_error', "#{e.class}: #{e.message}", :internal_server_error, { backtrace: e.backtrace.first(5) })
+          # MCP inputs may contain untrusted text and personal data. Never echo
+          # exception messages or backtraces to external tool consumers or logs:
+          # adapter errors can include credentials, SQL, and other tenant data.
+          Rails.logger.error("[MCP] tool=#{params[:tool_name]} request_id=#{request.request_id} error=#{e.class}")
+          render_tool_error(params[:tool_name], 'internal_error', 'Erro interno ao executar a ferramenta.', :internal_server_error, nil, elapsed_ms(started_at))
         end
 
         private
