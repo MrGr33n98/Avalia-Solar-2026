@@ -476,31 +476,41 @@ export function HomeCompaniesRail({
       <div className="mb-2 flex flex-col gap-1">
         <div
           data-testid="home-companies-header"
-          className="grid grid-cols-1 gap-1.5 min-[480px]:grid-cols-[minmax(0,1fr)_auto] min-[480px]:items-center min-[480px]:gap-2 sm:gap-4"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 sm:gap-4"
         >
-          <h2
-            id="home-companies-title"
-            className="flex min-w-0 flex-col gap-0.5"
+          {/* Mobile/PWA: heading + switcher in row 1, location + link in row 2.
+              Desktop: retain the existing paired title/actions layout. */}
+          <div
+            data-testid="home-companies-title-group"
+            className="contents sm:flex sm:min-w-0 sm:flex-col sm:gap-0.5"
           >
-            <span className="truncate text-[15px] font-semibold leading-5 tracking-tight text-slate-950 sm:text-lg sm:font-bold lg:text-xl">
-              {primaryTitle}
-            </span>
+            <h2
+              id="home-companies-title"
+              className="col-start-1 row-start-1 min-w-0 sm:col-auto sm:row-auto"
+            >
+              <span className="block truncate text-[15px] font-semibold leading-5 tracking-tight text-slate-950 sm:text-lg sm:font-bold lg:text-xl">
+                {primaryTitle}
+              </span>
+            </h2>
             {locationSubtitle ? (
-              <span
+              <p
                 data-testid="home-companies-location-subtitle"
-                className="truncate text-xs font-medium leading-4 text-slate-500 sm:text-sm"
+                className="col-start-1 row-start-2 min-w-0 truncate text-xs font-medium leading-4 text-slate-500 sm:col-auto sm:row-auto sm:text-sm"
               >
                 {locationSubtitle}
-              </span>
+              </p>
             ) : null}
-          </h2>
-          <div className="flex min-w-0 items-center justify-end gap-2">
+          </div>
+          <div
+            data-testid="home-companies-actions"
+            className="contents sm:flex sm:min-w-0 sm:items-center sm:justify-end sm:gap-2"
+          >
             {/* View Mode Switcher: Grid / List */}
             <div
               role="group"
               aria-label="Alternar modo de visualização"
               data-testid="company-view-mode-switcher"
-              className="inline-flex h-8 w-[68px] shrink-0 items-center justify-between gap-0.5 rounded-[10px] border border-[#E0E0E0] bg-white p-0.5 shadow-2xs"
+              className="col-start-2 row-start-1 inline-flex h-8 w-[68px] shrink-0 items-center justify-between justify-self-end gap-0.5 rounded-[10px] border border-[#E0E0E0] bg-white p-0.5 shadow-2xs sm:col-auto sm:row-auto"
             >
               <button
                 type="button"
@@ -542,7 +552,7 @@ export function HomeCompaniesRail({
 
             <Link
               href={effectiveViewAll}
-              className="inline-flex min-h-11 shrink-0 items-center gap-0.5 rounded-lg px-1.5 text-xs font-semibold leading-none text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:px-2 sm:text-sm"
+              className="col-start-2 row-start-2 inline-flex min-h-8 shrink-0 items-center justify-self-end gap-0.5 rounded-lg px-1.5 text-xs font-semibold leading-none text-blue-600 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:col-auto sm:row-auto sm:min-h-11 sm:px-2 sm:text-sm"
             >
               Ver todas
               <ChevronRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden="true" />
