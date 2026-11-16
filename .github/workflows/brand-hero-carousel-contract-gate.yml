@@ -46,7 +46,8 @@ jobs:
           npm test -- --runInBand --runTestsByPath \
             app/companies/'[id]'/components/CompanyHeroCarousel.spec.tsx \
             app/companies/'[id]'/components/CompanyHeroBanner.spec.tsx \
-            utils/company-banner.spec.ts
+            utils/company-banner.spec.ts \
+            app/dashboard/components/BrandHeroCarouselManager.spec.tsx
 
   backend:
     name: Brand Hero Domain + Security RSpec
