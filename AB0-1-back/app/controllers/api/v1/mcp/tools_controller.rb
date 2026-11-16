@@ -133,7 +133,7 @@ module Api
           # exception messages or backtraces to external tool consumers or logs:
           # adapter errors can include credentials, SQL, and other tenant data.
           Rails.logger.error("[MCP] tool=#{params[:tool_name]} request_id=#{request.request_id} error=#{e.class}")
-          render_tool_error(params[:tool_name], 'internal_error', 'Erro interno ao executar a ferramenta.', :internal_server_error)
+          render_tool_error(params[:tool_name], 'internal_error', 'Erro interno ao executar a ferramenta.', :internal_server_error, nil, elapsed_ms(started_at))
         end
 
         private
