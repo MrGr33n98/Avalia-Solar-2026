@@ -468,7 +468,7 @@ describe('rails de identidade visual da home', () => {
 
       const viewAllLink = screen.getByRole('link', { name: /Ver todas/i });
       expect(viewAllLink).toHaveAttribute('href', `/companies?state=${code}`);
-      expect(viewAllLink).toHaveClass('min-h-11', 'text-xs', 'font-semibold');
+      expect(viewAllLink).toHaveClass('min-h-8', 'sm:min-h-11', 'text-xs', 'font-semibold');
     }
 
     // Fallback nacional quando não há match local no estado selecionado
@@ -499,9 +499,23 @@ describe('rails de identidade visual da home', () => {
     const headerGrid = screen.getByTestId('home-companies-header');
     expect(headerGrid).toHaveClass(
       'grid',
-      'grid-cols-1',
-      'min-[480px]:grid-cols-[minmax(0,1fr)_auto]'
+      'grid-cols-[minmax(0,1fr)_auto]',
+      'items-center',
+      'gap-x-2',
+      'sm:gap-4'
     );
+
+    const heading = screen.getByRole('heading', { level: 2, name: 'Empresas em destaque' });
+    const location = screen.getByTestId('home-companies-location-subtitle');
+    const viewAll = screen.getByRole('link', { name: /Ver todas/i });
+
+    expect(heading).toHaveClass('col-start-1', 'row-start-1', 'min-w-0');
+    expect(location).toHaveClass('col-start-1', 'row-start-2', 'truncate');
+    expect(viewAll).toHaveClass('col-start-2', 'row-start-2', 'justify-self-end');
+    expect(screen.getByTestId('home-companies-title-group'))
+      .toHaveClass('contents', 'sm:flex', 'sm:flex-col');
+    expect(screen.getByTestId('home-companies-actions'))
+      .toHaveClass('contents', 'sm:flex', 'sm:justify-end');
 
     const switcher = screen.getByTestId('company-view-mode-switcher');
     expect(switcher).toHaveClass(
@@ -521,7 +535,40 @@ describe('rails de identidade visual da home', () => {
       expect(button.className).not.toContain('before:');
     }
 
-    expect(switcher.parentElement).toHaveClass('justify-end', 'gap-2');
+    expect(switcher).toHaveClass('col-start-2', 'row-start-1', 'justify-self-end');
+    expect(switcher.parentElement).toHaveClass('contents', 'sm:justify-end', 'sm:gap-2');
     expect(screen.getByRole('link', { name: /Ver todas/i })).toBeInTheDocument();
   });
+
+  it('alinha título e seletor no mobile/PWA sem alterar controles e links da seção', () => {
+    render(
+      <HomeCompaniesRail
+        stateCode="MT"
+        companies={[makeCompany({ id: 42, name: 'Solar MT', state: 'MT' })]}
+      />
+    );
+
+    const header = screen.getByTestId('home-companies-header');
+    const title = screen.getByRole('heading', { name: 'Empresas em destaque', level: 2 });
+    const location = screen.getByTestId('home-companies-location-subtitle');
+    const switcher = screen.getByRole('group', { name: 'Alternar modo de visualização' });
+    const viewAll = screen.getByRole('link', { name: /Ver todas/i });
+
+    // The grid must not collapse to a single column on 320–479px viewports.
+    expect(header).toHaveClass('grid-cols-[minmax(0,1fr)_auto]');
+    expect(header.className).not.toContain('grid-cols-1');
+    expect(title).toHaveClass('col-start-1', 'row-start-1');
+    expect(switcher).toHaveClass('col-start-2', 'row-start-1');
+    expect(location).toHaveClass('col-start-1', 'row-start-2');
+    expect(location).toHaveTextContent('Mato Grosso');
+    expect(viewAll).toHaveClass('col-start-2', 'row-start-2');
+    expect(viewAll).toHaveAttribute('href', '/companies?state=MT');
+
+    // The PWA uses the same Next.js component, so the button action stays shared.
+    fireEvent.click(screen.getByRole('button', { name: 'Visualização em lista' }));
+    expect(screen.getByRole('button', { name: 'Visualização em lista' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    expect(window.localStorage.getItem('avalia.company_view_mode.v1')).toBe('list');
+  });
+
 });

@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import CompanyFluidBanner from './CompanyFluidBanner';
+import CompanyHeroCarousel from './CompanyHeroCarousel';
 import { Company } from '@/lib/api';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
@@ -19,10 +21,13 @@ export default function CompanyPremiumHero({
   bannerError,
   setBannerError,
 }: CompanyPremiumHeroProps) {
+  const [carouselError, setCarouselError] = useState(false);
+  const slides = company.hero_carousel?.enabled ? company.hero_carousel.slides ?? [] : [];
+  const hasCarousel = slides.length > 0 && !carouselError;
   const locationLabel = [company.city, company.state].filter(Boolean).join(', ');
   const bannerState = resolveCompanyHeroBannerState(company, bannerUrl, bannerError);
-  const showTechnicalPlaceholder =
-    bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error';
+  const showTechnicalPlaceholder = !hasCarousel &&
+    (bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error');
 
   return (
     <div
@@ -34,7 +39,22 @@ export default function CompanyPremiumHero({
         className="relative w-full"
       >
         {/* Institutional / fallback banners retain their intrinsic height on every viewport. */}
-        {bannerState.kind === 'free-plan-placeholder' ? (
+        {hasCarousel && slides.length >= 2 ? (
+          <CompanyHeroCarousel
+            companyId={company.id}
+            companyName={company.name}
+            carousel={company.hero_carousel}
+            onAllFailed={() => setCarouselError(true)}
+          />
+        ) : hasCarousel && slides.length === 1 ? (
+          <CompanyFluidBanner
+            src={slides[0].image_url}
+            alt={slides[0].alt_text || `Banner da empresa ${company.name}`}
+            priority
+            quality={95}
+            onError={() => setCarouselError(true)}
+          />
+        ) : bannerState.kind === 'free-plan-placeholder' ? (
           <CompanyFreeBannerPlaceholder
             alt="Banner institucional Avalia Solar"
             priority

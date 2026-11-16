@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_15_210000) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_16_093000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_trgm"
@@ -1153,6 +1153,40 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_15_210000) do
     t.check_constraint "cnpj IS NULL OR length(cnpj::text) = 14 AND cnpj::text ~ '^[0-9]+$'::text", name: "ck_companies_valid_cnpj"
     t.check_constraint "email IS NULL OR email::text ~ '^[^@]+@[^@]+\\.[^@]+$'::text", name: "ck_companies_valid_email"
     t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'inactive'::character varying::text, 'pending'::character varying::text, 'blocked'::character varying::text])", name: "companies_status_allowed"
+  end
+
+  create_table "company_hero_slides", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.integer "slot", null: false
+    t.integer "display_position", null: false
+    t.integer "revision", default: 1, null: false
+    t.string "status", default: "draft", null: false
+    t.string "alt_text", limit: 160
+    t.integer "image_width"
+    t.integer "image_height"
+    t.bigint "image_bytes"
+    t.string "image_format"
+    t.bigint "created_by_id"
+    t.bigint "reviewed_by_id"
+    t.datetime "approved_at"
+    t.datetime "published_at"
+    t.datetime "archived_at"
+    t.string "rejection_reason"
+    t.bigint "replaces_slide_id"
+    t.string "request_key", limit: 80
+    t.string "source", default: "dashboard", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["company_id", "request_key"], name: "idx_company_hero_slides_idempotency", unique: true, where: "(request_key IS NOT NULL)"
+    t.index ["company_id", "slot", "revision"], name: "idx_company_hero_slides_unique_revision", unique: true
+    t.index ["company_id", "slot"], name: "idx_company_hero_slides_unique_published_slot", unique: true, where: "((status)::text = 'published'::text)"
+    t.index ["company_id", "status", "display_position"], name: "idx_company_hero_slides_public_order"
+    t.index ["company_id"], name: "index_company_hero_slides_on_company_id"
+    t.check_constraint "slot >= 1 AND slot <= 3", name: "company_hero_slide_slot_1_to_3"
+    t.check_constraint "display_position >= 1 AND display_position <= 3", name: "company_hero_slide_position_1_to_3"
+    t.check_constraint "revision >= 1", name: "company_hero_slide_revision_positive"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'pending_review'::character varying::text, 'approved'::character varying::text, 'published'::character varying::text, 'rejected'::character varying::text, 'archived'::character varying::text])", name: "company_hero_slide_status_valid"
   end
 
   create_table "company_access_requests", force: :cascade do |t|
@@ -6064,6 +6098,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_15_210000) do
   add_foreign_key "companies", "categories", column: "primary_category_id"
   add_foreign_key "companies", "plans"
   add_foreign_key "company_access_requests", "admin_users", column: "reviewed_by_admin_user_id"
+  add_foreign_key "company_hero_slides", "companies"
   add_foreign_key "company_access_requests", "companies"
   add_foreign_key "company_access_requests", "users"
   add_foreign_key "company_badges", "badges"

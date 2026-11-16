@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Company } from '@/lib/api';
+import { companiesApi, type Company } from '@/lib/api';
 import { toast } from 'sonner';
 import { CheckCircle2, Info, AlertTriangle, Trash2 } from 'lucide-react';
 import {
@@ -12,7 +12,13 @@ import {
   ComparisonExperience,
 } from '@/lib/comparison/config';
 
-const STORAGE_KEY = 'ab01_comparison_list';
+import {
+  COMPARISON_STORAGE_KEY,
+  parseStoredComparisonIds,
+  serializeComparisonIds,
+} from '@/lib/comparison/comparison-storage';
+
+const STORAGE_KEY = COMPARISON_STORAGE_KEY;
 
 // Event system for cross-component communication
 const comparisonEvents = new EventTarget();
@@ -20,6 +26,9 @@ const comparisonEvents = new EventTarget();
 export function useComparison() {
   const [comparisonList, setComparisonList] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hydrationError, setHydrationError] = useState(false);
+  const [hydrationAttempt, setHydrationAttempt] = useState(0);
+  const retryHydration = useCallback(() => setHydrationAttempt((attempt) => attempt + 1), []);
   const [windowWidth, setWindowWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
@@ -35,44 +44,80 @@ export function useComparison() {
   const experience: ComparisonExperience = getComparisonExperience(windowWidth);
   const maxComparison = getComparisonLimit(windowWidth);
 
-  // Load from localStorage on mount
+  // Legacy JSON arrays are migrated to IDs, then fetched from the API.
+  // Never trust browser-stored financial terms, ratings, or entitlements.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const validCompanies = parsed.filter(
-            (item) =>
-              item &&
-              (typeof item.id === 'number' || typeof item.id === 'string') &&
-              typeof item.name === 'string'
-          );
-          // Deduplicate by id and limit to max desktop allowed (3)
-          const deduped: Company[] = [];
-          const seen = new Set();
-          for (const item of validCompanies) {
-            if (!seen.has(item.id)) {
-              seen.add(item.id);
-              deduped.push(item);
-            }
-          }
-          setComparisonList(deduped.slice(0, COMPARISON_LIMITS.desktop));
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
+    let active = true;
+
+    const hydrate = async () => {
+      setIsLoading(true);
+
+      try {
+        const storedIds = parseStoredComparisonIds(localStorage.getItem(STORAGE_KEY));
+        if (storedIds.length === 0) {
+          if (!active) return;
+          setComparisonList([]);
+          setHydrationError(false);
+          return;
         }
+
+        // During a staggered deploy the new batch route may not be live yet.
+        // Existing detail endpoints still return fresh backend-owned data.
+        const snapshot = await companiesApi.getComparisonSnapshots(storedIds)
+          .catch(async () => {
+            const details = await Promise.all(
+              storedIds.map((id) => companiesApi.getById(id))
+            );
+            // An old backend can resolve public company details, but a partial
+            // network failure must never silently delete saved selections.
+            if (details.some((item) => !item || item.status !== 'active')) {
+              throw new Error('Incomplete comparison fallback');
+            }
+            return {
+              schema_version: 1,
+              companies: details as Company[],
+              missing_ids: [] as number[],
+              refreshed_at: new Date().toISOString(),
+            };
+          });
+        if (!active) return;
+        if (snapshot.schema_version !== 1 || !Array.isArray(snapshot.companies)) {
+          throw new Error('Unsupported comparison snapshot');
+        }
+
+        const available = new Map(snapshot.companies.map((company) => [company.id, company]));
+        const restored = storedIds
+          .map((id) => available.get(id))
+          .filter((company): company is Company => Boolean(company));
+
+        setComparisonList(restored);
+        setHydrationError(false);
+
+        if (snapshot.missing_ids?.length) {
+          toast.info('Seleção atualizada', {
+            description: 'Empresas indisponíveis foram retiradas da comparação.',
+          });
+        }
+      } catch {
+        if (!active) return;
+        // Do not overwrite the saved IDs or display stale company data.
+        setHydrationError(true);
+        toast.error('Não foi possível atualizar a comparação.', {
+          description: 'Sua seleção foi preservada. Verifique sua conexão e tente novamente.',
+          action: { label: 'Tentar novamente', onClick: retryHydration },
+        });
+      } finally {
+        if (active) setIsLoading(false);
       }
-    } catch (e) {
-      console.error('Failed to parse comparison list', e);
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    };
+
+    void hydrate();
+    return () => { active = false; };
+  }, [hydrationAttempt, retryHydration]);
 
   // Save to localStorage when list changes
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || hydrationError) return;
 
     if (skipEmitRef.current) {
       skipEmitRef.current = false;
@@ -80,7 +125,7 @@ export function useComparison() {
     }
 
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(comparisonList));
+      localStorage.setItem(STORAGE_KEY, serializeComparisonIds(comparisonList));
       window.dispatchEvent(new Event('avalia:comparison-updated'));
       comparisonEvents.dispatchEvent(
         new CustomEvent('comparison-updated', {
@@ -90,7 +135,7 @@ export function useComparison() {
     } catch (e) {
       console.error('Failed to save comparison list', e);
     }
-  }, [comparisonList, isLoading]);
+  }, [comparisonList, isLoading, hydrationError]);
 
   // Sync hook instances across components
   useEffect(() => {
@@ -114,6 +159,12 @@ export function useComparison() {
 
   const addToComparison = useCallback(
     (company: Company) => {
+      if (hydrationError) {
+        toast.error('Atualize a comparação antes de adicionar outra empresa.', {
+          action: { label: 'Tentar novamente', onClick: retryHydration },
+        });
+        return;
+      }
       setComparisonList((prev) => {
         if (prev.find((c) => c.id === company.id)) {
           toast.info('Empresa já adicionada', {
@@ -156,7 +207,7 @@ export function useComparison() {
         return newList;
       });
     },
-    []
+    [hydrationError, retryHydration]
   );
 
   const removeFromComparison = useCallback((companyId: number) => {
@@ -179,6 +230,7 @@ export function useComparison() {
   }, []);
 
   const clearComparison = useCallback(() => {
+    setHydrationError(false);
     setComparisonList([]);
     toast.success('Lista de comparação limpa', {
       description: 'Todas as empresas foram removidas.',
@@ -192,6 +244,7 @@ export function useComparison() {
   }, []);
 
   const replaceComparison = useCallback((companies: Company[]) => {
+    setHydrationError(false);
     const currentLimit = getComparisonLimit(
       typeof window !== 'undefined' ? window.innerWidth : 1024
     );
@@ -255,6 +308,8 @@ export function useComparison() {
     toggleComparison,
     getCompanyPosition,
     isLoading,
+    hydrationError,
+    retryHydration,
     canAddMore,
     isEmpty,
     isFull,

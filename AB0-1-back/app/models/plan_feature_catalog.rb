@@ -56,6 +56,23 @@ module PlanFeatureCatalog
       group: 'conversion',
       aliases: %w[banner banner_promocional]
     },
+    'brand_hero_carousel' => {
+      label: 'Carrossel institucional da marca (3 imagens)',
+      description: 'Até três imagens institucionais no hero da Brand Page; não inclui anúncios patrocinados.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'brand_hero'
+    },
+    'brand_hero_slides_limit' => {
+      label: 'Quantidade de banners do carrossel',
+      description: 'Limite de imagens institucionais publicáveis no hero (0 a 3). Exige carrossel habilitado e plano pago.',
+      type: :integer,
+      default: 0,
+      access_behavior: :config,
+      group: 'brand_hero'
+    },
     'verified_product' => {
       label: 'Selo de Empresa Verificada',
       description: 'Exibe o selo de confiança que aumenta a taxa de conversão.',
@@ -424,6 +441,8 @@ module PlanFeatureCatalog
     'free' => {
       'setup_included' => true, # Free plans usually don't have setup
       'premium_profile' => false,
+      'brand_hero_carousel' => false,
+      'brand_hero_slides_limit' => 0,
       'company_categories_limit' => 3,
       'service_area_states_limit' => 1,
       'service_area_cities_limit' => 3,
@@ -435,6 +454,8 @@ module PlanFeatureCatalog
     'essential' => {
       'setup_fee' => 0,
       'premium_profile' => false,
+      'brand_hero_carousel' => true,
+      'brand_hero_slides_limit' => 3,
       'onboarding_session' => false,
       'ideal_customer_block' => true,
       'promo_banner' => false,
@@ -473,6 +494,8 @@ module PlanFeatureCatalog
     'pro' => {
       'setup_fee' => 499,
       'premium_profile' => true,
+      'brand_hero_carousel' => true,
+      'brand_hero_slides_limit' => 3,
       'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,
@@ -511,6 +534,8 @@ module PlanFeatureCatalog
     'enterprise' => {
       'setup_fee' => 1499,
       'premium_profile' => true,
+      'brand_hero_carousel' => true,
+      'brand_hero_slides_limit' => 3,
       'onboarding_session' => true,
       'ideal_customer_block' => true,
       'promo_banner' => true,

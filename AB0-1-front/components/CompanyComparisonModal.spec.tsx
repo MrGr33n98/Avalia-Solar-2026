@@ -89,6 +89,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
   const defaultProps = {
     isOpen: true,
     onClose: jest.fn(),
+    onMinimize: jest.fn(),
     onRemoveCompany: jest.fn(),
     onClearAll: jest.fn(),
     companies: [companyWithPaidPlan, companyWithoutPaidPlan],
@@ -98,8 +99,15 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     jest.clearAllMocks();
   });
 
+  const expandCriteria = () => {
+    const controls = screen.getAllByRole('button', { name: /ver mais 7 critérios/i });
+    fireEvent.click(controls[0]);
+  };
+
+
   test('renderiza os 14 critérios na ordem exata e a linha final de orçamento (15 linhas totais)', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
+    expandCriteria();
 
     // 14 critérios canônicos + 1 linha CTA
     const expectedLabels = [
@@ -128,6 +136,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
 
   test('renderiza badges com dados mapeados corretamente', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
+    expandCriteria();
 
     // Prazo do orçamento da empresa 1: "Até 24h"
     expect(screen.getAllByText('Até 24h').length).toBeGreaterThan(0);
@@ -201,6 +210,8 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
       />
     );
 
+    expandCriteria();
+
     // Empresa 1 tem 3 serviços: exibe preview + botão com "+1"
     const plus1Button = screen.getAllByRole('button', {
       name: /ver todos os 3 serviços/i,
@@ -245,9 +256,11 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     render(
       <CompanyComparisonModal
         {...defaultProps}
-        companies={[emptyCompany]}
+        companies={[emptyCompany, companyWithoutPaidPlan]}
       />
     );
+
+    expandCriteria();
 
     // Deve exibir múltiplos badges/textos "Não informado"
     const notInformedElements = screen.getAllByText('Não informado');
@@ -301,4 +314,89 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     expect(mobileAddBtn).toBeInTheDocument();
     expect(mobileAddBtn).toBeDisabled();
   });
+  test('não interpreta respostas negativas como oferta de manutenção, suporte ou financiamento', () => {
+    const negativeCompany: ComparisonCompany = {
+      ...companyWithoutPaidPlan,
+      comparison_profile: {
+        ...companyWithoutPaidPlan.comparison_profile,
+        financing_availability: 'não disponível',
+        maintenance_availability: 'não oferece',
+        after_sales_support: 'não oferece suporte',
+      },
+    };
+    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany, { ...negativeCompany, id: 404, slug: 'segunda-negativa' }]} />);
+    expandCriteria();
+    expect(screen.getAllByText('Não oferece').length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByText('Oferece')).not.toBeInTheDocument();
+    expect(screen.queryByText('Oferece suporte')).not.toBeInTheDocument();
+    expect(screen.queryByText('Disponível')).not.toBeInTheDocument();
+  });
+
+  test('separa garantia autodeclarada de garantia sem confirmação', () => {
+    const declared: ComparisonCompany = {
+      ...companyWithPaidPlan,
+      comparison_profile: {
+        ...companyWithPaidPlan.comparison_profile,
+        warranty_years: 5,
+        warranty_confirmed: false,
+      },
+    };
+    render(<CompanyComparisonModal {...defaultProps} companies={[declared, companyWithoutPaidPlan]} />);
+    expect(screen.getAllByText('Não confirmada').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Declarada pela empresa')).not.toBeInTheDocument();
+  });
+
+  test('não apresenta cinco estrelas preenchidas para notas inferiores a cinco', () => {
+    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan, companyWithoutPaidPlan]} />);
+    expect(screen.getAllByLabelText('Nota 4.8 de 5').length).toBeGreaterThan(0);
+    expect(screen.queryByText('★★★★★')).not.toBeInTheDocument();
+  });
+
+  test('S1 apresenta escolha da segunda empresa, sem tabela vazia nem CTA prematuro', () => {
+    render(
+      <CompanyComparisonModal
+        {...defaultProps}
+        companies={[companyWithPaidPlan]}
+      />
+    );
+
+    expect(screen.getByTestId('comparison-single-selection')).toBeInTheDocument();
+    expect(screen.queryByText('Avaliações')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ver comparação completa/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver perfil da empresa/i })).toHaveAttribute('href', '/companies/weg-solar');
+
+    fireEvent.click(screen.getByRole('button', { name: /adicionar outra empresa/i }));
+    expect(mockPush).toHaveBeenCalledWith('/search?tab=companies');
+    expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
+  test('minimizar é diferente de fechar e preserva o seletor', () => {
+    render(
+      <CompanyComparisonModal
+        {...defaultProps}
+        companies={[companyWithPaidPlan]}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /minimizar comparação/i }));
+    expect(defaultProps.onMinimize).toHaveBeenCalledTimes(1);
+    expect(defaultProps.onClose).not.toHaveBeenCalled();
+  });
+
+  test('resumo mostra critérios essenciais e permite expandir e recolher os demais', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+    expect(screen.getAllByText('Avaliações').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Serviços oferecidos')).not.toBeInTheDocument();
+
+    expandCriteria();
+    expect(screen.getAllByText('Serviços oferecidos').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: /mostrar menos critérios/i })[0]);
+    expect(screen.queryByText('Serviços oferecidos')).not.toBeInTheDocument();
+  });
+
+  test('duas empresas no desktop não reservam uma terceira coluna vazia', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+    expect(screen.getByTestId('comparison-desktop-header'))
+      .toHaveClass('grid-cols-[150px_repeat(2,minmax(0,1fr))]');
+  });
+
 });

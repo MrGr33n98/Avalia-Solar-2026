@@ -176,6 +176,22 @@ export interface DirectMessage {
   attachment_url?: string | null;
 }
 
+export interface CompanyHeroCarouselSlide {
+  id: number;
+  slot: number;
+  position: number;
+  image_url: string;
+  width: number;
+  height: number;
+  alt_text?: string | null;
+}
+
+export interface CompanyHeroCarouselData {
+  version: number;
+  enabled: boolean;
+  slides: CompanyHeroCarouselSlide[];
+}
+
 export interface CompanyComparisonProfile {
   quote_turnaround?: 'within_24h' | 'within_3_days' | 'consult' | string | null;
   technical_visit?: 'free' | 'paid' | 'consult' | 'not_offered' | string | null;
@@ -237,6 +253,7 @@ export interface Company {
   created_at: string;
   updated_at: string;
   banner_url?: string | null;
+  hero_carousel?: CompanyHeroCarouselData | null;
   logo_url?: string | null;
   verified_badge_url?: string | null;
   verified_badge_image_url?: string | null;
@@ -2863,7 +2880,32 @@ export const companyDashboardApi = {
     }),
 };
 
+/**
+ * Public comparison snapshots are sourced directly from the Rails
+ * entitlement and Company#comparison_profile policies.
+ */
+export interface CompanyComparisonSnapshotsResponse {
+  schema_version: number;
+  refreshed_at: string;
+  companies: Company[];
+  missing_ids: number[];
+}
+
 export const companiesApi = {
+  getComparisonSnapshots: async (ids: number[]): Promise<CompanyComparisonSnapshotsResponse> => {
+    const unique = Array.from(new Set(ids));
+    if (!unique.length || unique.length > 3 ||
+        unique.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
+      throw new Error('Selecione entre 1 e 3 IDs válidos para comparar.');
+    }
+    return fetchApi<CompanyComparisonSnapshotsResponse>('/companies/compare', {
+      params: { ids: unique.join(',') },
+      noCache: true,
+      retries: 0,
+      timeout: 10000,
+    });
+  },
+
   getAll: async (
     params: {
       status?: string;

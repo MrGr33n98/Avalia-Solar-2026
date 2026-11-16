@@ -10,7 +10,7 @@ class CompanySerializer < ActiveModel::Serializer
              :email_public, :featured, :verified, :claimed,
              :media_upload_allowed,
              :rating_avg, :rating_count,
-             :banner_url, :logo_url, :verified_badge_image_url, :verified_badge_url,
+             :banner_url, :hero_carousel, :logo_url, :verified_badge_image_url, :verified_badge_url,
              :created_at, :updated_at,
              :founded_year, :employees_count,
              :response_time_sla, :response_sla_minutes,
@@ -183,6 +183,13 @@ class CompanySerializer < ActiveModel::Serializer
 
   def meta_description
     object.try(:meta_description).presence || object.try(:seo_description).presence
+  end
+
+  def hero_carousel
+    ::BrandHero::PublicSnapshot.call(
+      company: object,
+      url_for_attachment: method(:generate_attachment_url)
+    )
   end
 
   def banner_url

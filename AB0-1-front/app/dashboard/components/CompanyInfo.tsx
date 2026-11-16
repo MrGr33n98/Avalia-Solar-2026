@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SellerInformationPanel, { type SellerEditorMode } from './SellerInformationPanel';
+import BrandHeroCarouselManager from './BrandHeroCarouselManager';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -46,6 +47,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import type { FeatureAccessEntry } from '@/lib/api';
+import { canUsePaidConversion } from '@/lib/feature-access';
 import { buildApiUrl, getApiRequestHeaders } from '@/lib/api-config';
 import {
   BRAZIL_CAPITAL_OPTIONS,
@@ -125,6 +127,8 @@ interface CompanyData {
   rating_count?: number;
   reviews_count?: number;
   has_paid_plan?: boolean;
+  quote_cta_enabled?: boolean | null;
+  business_verification_status?: string | null;
   post_sales_support?: boolean;
   comparison_profile?: {
     quote_turnaround?: string | null;
@@ -996,7 +1000,14 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
             <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
               <span>Formato recomendado: 1920x600px (16:5) em PNG ou JPG. Mantenha textos e logos afastados das bordas.</span>
-              <span className="font-semibold text-brand-blue">Banner da Empresa</span>
+              <span className="font-semibold text-brand-blue">Banner legado da Empresa</span>
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">Carrossel institucional (até 3 imagens)</h3>
+              <BrandHeroCarouselManager
+                companyId={companyId}
+                companyName={displayText(currentData.name)}
+              />
             </div>
           </div>
         </SectionCard>
@@ -1259,17 +1270,27 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
               <span className="block text-[11px] font-semibold text-slate-500">Status de auditoria</span>
               <span className="block text-sm font-bold text-emerald-700 mt-0.5">
-                {currentData.verified ? '✓ Empresa Verificada' : 'Documentação em análise'}
+                {currentData.verified || currentData.business_verification_status === 'verified'
+                  ? 'Empresa verificada'
+                  : ['pending', 'in_review', 'under_review'].includes(currentData.business_verification_status || '')
+                    ? 'Em análise'
+                    : 'Não verificada'}
               </span>
-              <span className="block text-[10px] text-slate-400 mt-0.5">Definido por validação de CNPJ</span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Status cadastral definido pela Avalia Solar; não implica verificação de cada declaração comercial</span>
             </div>
 
             <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
               <span className="block text-[11px] font-semibold text-slate-500">Botão de Orçamento no Comparador</span>
               <span className="block text-sm font-bold text-slate-900 mt-0.5">
-                {currentData.has_paid_plan ? 'Habilitado (Plano Ativo)' : 'Requer Plano Pro'}
+                {canUsePaidConversion(currentData, 'quote')
+                  ? 'Disponível para clientes'
+                  : !currentData.has_paid_plan
+                    ? 'Indisponível no plano atual'
+                    : currentData.quote_cta_enabled === false
+                      ? 'Desativado pela empresa'
+                      : 'Recurso não habilitado'}
               </span>
-              <span className="block text-[10px] text-slate-400 mt-0.5">Definido pelo plano contratado</span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Plano, permissão da API e preferência da empresa</span>
             </div>
           </div>
         </div>

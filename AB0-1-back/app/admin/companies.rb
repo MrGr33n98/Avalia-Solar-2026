@@ -31,7 +31,13 @@ ActiveAdmin.register Company do
   end
 
   action_item :view_banners, only: :show do
-    link_to 'Ver Banners', admin_banners_path(q: { company_id_eq: resource.id }), class: 'member_link'
+    link_to 'Ver Anúncios', admin_banners_path(q: { company_id_eq: resource.id }), class: 'member_link'
+  end
+
+  action_item :manage_brand_hero, only: %i[show edit] do
+    link_to 'Carrossel da Marca',
+            admin_company_hero_slides_path(q: { company_id_eq: resource.id }),
+            class: 'member_link'
   end
 
   action_item :view_plan, only: :show do
@@ -88,6 +94,9 @@ ActiveAdmin.register Company do
       :priority_score, :sponsored, :segment, :primary_category_id,
       :cnpj, :email, :whatsapp,
       :working_hours, :payment_methods,
+      :quote_turnaround, :technical_visit, :financing_availability,
+      :installation_terms, :maintenance_availability, :after_sales_support,
+      :installation_team, :system_monitoring, :warranty_years, :warranty_confirmed,
       :certifications, :status, :founded_year, :employees_count,
       :awards, :partner_brands, :coverage_states, :coverage_cities,
       :latitude, :longitude, :minimum_ticket, :maximum_ticket,
@@ -313,6 +322,45 @@ ActiveAdmin.register Company do
       end
     end
 
+    f.inputs 'Perfil no Comparador (mesmo contrato do Dashboard)' do
+      para 'Condições comerciais autodeclaradas. Campos em branco serão mostrados como Não informado. Verificação de documentos e avaliações não podem ser editadas aqui.'
+      columns do
+        column do
+          f.input :quote_turnaround, as: :select, include_blank: 'Não informado',
+                  collection: [['Até 24 horas', 'within_24h'], ['Até 3 dias', 'within_3_days'], ['Sob consulta', 'consult']],
+                  label: 'Prazo do orçamento'
+          f.input :technical_visit, as: :select, include_blank: 'Não informado',
+                  collection: [['Gratuita', 'free'], ['Paga', 'paid'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Visita técnica'
+          f.input :financing_availability, as: :select, include_blank: 'Não informado',
+                  collection: [['Disponível', 'available'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Financiamento'
+          f.input :installation_terms, as: :select, include_blank: 'Não informado',
+                  collection: [['Inclusa no pacote', 'included'], ['Contratada à parte', 'separately_contracted'], ['Não oferece', 'not_offered']],
+                  label: 'Instalação'
+          f.input :maintenance_availability, as: :select, include_blank: 'Não informado',
+                  collection: [['Oferece', 'offered'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Manutenção'
+        end
+        column do
+          f.input :after_sales_support, as: :select, include_blank: 'Não informado',
+                  collection: [['Oferece suporte', 'offered'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Pós-venda'
+          f.input :installation_team, as: :select, include_blank: 'Não informado',
+                  collection: [['Própria', 'in_house'], ['Terceirizada', 'outsourced'], ['Mista', 'mixed'], ['Não se aplica', 'not_applicable']],
+                  label: 'Equipe instaladora'
+          f.input :system_monitoring, as: :select, include_blank: 'Não informado',
+                  collection: [['Aplicativo', 'app'], ['Portal web', 'web_portal'], ['Manual', 'manual'], ['Não oferece', 'not_offered']],
+                  label: 'Acompanhamento do sistema'
+          f.input :warranty_years, as: :number, label: 'Anos de garantia declarados',
+                  input_html: { min: 1, max: 30 }
+          f.input :warranty_confirmed, as: :boolean,
+                  label: 'Empresa confirma a declaração da garantia',
+                  hint: 'Esta confirmação NÃO equivale à verificação documental pela Avalia Solar.'
+        end
+      end
+    end
+
     f.inputs 'Especialidades & Tags' do
       columns do
         column span: 1 do
@@ -441,6 +489,100 @@ ActiveAdmin.register Company do
             end.join.html_safe
           end
         )
+      end
+    end
+
+    f.inputs 'Carrossel institucional da Brand Page (até 3 banners)' do
+      if f.object.persisted?
+        limit = BrandHero::Eligibility.limit(f.object)
+        published_enabled = BrandHero::Eligibility.allowed?(f.object)
+        slides = f.object.company_hero_slides.order(revision: :desc).to_a
+
+        para "Plano: #{f.object.plan&.name || 'Free'} | Limite contratado: #{limit} de 3 imagens.",
+             class: 'inline-hints'
+        para(
+          published_enabled ?
+            'Exibição pública habilitada (imagens ainda precisam ser aprovadas).' :
+            'Publicação pública indisponível. Empresas pagantes podem preparar imagens antes da ativação global.',
+          class: 'inline-hints'
+        )
+
+        cards = (1..3).map do |slot|
+          published = slides.find { |slide| slide.slot == slot && slide.status == 'published' }
+          draft = slides.find do |slide|
+            slide.slot == slot && %w[draft pending_review approved rejected].include?(slide.status)
+          end
+          current = draft || published
+
+          details = [
+            f.template.content_tag(:strong, "Banner #{slot}", style: 'display:block;margin-bottom:6px;'),
+            f.template.content_tag(
+              :p,
+              current ? "Revisão #{current.revision} — #{current.status}" : 'Nenhuma imagem cadastrada',
+              class: 'inline-hints'
+            )
+          ]
+          if published&.image&.attached?
+            details << f.template.image_tag(
+              url_for(published.image),
+              alt: "Prévia do banner #{slot}",
+              style: 'display:block;max-width:100%;height:auto;max-height:85px;object-fit:contain;margin:8px 0;'
+            )
+          end
+          if draft && published
+            details << f.template.content_tag(:p, 'Banner publicado preservado durante a revisão.',
+                                              class: 'inline-hints')
+          end
+          if slot <= limit
+            details << f.template.link_to(
+              "Enviar ou substituir banner #{slot}",
+              new_admin_company_hero_slide_path(company_id: f.object.id, slot: slot),
+              class: 'button',
+              style: 'display:inline-block;margin-top:8px;'
+            )
+          else
+            details << f.template.content_tag(:p, 'Slot bloqueado pelo plano.', class: 'inline-hints')
+          end
+
+          f.template.content_tag(
+            :div,
+            f.template.safe_join(details),
+            style: 'flex:1 1 210px;min-width:180px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;'
+          )
+        end
+
+        # ActiveAdmin form capture does not automatically render raw SafeBuffers.
+        # text_node explicitly inserts the slot cards/links into the form's content tree.
+        text_node(
+          f.template.content_tag(
+            :li,
+            f.template.content_tag(
+              :div,
+              f.template.safe_join(cards),
+              style: 'display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;'
+            ),
+            class: 'input hero-slide-slots'
+          )
+        )
+        text_node(
+          f.template.content_tag(
+            :li,
+            f.template.link_to(
+              'Ver todas as revisões e aprovar banners',
+              admin_company_hero_slides_path(q: { company_id_eq: f.object.id }),
+              class: 'button'
+            ),
+            class: 'input'
+          )
+        )
+        if limit.zero?
+          text_node(
+            f.template.content_tag(:li, 'Ative o recurso e defina a quantidade em Planos antes de enviar imagens.',
+                                   class: 'input inline-hints')
+          )
+        end
+      else
+        para 'Salve a empresa antes de configurar seus banners institucionais.', class: 'inline-hints'
       end
     end
 
@@ -843,6 +985,33 @@ ActiveAdmin.register Company do
         column { para "Leads últimos 30 dias: #{overview[:recent_leads]}" }
         column { para "Campanhas ativas: #{overview[:active_campaigns]}" }
         column { para "Avaliação média: #{overview[:average_rating]}" }
+      end
+    end
+
+    panel 'Perfil público no Comparador' do
+      para 'Dados comerciais da empresa, não verificados pela plataforma salvo indicação específica.'
+      attributes_table_for resource do
+        [
+          ['Prazo do orçamento', :quote_turnaround],
+          ['Visita técnica', :technical_visit],
+          ['Financiamento', :financing_availability],
+          ['Instalação', :installation_terms],
+          ['Manutenção', :maintenance_availability],
+          ['Pós-venda', :after_sales_support],
+          ['Equipe', :installation_team],
+          ['Acompanhamento', :system_monitoring]
+        ].each do |label, field|
+          row(label) { |company| company.comparison_profile[field].presence || 'Não informado' }
+        end
+        row('Garantia') do |company|
+          profile = company.comparison_profile
+          years = profile[:warranty_years]
+          if years.present?
+            "#{years} ano(s) — #{profile[:warranty_confirmed] ? 'Confirmada pela empresa' : 'Não confirmada'}"
+          else
+            'Não informado'
+          end
+        end
       end
     end
 

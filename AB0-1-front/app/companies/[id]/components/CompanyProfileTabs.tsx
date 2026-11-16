@@ -67,76 +67,68 @@ export default function CompanyProfileTabs({
 
   // Mobile begins with the same four actions shown in the product reference.
   const mobileTabs = useMemo(() => {
-    const primaryIds = ['overview', 'products', 'reviews', 'contact'];
+    const primaryIds = ['overview', 'products', 'reviews', 'projects'];
     const primary = primaryIds
       .map((id) => tabs.find((tab) => tab.id === id))
       .filter((tab): tab is (typeof tabs)[number] => Boolean(tab));
-    const extra = tabs.filter((tab) => !primaryIds.includes(tab.id));
+    // Contact stays available in the profile content/sidebar; omit only its mobile tab.
+    const extra = tabs.filter((tab) => tab.id !== 'contact' && !primaryIds.includes(tab.id));
 
     return [...primary, ...extra];
   }, [tabs]);
 
+  const primaryMobileTabs = mobileTabs.slice(0, 4);
+  const secondaryMobileTabs = mobileTabs.slice(4);
+
+  const renderMobileTab = (tab: (typeof mobileTabs)[number], isSecondary = false) => {
+    const isActive = activeTab === tab.id;
+    const tabHasMenu = tab.id === 'products' && hasProductMenu;
+    const shortLabel = tab.id === 'products' ? 'Produtos e Serviços' : tab.id === 'faq' ? 'FAQ' : tab.label;
+
+    return (
+      <button
+        key={tab.id}
+        type="button"
+        role="tab"
+        aria-label={tab.label}
+        aria-selected={isActive}
+        aria-controls={`company-tab-panel-${tab.id}`}
+        aria-haspopup={tabHasMenu ? 'dialog' : undefined}
+        onClick={() => {
+          handleTabClick(tab.id);
+          if (tabHasMenu) {
+            setMobileSheetOpen(true);
+            trackCompanyProfileCategoryDropdownOpened({ company_id: companyId, company_name: companyName });
+          }
+        }}
+        className={cn(
+          'relative flex min-w-0 min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
+          isSecondary ? 'min-h-[44px] flex-row gap-1.5' : 'min-h-[64px]',
+          isActive ? 'bg-blue-50 font-semibold text-blue-700' : 'bg-slate-50 font-medium text-slate-600 hover:bg-slate-100'
+        )}
+      >
+        <tab.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <span className="min-w-0 text-[11px] leading-[1.2] [overflow-wrap:anywhere]">{shortLabel}</span>
+        {tabHasMenu && <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />}
+        {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-blue-600" aria-hidden="true" />}
+      </button>
+    );
+  };
+
   return (
     <>
-      {/* Mobile tab rail */}
-      <div id="company-profile-tabs" className="sticky top-14 z-30 mt-2.5 w-full md:hidden">
-        <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs">
+      {/* Mobile tab grid */}
+      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full md:hidden">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-xs">
           <nav aria-label="Seções do perfil da empresa">
-            <div className="flex min-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {mobileTabs.map((tab, index) => {
-                const isActive = activeTab === tab.id;
-                const isProductsTab = tab.id === 'products';
-                const tabHasMenu = isProductsTab && hasProductMenu;
-
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`company-tab-panel-${tab.id}`}
-                    aria-haspopup={tabHasMenu ? 'dialog' : undefined}
-                    onClick={() => {
-                      handleTabClick(tab.id);
-                      if (tabHasMenu) {
-                        setMobileSheetOpen(true);
-                        trackCompanyProfileCategoryDropdownOpened({
-                          company_id: companyId,
-                          company_name: companyName,
-                        });
-                      }
-                    }}
-                    className={cn(
-                      'relative flex h-[52px] basis-1/4 shrink-0 snap-start flex-col items-center justify-center gap-0.5 px-1 text-center transition-colors',
-                      index > 0 && 'border-l border-slate-100',
-                      isActive
-                        ? 'text-blue-600 font-semibold'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
-                    )}
-                  >
-                    <tab.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="flex max-w-[82px] items-center justify-center gap-0.5 text-[11px] leading-tight">
-                      <span>{tab.label}</span>
-                      {tabHasMenu ? (
-                        <ChevronDown
-                          className={cn(
-                            'h-3 w-3 shrink-0 transition-transform',
-                            mobileSheetOpen && 'rotate-180'
-                          )}
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                    </span>
-                    {isActive ? (
-                      <span
-                        className="absolute bottom-0 h-[2.5px] w-[60%] rounded-t-full bg-blue-600"
-                        aria-hidden="true"
-                      />
-                    ) : null}
-                  </button>
-                );
-              })}
+            <div role="tablist" aria-label="Seções da empresa" className="grid grid-cols-4 gap-1">
+              {primaryMobileTabs.map((tab) => renderMobileTab(tab))}
             </div>
+            {secondaryMobileTabs.length > 0 && (
+              <div className="mt-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(secondaryMobileTabs.length, 3)}, minmax(0, 1fr))` }}>
+                {secondaryMobileTabs.map((tab) => renderMobileTab(tab, true))}
+              </div>
+            )}
           </nav>
         </div>
 
