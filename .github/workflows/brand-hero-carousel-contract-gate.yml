@@ -93,4 +93,6 @@ jobs:
           bundle exec rspec \
             spec/models/company_hero_slide_spec.rb \
             spec/services/brand_hero/eligibility_spec.rb \
-            spec/services/brand_hero/publisher_spec.rb
+            spec/services/brand_hero/publisher_spec.rb \
+            spec/services/brand_hero/plan_catalog_spec.rb \
+            spec/requests/api/v1/company_dashboard_hero_slides_spec.rb
