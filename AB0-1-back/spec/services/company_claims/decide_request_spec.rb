@@ -12,6 +12,8 @@ RSpec.describe CompanyClaims::DecideRequest do
     expect(described_class.call(request: request, admin: admin)).to be true
     expect(request.reload.status).to eq('approved')
     expect(CompanyMember.find_by!(user: user, company: company)).to have_attributes(role: 'owner', status: 'active')
+    expect(user.reload.role).to eq('company')
+    expect(user.approved_by_admin?).to be(true)
     expect(company.reload.verified).to eq(verified_before)
   end
 
