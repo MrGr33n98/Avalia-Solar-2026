@@ -21,6 +21,11 @@ import { sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
 import { cn } from '@/lib/utils';
 import { getCoverageLabel } from '@/lib/company/coverage-label';
 import { COMPARISON_LIMITS } from '@/lib/comparison/config';
+import {
+  availabilityLabel,
+  normalizeCommercialAvailability,
+  presentCompanyWarranty,
+} from '@/lib/comparison/field-normalizers';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { CompanyComparisonProfile } from '@/lib/api';
 
@@ -146,16 +151,14 @@ interface CriterionConfig {
 }
 
 const CRITERIA_ROWS: CriterionConfig[] = [
-  // 1. Avaliações
+  // 1. Avaliações — a single star, never five filled stars for every rating
   {
     id: 'ratings',
     label: 'Avaliações',
     render: (company) => {
       const rating = Number(company.average_rating ?? company.rating_avg ?? company.rating ?? 0);
-      const reviews = Number(
-        company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0
-      );
-      if (rating <= 0 && reviews <= 0) {
+      const reviews = Number(company.rating_count ?? company.reviews_count ?? company.total_reviews ?? 0);
+      if (!Number.isFinite(rating) || !Number.isFinite(reviews) || rating <= 0 || reviews <= 0) {
         return <span className="text-[10px] text-slate-400 font-medium">— Sem avaliações</span>;
       }
       return (
@@ -163,9 +166,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
           <span className="text-[10.5px] font-bold text-slate-900 leading-none">
             {rating.toFixed(1).replace('.', ',')}
           </span>
-          <span className="text-[9px] text-amber-500 tracking-tighter" aria-hidden="true">
-            ★★★★★
-          </span>
+          <span className="text-[11px] text-amber-500" aria-label={`Nota ${rating.toFixed(1)} de 5`}>★</span>
           <span className="text-[9px] text-slate-500 font-medium">({reviews})</span>
         </div>
       );
@@ -290,27 +291,18 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     },
   },
 
-  // 7. Financiamento
+  // 7. Financiamento — exact state, never a positive substring match
   {
     id: 'financing',
     label: 'Financiamento',
     render: (company) => {
-      const val =
-        company.comparison_profile?.financing_availability ||
-        company.financing_availability ||
-        (company.financing_enabled ? 'available' : null);
-      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
-      const lower = val.toLowerCase();
-      if (lower === 'available' || lower === 'true' || lower.includes('dispon')) {
-        return <ComparisonBadge text="Disponível" variant="green" />;
-      }
-      if (lower === 'consult' || lower.includes('consult')) {
-        return <ComparisonBadge text="Consultar" variant="blue" />;
-      }
-      if (lower === 'not_offered' || lower === 'false' || lower.includes('não oferece')) {
-        return <ComparisonBadge text="Não oferece" variant="red" />;
-      }
-      return <ComparisonBadge text={val} variant="blue" />;
+      const raw = company.comparison_profile?.financing_availability ??
+        company.financing_availability ??
+        (company.financing_enabled === true ? 'available' : null);
+      const state = normalizeCommercialAvailability(raw);
+      const variant: BadgeVariant = state === 'offered' ? 'green' :
+        state === 'not_offered' ? 'red' : state === 'consult' ? 'blue' : 'gray';
+      return <ComparisonBadge text={availabilityLabel(state, 'Disponível')} variant={variant} />;
     },
   },
 
@@ -340,20 +332,12 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     id: 'maintenance',
     label: 'Manutenção',
     render: (company) => {
-      const val =
-        company.comparison_profile?.maintenance_availability || company.maintenance_availability;
-      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
-      const lower = val.toLowerCase();
-      if (lower === 'offered' || lower.includes('oferece')) {
-        return <ComparisonBadge text="Oferece" variant="green" />;
-      }
-      if (lower === 'consult' || lower.includes('consult')) {
-        return <ComparisonBadge text="Consultar" variant="blue" />;
-      }
-      if (lower === 'not_offered' || lower.includes('não oferece')) {
-        return <ComparisonBadge text="Não oferece" variant="red" />;
-      }
-      return <ComparisonBadge text={val} variant="blue" />;
+      const raw = company.comparison_profile?.maintenance_availability ??
+        company.maintenance_availability;
+      const state = normalizeCommercialAvailability(raw);
+      const variant: BadgeVariant = state === 'offered' ? 'green' :
+        state === 'not_offered' ? 'red' : state === 'consult' ? 'blue' : 'gray';
+      return <ComparisonBadge text={availabilityLabel(state, 'Oferece')} variant={variant} />;
     },
   },
 
@@ -362,22 +346,13 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     id: 'after_sales',
     label: 'Pós-venda',
     render: (company) => {
-      const val =
-        company.comparison_profile?.after_sales_support ||
-        company.after_sales_support ||
-        (company.post_sales_support ? 'offered' : null);
-      if (!val) return <ComparisonBadge text="Não informado" variant="gray" />;
-      const lower = val.toLowerCase();
-      if (lower === 'offered' || lower.includes('oferece') || lower === 'true') {
-        return <ComparisonBadge text="Oferece suporte" variant="green" />;
-      }
-      if (lower === 'consult' || lower.includes('consult')) {
-        return <ComparisonBadge text="Consultar" variant="blue" />;
-      }
-      if (lower === 'not_offered' || lower.includes('não oferece') || lower === 'false') {
-        return <ComparisonBadge text="Não oferece" variant="red" />;
-      }
-      return <ComparisonBadge text={val} variant="blue" />;
+      const raw = company.comparison_profile?.after_sales_support ??
+        company.after_sales_support ??
+        company.post_sales_support;
+      const state = normalizeCommercialAvailability(raw);
+      const variant: BadgeVariant = state === 'offered' ? 'green' :
+        state === 'not_offered' ? 'red' : state === 'consult' ? 'blue' : 'gray';
+      return <ComparisonBadge text={availabilityLabel(state, 'Oferece suporte')} variant={variant} />;
     },
   },
 
@@ -471,25 +446,25 @@ const CRITERIA_ROWS: CriterionConfig[] = [
     },
   },
 
-  // 14. Garantia
+  // 14. Garantia — self-declaration is NOT platform verification
   {
     id: 'warranty',
     label: 'Garantia',
     render: (company) => {
       const profile = company.comparison_profile;
-      const confirmed =
-        profile?.warranty_confirmed === true || company.warranty_confirmed === true;
-      const years =
-        profile?.warranty_years ??
+      const confirmed = profile?.warranty_confirmed === true || company.warranty_confirmed === true;
+      const years = profile?.warranty_years ??
         company.warranty_years ??
         (confirmed ? company.installation_warranty_years : null);
-      if (!years || years <= 0) {
-        return <ComparisonBadge text="Consultar" variant="blue" />;
-      }
+      const warranty = presentCompanyWarranty(years, confirmed);
+      if (!warranty.value) return <ComparisonBadge text="Não informado" variant="gray" />;
       return (
-        <span className="text-[10.5px] font-bold text-slate-900 leading-tight">
-          {years} {years === 1 ? 'ano' : 'anos'}
-        </span>
+        <div className="flex flex-col items-center text-center leading-tight gap-0.5">
+          <span className="text-[10.5px] font-bold text-slate-900">{warranty.value}</span>
+          <span className="text-[9px] text-slate-500">
+            {warranty.provenance === 'company_declared' ? 'Declarada pela empresa' : 'Não confirmada'}
+          </span>
+        </div>
       );
     },
   },
