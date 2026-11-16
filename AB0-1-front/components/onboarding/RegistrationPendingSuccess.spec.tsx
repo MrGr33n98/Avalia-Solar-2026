@@ -24,7 +24,7 @@ describe('RegistrationPendingSuccess', () => {
   });
 
   it('accepts only the official secure booking origin and falls back on invalid configuration', () => {
-    const defaultUrl = getOnboardingBookingUrl(undefined);
+    const defaultUrl = getOnboardingBookingUrl('');
     expect(defaultUrl).toContain('https://avaliasolar.zohobookings.com/');
     expect(getOnboardingBookingUrl('http://avaliasolar.zohobookings.com/unsafe')).toBe(defaultUrl);
     expect(getOnboardingBookingUrl('https://avaliasolar.zohobookings.com.evil.example/')).toBe(defaultUrl);
