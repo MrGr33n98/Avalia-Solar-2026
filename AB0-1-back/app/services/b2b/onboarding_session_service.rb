@@ -732,7 +732,11 @@ module B2b
       ).to_s.strip
       # Compare the parsed hostname instead of a string prefix: URLs with
       # spoofed suffixes, credentials or a non-HTTPS scheme must not be sent.
-      booking_uri = URI.parse(onboarding_booking_url)
+      booking_uri = begin
+        URI.parse(onboarding_booking_url)
+      rescue URI::InvalidURIError
+        nil
+      end
       if booking_uri.is_a?(URI::HTTPS) &&
          booking_uri.host == 'avaliasolar.zohobookings.com' &&
          booking_uri.userinfo.nil?
