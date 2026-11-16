@@ -32,7 +32,7 @@ module Companies
         segment: company.segment,
         city: company.city,
         state: company.state,
-        logo_url: company.logo_url,
+        logo_url: CompanySerializer.new(company).logo_url,
         rating_avg: company.rating_avg,
         rating_count: company.rating_count,
         verified: company.verified?,
