@@ -99,8 +99,15 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     jest.clearAllMocks();
   });
 
+  const expandCriteria = () => {
+    const controls = screen.getAllByRole('button', { name: /ver mais 7 critérios/i });
+    fireEvent.click(controls[0]);
+  };
+
+
   test('renderiza os 14 critérios na ordem exata e a linha final de orçamento (15 linhas totais)', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
+    expandCriteria();
 
     // 14 critérios canônicos + 1 linha CTA
     const expectedLabels = [
@@ -129,6 +136,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
 
   test('renderiza badges com dados mapeados corretamente', () => {
     render(<CompanyComparisonModal {...defaultProps} />);
+    expandCriteria();
 
     // Prazo do orçamento da empresa 1: "Até 24h"
     expect(screen.getAllByText('Até 24h').length).toBeGreaterThan(0);
@@ -202,6 +210,8 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
       />
     );
 
+    expandCriteria();
+
     // Empresa 1 tem 3 serviços: exibe preview + botão com "+1"
     const plus1Button = screen.getAllByRole('button', {
       name: /ver todos os 3 serviços/i,
@@ -249,6 +259,8 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
         companies={[emptyCompany, companyWithoutPaidPlan]}
       />
     );
+
+    expandCriteria();
 
     // Deve exibir múltiplos badges/textos "Não informado"
     const notInformedElements = screen.getAllByText('Não informado');
@@ -313,6 +325,7 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
       },
     };
     render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany, { ...negativeCompany, id: 404, slug: 'segunda-negativa' }]} />);
+    expandCriteria();
     expect(screen.getAllByText('Não oferece').length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText('Oferece')).not.toBeInTheDocument();
     expect(screen.queryByText('Oferece suporte')).not.toBeInTheDocument();
@@ -367,6 +380,23 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     fireEvent.click(screen.getByRole('button', { name: /minimizar comparação/i }));
     expect(defaultProps.onMinimize).toHaveBeenCalledTimes(1);
     expect(defaultProps.onClose).not.toHaveBeenCalled();
+  });
+
+  test('resumo mostra critérios essenciais e permite expandir e recolher os demais', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+    expect(screen.getAllByText('Avaliações').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Serviços oferecidos')).not.toBeInTheDocument();
+
+    expandCriteria();
+    expect(screen.getAllByText('Serviços oferecidos').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: /mostrar menos critérios/i })[0]);
+    expect(screen.queryByText('Serviços oferecidos')).not.toBeInTheDocument();
+  });
+
+  test('duas empresas no desktop não reservam uma terceira coluna vazia', () => {
+    render(<CompanyComparisonModal {...defaultProps} />);
+    expect(screen.getByTestId('comparison-desktop-header'))
+      .toHaveClass('grid-cols-[150px_repeat(2,minmax(0,1fr))]');
   });
 
 });
