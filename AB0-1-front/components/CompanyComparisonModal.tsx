@@ -28,6 +28,7 @@ import {
 } from '@/lib/comparison/field-normalizers';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
 import type { CompanyComparisonProfile } from '@/lib/api';
+import ComparisonSingleSelection from '@/components/compare/ComparisonSingleSelection';
 
 export interface ComparisonCompany {
   id: number;
@@ -83,6 +84,7 @@ export interface ComparisonCompany {
 interface CompanyComparisonModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onMinimize?: () => void;
   companies: ComparisonCompany[];
   onRemoveCompany: (id: number) => void;
   onClearAll: () => void;
@@ -499,6 +501,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
 export function CompanyComparisonModal({
   isOpen,
   onClose,
+  onMinimize,
   companies,
   onRemoveCompany,
   onClearAll,
@@ -540,9 +543,6 @@ export function CompanyComparisonModal({
         >
           {/* Cabeçalho do Modal: Azul Royal Degradê */}
           <DialogHeader className="space-y-0 border-b border-blue-900/10 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 px-3 py-1.5 text-white">
-            {/* Drag handle sutil */}
-            <div className="w-8 h-1 rounded-full bg-white/35 mx-auto mb-1" aria-hidden="true" />
-
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-left min-w-0">
                 <span
@@ -552,13 +552,16 @@ export function CompanyComparisonModal({
                   ⇄
                 </span>
                 <div className="min-w-0">
-                  <DialogTitle className="text-[13.5px] font-bold text-white leading-tight">
+                  <DialogTitle className="text-base font-semibold text-white leading-tight">
                     Comparar empresas
                   </DialogTitle>
-                  <DialogDescription className="mt-0.5 text-[10px] text-blue-100/90 leading-tight">
+                  <DialogDescription aria-live="polite" className="mt-0.5 text-xs text-blue-100/90 leading-tight">
                     <span className="md:hidden">
                       {Math.min(companies.length, COMPARISON_LIMITS.mobile)} de{' '}
                       {COMPARISON_LIMITS.mobile} empresas no celular
+                      {companies.length > COMPARISON_LIMITS.mobile
+                        ? ` · ${companies.length - COMPARISON_LIMITS.mobile} outra salva`
+                        : ''}
                     </span>
                     <span className="hidden md:inline">
                       {Math.min(companies.length, COMPARISON_LIMITS.desktop)} de{' '}
@@ -584,7 +587,7 @@ export function CompanyComparisonModal({
                 {/* Botão Minimizar (−) */}
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => (onMinimize ? onMinimize() : onClose())}
                   aria-label="Minimizar comparação"
                   className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
                   title="Minimizar"
@@ -610,6 +613,18 @@ export function CompanyComparisonModal({
             </div>
           </DialogHeader>
 
+          {companies.length === 1 ? (
+            <ComparisonSingleSelection
+              company={companies[0]}
+              onAddCompany={() => {
+                onClose();
+                router.push('/search?tab=companies');
+              }}
+              onRemoveCompany={onRemoveCompany}
+              onViewProfile={onClose}
+            />
+          ) : (
+            <>
           {/* ═══════════════════════════════════════════════════════════════════════
               CORPO DO MODAL — MOBILE (Grid de 3 Colunas: 1 Rótulo + 2 Empresas)
               ═══════════════════════════════════════════════════════════════════════ */}
@@ -861,9 +876,13 @@ export function CompanyComparisonModal({
             </div>
           </div>
 
+            </>
+          )}
+
           {/* ═══════════════════════════════════════════════════════════════════════
               RODAPÉ DO MODAL (Mobile e Desktop)
               ═══════════════════════════════════════════════════════════════════════ */}
+          {companies.length >= 2 && (
           <div className="bg-white border-t border-slate-100 px-2 py-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-1.5">
             {/* Botão Adicionar Empresa — Versão Mobile (limite = 2) */}
             <button
@@ -912,6 +931,8 @@ export function CompanyComparisonModal({
               <span aria-hidden="true">→</span>
             </button>
           </div>
+
+          )}
 
           {/* ═══════════════════════════════════════════════════════════════════════
               OVERLAY DE DISCLOSURE DE SERVIÇOS (Acesso progressivo sem scroll do modal)
