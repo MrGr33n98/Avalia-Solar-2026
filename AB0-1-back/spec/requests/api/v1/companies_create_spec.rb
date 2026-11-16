@@ -95,7 +95,22 @@ RSpec.describe 'Companies create API', type: :request do
     expect(company.company_members).to be_empty
     expect(applicant.status).to eq('pending')
     expect(applicant.confirmed?).to be(false)
-    expect(company.company_access_requests.find_by!(user: applicant).status).to eq('pending')
+    claim = company.company_access_requests.find_by!(user: applicant)
+    expect(claim.status).to eq('pending')
+
+    CompanyClaims::DecideRequest.call(request: claim, admin: create(:admin_user))
+    expect(claim.reload.status).to eq('approved')
+    expect(company.reload.status).to eq('pending')
+    expect(company.company_members.active).not_to exist
+    expect(applicant.reload.status).to eq('pending')
+
+    applicant.confirm
+
+    expect(applicant.reload).to be_confirmed
+    expect(applicant.status).to eq('active')
+    expect(applicant.approved_by_admin?).to be(true)
+    expect(company.reload.status).to eq('active')
+    expect(company.company_members.active.where(user: applicant, role: :owner)).to exist
   end
 
   it 'does not create a duplicate company for an existing CNPJ' do
