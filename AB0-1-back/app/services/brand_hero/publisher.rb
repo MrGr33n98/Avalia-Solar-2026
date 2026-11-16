@@ -30,7 +30,7 @@ module BrandHero
         slide.update!(
           status: 'published', reviewed_by_id: reviewer_id,
           approved_at: Time.current, published_at: Time.current,
-          rejected_reason: nil
+          rejection_reason: nil
         )
       end
       slide
