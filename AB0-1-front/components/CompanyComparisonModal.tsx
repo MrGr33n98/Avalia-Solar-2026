@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { X, Building2, Plus, FileText } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { canUsePaidConversion, type FeatureAccessMap } from '@/lib/feature-access';
@@ -485,7 +484,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
           type="button"
           onClick={() => onQuote(company.id)}
           aria-label={`Solicitar orçamento para ${company.name}`}
-          className="w-full max-w-[124px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs transition-colors py-1 px-1.5 flex items-center justify-center gap-1 text-[10px] font-bold leading-tight !min-h-[28px] !min-w-0"
+          className="w-full max-w-[124px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs transition-colors py-1 px-1.5 flex items-center justify-center gap-1 text-[10px] font-bold leading-tight !min-h-[36px] !min-w-0"
         >
           <FileText className="h-3 w-3 shrink-0" aria-hidden="true" />
           <span className="flex flex-col items-center justify-center leading-[1.05]">
@@ -519,6 +518,13 @@ export function CompanyComparisonModal({
     ? CRITERIA_ROWS
     : CRITERIA_ROWS.filter((row) => CORE_CRITERION_IDS.has(row.id));
   const extraCriteriaCount = CRITERIA_ROWS.filter((row) => !CORE_CRITERION_IDS.has(row.id)).length;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAllCriteria(false);
+      setServicesModalCompany(null);
+    }
+  }, [isOpen]);
 
   const handleQuoteClick = (companyId: number) => {
     const company = companies.find((item) => item.id === companyId);
@@ -705,7 +711,7 @@ export function CompanyComparisonModal({
                       >
                         <span className="line-clamp-2">{company.name}</span>
                       </Link>
-                      <span className="block text-[9px] text-slate-500 leading-none truncate mt-0.5">
+                      <span className="block text-[11px] text-slate-500 leading-tight truncate mt-0.5">
                         📍 {[company.city, company.state].filter(Boolean).join(', ') || 'Localização'}
                       </span>
                     </div>
@@ -713,7 +719,7 @@ export function CompanyComparisonModal({
                       type="button"
                       onClick={() => onRemoveCompany(company.id)}
                       aria-label={`Remover ${company.name} da comparação`}
-                      className="absolute top-0.5 right-0.5 p-0.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="absolute top-0 right-0 flex h-8 w-8 items-start justify-end rounded-lg p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       title="Remover"
                     >
                       <X className="h-2.5 w-2.5" />
@@ -779,7 +785,8 @@ export function CompanyComparisonModal({
           <div className="hidden md:block min-h-0 overflow-y-auto p-2.5">
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
               {/* Header das Empresas Desktop */}
-              <div className={cn(
+              <div data-testid="comparison-desktop-header"
+                className={cn(
                   'grid divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200',
                   desktopCompanies.length === 2
                     ? 'grid-cols-[150px_repeat(2,minmax(0,1fr))]'
@@ -850,7 +857,7 @@ export function CompanyComparisonModal({
                         type="button"
                         onClick={() => onRemoveCompany(company.id)}
                         aria-label={`Remover ${company.name} da comparação`}
-                        className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         title="Remover"
                       >
                         <X className="h-3 w-3" />
