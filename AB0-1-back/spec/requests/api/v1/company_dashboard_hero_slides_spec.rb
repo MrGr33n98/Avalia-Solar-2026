@@ -28,6 +28,35 @@ RSpec.describe 'CompanyDashboard hero carousel API', type: :request do
     expect(JSON.parse(response.body)).to include('enabled' => false, 'limit' => 0, 'slides' => [])
   end
 
+  it 'lets a Pro company manage drafts before the public rollout is enabled' do
+    paid_plan = create(
+      :plan, name: 'Pro Carousel API Spec', price: 1500,
+      features_json: PlanFeatureCatalog.defaults_for_tier('pro').merge('brand_hero_slides_limit' => 2)
+    )
+    company.update!(plan: paid_plan, plan_status: 'active')
+
+    get '/api/v1/company_dashboard/hero_slides',
+        params: { company_id: company.id }, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body)).to include(
+      'enabled' => true,
+      'public_enabled' => false,
+      'availability_reason' => 'rollout_disabled',
+      'limit' => 2
+    )
+
+    post '/api/v1/company_dashboard/hero_slides',
+         params: { company_id: company.id, slot: 3 }, headers: headers
+    expect(response).to have_http_status(:unprocessable_entity)
+
+    # Slot 1 passes the plan gate; an actual image is still mandatory.
+    post '/api/v1/company_dashboard/hero_slides',
+         params: { company_id: company.id, slot: 1 }, headers: headers
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body)['error']).to eq('invalid_image')
+  end
+
   it 'does not authorize uploading via a disabled feature' do
     post '/api/v1/company_dashboard/hero_slides',
          params: { company_id: company.id, slot: 1 },
