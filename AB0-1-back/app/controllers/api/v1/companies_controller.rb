@@ -99,6 +99,28 @@ module Api
         render json: companies_data
       end
 
+      # GET /api/v1/companies/compare?ids=101,202
+      # Public, current snapshots for at most 3 companies. Do not accept
+      # browser-supplied paid entitlements or return private contact details.
+      def comparison_snapshots
+        raw = params[:ids]
+        unless raw.is_a?(String) && raw.bytesize.between?(1, 64)
+          return render json: { error: 'ids must be a comma-separated list of 1 to 3 company IDs' },
+                        status: :unprocessable_entity
+        end
+
+        tokens = raw.split(',', -1).map(&:strip)
+        unless tokens.length.between?(1, ::Companies::ComparisonSnapshotService::MAX_COMPANIES) &&
+               tokens.all? { |token| token.match?(/\A[1-9]\d{0,17}\z/) }
+          return render json: { error: 'ids must contain 1 to 3 valid positive company IDs' },
+                        status: :unprocessable_entity
+        end
+
+        requested_ids = tokens.map(&:to_i).uniq
+        response.headers['Cache-Control'] = 'private, no-store'
+        render json: ::Companies::ComparisonSnapshotService.call(ids: requested_ids), status: :ok
+      end
+
       # GET /api/v1/companies/:id
       def show
         return render json: { error: 'Company not found' }, status: :not_found unless @company

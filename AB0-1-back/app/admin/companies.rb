@@ -88,6 +88,9 @@ ActiveAdmin.register Company do
       :priority_score, :sponsored, :segment, :primary_category_id,
       :cnpj, :email, :whatsapp,
       :working_hours, :payment_methods,
+      :quote_turnaround, :technical_visit, :financing_availability,
+      :installation_terms, :maintenance_availability, :after_sales_support,
+      :installation_team, :system_monitoring, :warranty_years, :warranty_confirmed,
       :certifications, :status, :founded_year, :employees_count,
       :awards, :partner_brands, :coverage_states, :coverage_cities,
       :latitude, :longitude, :minimum_ticket, :maximum_ticket,
@@ -309,6 +312,45 @@ ActiveAdmin.register Company do
               f.input :maximum_ticket, as: :number, label: 'Ticket Máximo (R$)', input_html: { style: 'width: 80%' }
             end
           end
+        end
+      end
+    end
+
+    f.inputs 'Perfil no Comparador (mesmo contrato do Dashboard)' do
+      para 'Condições comerciais autodeclaradas. Campos em branco serão mostrados como Não informado. Verificação de documentos e avaliações não podem ser editadas aqui.'
+      columns do
+        column do
+          f.input :quote_turnaround, as: :select, include_blank: 'Não informado',
+                  collection: [['Até 24 horas', 'within_24h'], ['Até 3 dias', 'within_3_days'], ['Sob consulta', 'consult']],
+                  label: 'Prazo do orçamento'
+          f.input :technical_visit, as: :select, include_blank: 'Não informado',
+                  collection: [['Gratuita', 'free'], ['Paga', 'paid'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Visita técnica'
+          f.input :financing_availability, as: :select, include_blank: 'Não informado',
+                  collection: [['Disponível', 'available'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Financiamento'
+          f.input :installation_terms, as: :select, include_blank: 'Não informado',
+                  collection: [['Inclusa no pacote', 'included'], ['Contratada à parte', 'separately_contracted'], ['Não oferece', 'not_offered']],
+                  label: 'Instalação'
+          f.input :maintenance_availability, as: :select, include_blank: 'Não informado',
+                  collection: [['Oferece', 'offered'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Manutenção'
+        end
+        column do
+          f.input :after_sales_support, as: :select, include_blank: 'Não informado',
+                  collection: [['Oferece suporte', 'offered'], ['Consultar', 'consult'], ['Não oferece', 'not_offered']],
+                  label: 'Pós-venda'
+          f.input :installation_team, as: :select, include_blank: 'Não informado',
+                  collection: [['Própria', 'in_house'], ['Terceirizada', 'outsourced'], ['Mista', 'mixed'], ['Não se aplica', 'not_applicable']],
+                  label: 'Equipe instaladora'
+          f.input :system_monitoring, as: :select, include_blank: 'Não informado',
+                  collection: [['Aplicativo', 'app'], ['Portal web', 'web_portal'], ['Manual', 'manual'], ['Não oferece', 'not_offered']],
+                  label: 'Acompanhamento do sistema'
+          f.input :warranty_years, as: :number, label: 'Anos de garantia declarados',
+                  input_html: { min: 1, max: 30 }
+          f.input :warranty_confirmed, as: :boolean,
+                  label: 'Empresa confirma a declaração da garantia',
+                  hint: 'Esta confirmação NÃO equivale à verificação documental pela Avalia Solar.'
         end
       end
     end
@@ -843,6 +885,33 @@ ActiveAdmin.register Company do
         column { para "Leads últimos 30 dias: #{overview[:recent_leads]}" }
         column { para "Campanhas ativas: #{overview[:active_campaigns]}" }
         column { para "Avaliação média: #{overview[:average_rating]}" }
+      end
+    end
+
+    panel 'Perfil público no Comparador' do
+      para 'Dados comerciais da empresa, não verificados pela plataforma salvo indicação específica.'
+      attributes_table_for resource do
+        [
+          ['Prazo do orçamento', :quote_turnaround],
+          ['Visita técnica', :technical_visit],
+          ['Financiamento', :financing_availability],
+          ['Instalação', :installation_terms],
+          ['Manutenção', :maintenance_availability],
+          ['Pós-venda', :after_sales_support],
+          ['Equipe', :installation_team],
+          ['Acompanhamento', :system_monitoring]
+        ].each do |label, field|
+          row(label) { |company| company.comparison_profile[field].presence || 'Não informado' }
+        end
+        row('Garantia') do |company|
+          profile = company.comparison_profile
+          years = profile[:warranty_years]
+          if years.present?
+            "#{years} ano(s) — #{profile[:warranty_confirmed] ? 'Confirmada pela empresa' : 'Não confirmada'}"
+          else
+            'Não informado'
+          end
+        end
       end
     end
 
