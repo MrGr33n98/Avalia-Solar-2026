@@ -50,26 +50,11 @@ export function SearchHero({
 
   return (
     <section className="relative isolate w-full overflow-hidden border-b border-slate-200/80 bg-[#F8FAFC]">
-      {/* Background illustration asset - positioned on the right */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 right-0 top-0 hidden h-full w-[40%] select-none md:block lg:w-[45%] xl:w-[47%]"
-      >
-        <div className="relative h-full w-full">
-          <Image
-            src="/images/search-avalia-solar.png"
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 1440px) 580px, (min-width: 1024px) 45vw, 40vw"
-            className="object-contain object-right-bottom"
-          />
-        </div>
-      </div>
-
+      {/* One bounded desktop grid: illustration and search fields share the same alignment. */}
       {/* Hero Content Container */}
-      <div className="relative z-10 mx-auto flex w-full max-w-[1240px] flex-col justify-center px-4 py-5 sm:px-6 sm:py-6 lg:min-h-[240px] lg:px-8 lg:py-5">
-        <div className="w-full max-w-full lg:max-w-[620px] xl:max-w-[660px]">
+      <div data-testid="search-hero-layout"
+        className="relative z-10 mx-auto grid w-full max-w-[1240px] grid-cols-1 items-center gap-0 px-4 py-5 sm:px-6 sm:py-6 lg:min-h-[248px] lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)] lg:gap-8 lg:px-8 lg:py-5 xl:gap-12">
+        <div className="min-w-0 w-full max-w-full lg:max-w-[660px]">
           {/* Eyebrow */}
           <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600 sm:text-xs">
             Busca no Avalia Solar
@@ -167,6 +152,21 @@ export function SearchHero({
               })}
             </div>
           ) : null}
+        </div>
+
+        <div
+          data-testid="search-hero-artwork"
+          aria-hidden="true"
+          className="pointer-events-none relative hidden h-[215px] min-w-0 w-full select-none lg:block xl:h-[235px]"
+        >
+          <Image
+            src="/images/search-avalia-solar.png"
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1440px) 460px, (min-width: 1024px) 35vw, 0px"
+            className="object-contain object-right-center"
+          />
         </div>
       </div>
     </section>
