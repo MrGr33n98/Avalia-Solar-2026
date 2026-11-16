@@ -51,16 +51,16 @@ export function useComparison() {
 
     const hydrate = async () => {
       setIsLoading(true);
-      const storedIds = parseStoredComparisonIds(localStorage.getItem(STORAGE_KEY));
-      if (storedIds.length === 0) {
-        if (!active) return;
-        setComparisonList([]);
-        setHydrationError(false);
-        setIsLoading(false);
-        return;
-      }
 
       try {
+        const storedIds = parseStoredComparisonIds(localStorage.getItem(STORAGE_KEY));
+        if (storedIds.length === 0) {
+          if (!active) return;
+          setComparisonList([]);
+          setHydrationError(false);
+          return;
+        }
+
         const snapshot = await companiesApi.getComparisonSnapshots(storedIds);
         if (!active) return;
         if (snapshot.schema_version !== 1 || !Array.isArray(snapshot.companies)) {
