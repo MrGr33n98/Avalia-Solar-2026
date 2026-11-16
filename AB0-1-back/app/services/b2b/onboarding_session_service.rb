@@ -730,7 +730,12 @@ module B2b
         'B2B_ONBOARDING_BOOKING_URL',
         'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL'
       ).to_s.strip
-      if onboarding_booking_url.start_with?('https://avaliasolar.zohobookings.com/')
+      # Compare the parsed hostname instead of a string prefix: URLs with
+      # spoofed suffixes, credentials or a non-HTTPS scheme must not be sent.
+      booking_uri = URI.parse(onboarding_booking_url)
+      if booking_uri.is_a?(URI::HTTPS) &&
+         booking_uri.host == 'avaliasolar.zohobookings.com' &&
+         booking_uri.userinfo.nil?
         booking_msg = "*Conversa rápida de 15 minutos com o fundador*\n\n" \
                       "Sou o Felipe, fundador do Avalia Solar. Podemos conversar por 15 minutos " \
                       "sobre as categorias, serviços e o perfil da sua empresa.\n\n" \
