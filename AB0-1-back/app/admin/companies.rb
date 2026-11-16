@@ -500,10 +500,12 @@ ActiveAdmin.register Company do
 
         para "Plano: #{f.object.plan&.name || 'Free'} | Limite contratado: #{limit} de 3 imagens.",
              class: 'inline-hints'
-        para published_enabled ?
-          'Exibição pública habilitada (imagens ainda precisam ser aprovadas).' :
-          'Publicação pública indisponível. O plano pago pode preparar imagens antes da ativação global.',
+        para(
+          published_enabled ?
+            'Exibição pública habilitada (imagens ainda precisam ser aprovadas).' :
+            'Publicação pública indisponível. Empresas pagantes podem preparar imagens antes da ativação global.',
           class: 'inline-hints'
+        )
 
         cards = (1..3).map do |slot|
           published = slides.find { |slide| slide.slot == slot && slide.status == 'published' }
