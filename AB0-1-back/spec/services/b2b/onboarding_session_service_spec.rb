@@ -156,7 +156,7 @@ RSpec.describe B2b::OnboardingSessionService do
         expect(gateway).to receive(:send_message).with(session, /Cadastro recebido para análise/)
         expect(gateway).to receive(:send_message).with(
           session,
-          /Conversa rápida de 15 minutos com o fundador.*\\*Agendar conversa:\\*\\s+https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
+          /Conversa rápida de 15 minutos com o fundador.*\*Agendar conversa:\*\s+https:\/\/avaliasolar\.zohobookings\.com\/.*A conversa é opcional/m
         )
         described_class.process_message!(session, { 'body' => 'pular' })
 
