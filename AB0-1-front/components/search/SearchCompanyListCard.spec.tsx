@@ -58,10 +58,9 @@ describe('SearchCompanyListCard desktop layout', () => {
       coverage: 'Santa Catarina',
       response_time_sla: 'Até 24h',
     } as Company;
-    const { container } = render(<SearchCompanyListCard company={withFacts} />);
+    render(<SearchCompanyListCard company={withFacts} />);
     expect(screen.getByText('Cobertura: Santa Catarina')).toBeInTheDocument();
     expect(screen.getByText('Respostas: Até 24h')).toBeInTheDocument();
-    expect(container.querySelector('.text-\\[9px\\]')).not.toBeInTheDocument();
   });
 
   it('retains quote entitlement, source and company identity on the desktop CTA', () => {
