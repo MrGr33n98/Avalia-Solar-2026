@@ -1,5 +1,11 @@
+import type { Company } from '@/lib/api';
+import {
+  resolveCompanyFallbackBanner,
+} from '@/utils/company-banner';
+
 interface CompanyBannerPlaceholderProps {
   alt: string;
+  company?: Partial<Company> | null;
   className?: string;
   priority?: boolean;
 }
@@ -10,15 +16,18 @@ interface CompanyBannerPlaceholderProps {
  */
 export default function CompanyBannerPlaceholder({
   alt,
+  company,
   className = '',
   priority = false,
 }: CompanyBannerPlaceholderProps) {
+  const fallback = resolveCompanyFallbackBanner(company);
+
   return (
     <picture className="block w-full">
       <img
-        src="/assets/avalia-solar-banner-v3.webp"
-        width={1024}
-        height={191}
+        src={fallback.src}
+        width={fallback.width}
+        height={fallback.height}
         alt={alt}
         className={`block h-auto w-full ${className}`}
         loading={priority ? 'eager' : 'lazy'}

@@ -218,7 +218,7 @@ export default function CompanyHero({
               onError={() => setCarouselError(true)}
             />
           ) : bannerState.kind === 'free-plan-placeholder' ? (
-            <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
+            <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" company={company} priority />
           ) : bannerState.kind === 'company-banner' ? (
             <CompanyFluidBanner
               src={bannerState.src}
@@ -228,7 +228,7 @@ export default function CompanyHero({
               onError={() => setBannerError(true)}
             />
           ) : (
-            <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" priority />
+            <CompanyBannerPlaceholder alt="Banner ilustrativo Avalia Solar" company={company} priority />
           )}
 
           {showTechnicalPlaceholder && (
