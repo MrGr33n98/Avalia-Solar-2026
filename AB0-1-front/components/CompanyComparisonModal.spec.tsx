@@ -301,4 +301,41 @@ describe('CompanyComparisonModal — Contrato Unificado de 14 Critérios + Linha
     expect(mobileAddBtn).toBeInTheDocument();
     expect(mobileAddBtn).toBeDisabled();
   });
+  test('não interpreta respostas negativas como oferta de manutenção, suporte ou financiamento', () => {
+    const negativeCompany: ComparisonCompany = {
+      ...companyWithoutPaidPlan,
+      comparison_profile: {
+        ...companyWithoutPaidPlan.comparison_profile,
+        financing_availability: 'não disponível',
+        maintenance_availability: 'não oferece',
+        after_sales_support: 'não oferece suporte',
+      },
+    };
+    render(<CompanyComparisonModal {...defaultProps} companies={[negativeCompany]} />);
+    expect(screen.getAllByText('Não oferece').length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByText('Oferece')).not.toBeInTheDocument();
+    expect(screen.queryByText('Oferece suporte')).not.toBeInTheDocument();
+    expect(screen.queryByText('Disponível')).not.toBeInTheDocument();
+  });
+
+  test('separa garantia autodeclarada de garantia sem confirmação', () => {
+    const declared: ComparisonCompany = {
+      ...companyWithPaidPlan,
+      comparison_profile: {
+        ...companyWithPaidPlan.comparison_profile,
+        warranty_years: 5,
+        warranty_confirmed: false,
+      },
+    };
+    render(<CompanyComparisonModal {...defaultProps} companies={[declared]} />);
+    expect(screen.getAllByText('Não confirmada').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Declarada pela empresa')).not.toBeInTheDocument();
+  });
+
+  test('não apresenta cinco estrelas preenchidas para notas inferiores a cinco', () => {
+    render(<CompanyComparisonModal {...defaultProps} companies={[companyWithPaidPlan]} />);
+    expect(screen.getAllByLabelText('Nota 4.8 de 5').length).toBeGreaterThan(0);
+    expect(screen.queryByText('★★★★★')).not.toBeInTheDocument();
+  });
+
 });
