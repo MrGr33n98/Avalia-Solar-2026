@@ -28,6 +28,20 @@ RSpec.describe BrandHero::Publisher do
     expect(company.company_hero_slides.where(status: 'published', slot: 1).count).to eq(1)
   end
 
+  it 'keeps reordered display positions while replacing a published slide' do
+    old = slide(slot: 1, revision: 1, state: 'published')
+    second = slide(slot: 2, revision: 1, state: 'published')
+    old.update!(display_position: 2)
+    second.update!(display_position: 1)
+
+    candidate = slide(slot: 1, revision: 2, state: 'pending_review')
+    allow(candidate).to receive(:ready_for_publication?).and_return(true)
+    described_class.call(slide: candidate)
+
+    expect(candidate.reload.display_position).to eq(2)
+    expect(company.company_hero_slides.published.pluck(:slot)).to eq([2, 1])
+  end
+
   it 'refuses a publication that changes the intrinsic hero height' do
     slide(slot: 1, revision: 1, state: 'published')
     other = slide(slot: 2, revision: 1, state: 'pending_review', width: 1920, height: 800)
