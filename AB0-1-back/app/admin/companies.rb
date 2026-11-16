@@ -1373,33 +1373,54 @@ ActiveAdmin.register Company do
   scope('Pendentes') { |scope| scope.where(status: 'pending') }
 
   member_action :approve, method: :put do
-    resource.transaction do
-      raise ActiveRecord::RecordInvalid, resource unless resource.approve!(current_admin_user)
-
-      resource.update!(status: 'active')
-
-      # FIX #5: Unificar aprovação de empresa e usuário criador no ActiveAdmin
-      owner_member = resource.company_members.find_by(role: 'owner')
-      if owner_member&.user
-        user = owner_member.user
-        user.update!(
-          status: 'active',
-          approved_by_admin: true
-        )
-        # Se o usuário ainda não foi confirmado, envia as instruções agora que foi aprovado
-        user.send_confirmation_instructions unless user.confirmed?
+    # Public WhatsApp and web applicants follow the same reviewed claim flow.
+    # Approval alone never activates an owner whose mailbox is unconfirmed.
+    pending_claim = resource.company_access_requests.pending.order(:requested_at, :id).first
+    if pending_claim
+      CompanyClaims::DecideRequest.call(
+        request: pending_claim,
+        admin: current_admin_user,
+        note: 'Cadastro da empresa analisado pelo ActiveAdmin'
+      )
+      resource.reload
+      if resource.active_status?
+        begin
+          CompanyMailer.registration_approved(resource).deliver_later
+        rescue StandardError => e
+          Rails.logger.warn("[Admin::Companies] approval email failed company_id=#{resource.id} error=#{e.class}")
+        end
+        redirect_to resource_path(resource), notice: 'Empresa e titularidade aprovadas. Acesso liberado após e-mail confirmado.'
+      else
+        redirect_to resource_path(resource), notice: 'Solicitação analisada. Aguardando a confirmação do e-mail do responsável.'
       end
-    end
+    else
+      # Preserve legacy/manual company approval, but fail closed if an owner
+      # is not yet verified. Pending members are activated only after proof.
+      owner_member = resource.company_members.find_by(role: :owner)
+      if owner_member&.user && !owner_member.user.confirmed?
+        redirect_to resource_path(resource), alert: 'Confirme o e-mail do proprietário antes de ativar a empresa.' and return
+      end
 
-    begin
-      CompanyMailer.registration_approved(resource).deliver_later
-    rescue StandardError => e
-      Rails.logger.error("[Admin::Companies] registration_approved failed company_id=#{resource.id} error=#{e.class} #{e.message}")
-      flash[:alert] = 'Empresa aprovada, mas nao foi possivel enfileirar o email.'
+      resource.transaction do
+        raise ActiveRecord::RecordInvalid, resource unless resource.approve!(current_admin_user)
+        resource.update!(status: 'active')
+        if owner_member&.user
+          owner_member.user.update!(status: 'active', approved_by_admin: true)
+          owner_member.update!(status: :active) if owner_member.pending?
+        end
+      end
+
+      begin
+        CompanyMailer.registration_approved(resource).deliver_later
+      rescue StandardError => e
+        Rails.logger.warn("[Admin::Companies] approval email failed company_id=#{resource.id} error=#{e.class}")
+      end
+      redirect_to resource_path(resource), notice: 'Empresa aprovada com sucesso.'
     end
-    redirect_to resource_path(resource), notice: 'Empresa aprovada com sucesso! E-mail enviado.'
   rescue ActiveRecord::RecordInvalid => e
     redirect_to resource_path(resource), alert: "Não foi possível aprovar: #{e.record.errors.full_messages.join(', ')}"
+  rescue Pundit::NotAuthorizedError
+    redirect_to resource_path(resource), alert: 'Não autorizado a aprovar esta titularidade.'
   end
 
   member_action :reject, method: :put do
@@ -1591,6 +1612,13 @@ ActiveAdmin.register Company do
     errors = []
 
     batch_action_collection.where(id: ids).find_each do |company|
+      owner_member = company.company_members.find_by(role: :owner)
+      if company.company_access_requests.pending.exists? ||
+         (owner_member && (!owner_member.active? || !owner_member.user&.confirmed?))
+        errors << "#{company.id}: existe titularidade pendente de aprovação e/ou e-mail."
+        next
+      end
+
       company.update!(status: 'active')
       activated += 1
     rescue ActiveRecord::RecordInvalid => e
