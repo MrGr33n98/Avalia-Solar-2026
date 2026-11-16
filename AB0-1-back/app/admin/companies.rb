@@ -1375,7 +1375,12 @@ ActiveAdmin.register Company do
   member_action :approve, method: :put do
     # Public WhatsApp and web applicants follow the same reviewed claim flow.
     # Approval alone never activates an owner whose mailbox is unconfirmed.
-    pending_claim = resource.company_access_requests.pending.order(:requested_at, :id).first
+    pending_claims = resource.company_access_requests.pending.order(:requested_at, :id)
+    if pending_claims.count > 1
+      redirect_to resource_path(resource), alert: 'Existem múltiplas solicitações. Analise cada titularidade individualmente.' and return
+    end
+
+    pending_claim = pending_claims.first
     if pending_claim
       CompanyClaims::DecideRequest.call(
         request: pending_claim,
@@ -1394,6 +1399,14 @@ ActiveAdmin.register Company do
         redirect_to resource_path(resource), notice: 'Solicitação analisada. Aguardando a confirmação do e-mail do responsável.'
       end
     else
+      unverified_claim = resource.company_access_requests.approved.includes(:user).any? do |claim|
+        !claim.user&.confirmed? ||
+          !resource.company_members.active.where(role: :owner, user_id: claim.user_id).exists?
+      end
+      if unverified_claim
+        redirect_to resource_path(resource), alert: 'A titularidade está aprovada, mas o e-mail ou vínculo de proprietário ainda está pendente.' and return
+      end
+
       # Preserve legacy/manual company approval, but fail closed if an owner
       # is not yet verified. Pending members are activated only after proof.
       owner_member = resource.company_members.find_by(role: :owner)
