@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { companiesApi, type Category } from '@/lib/api';
 import { useCategories } from '@/hooks/useCategories';
+import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +47,10 @@ interface Step2Data {
 }
 
 type WizardStep = 1 | 2 | 3;
+
+// Existing 15-minute founder booking used by the WhatsApp onboarding journey.
+const ONBOARDING_BOOKING_URL =
+  'https://avaliasolar.zohobookings.com/5012013000000038009/#/5012013000000038009?bookedFrom=ShortenURL';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -558,7 +563,7 @@ function Step3({
       </div>
 
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Empresa cadastrada com sucesso!</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Cadastro recebido para análise</h2>
         <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
           Estamos analisando as informações da{' '}
           <span className="font-semibold text-gray-700">{companyName}</span>. Você receberá um
@@ -585,6 +590,33 @@ function Step3({
           </li>
         </ul>
       </div>
+
+      <section className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">Próximo passo opcional</p>
+        <h3 className="mt-1 text-base font-semibold text-slate-900">Converse com o fundador</h3>
+        <p className="mt-1 text-sm leading-relaxed text-slate-700">
+          Agende uma conversa rápida de 15 minutos para apresentar sua empresa e tirar dúvidas.
+          O agendamento não substitui a análise do cadastro nem a confirmação do e-mail.
+        </p>
+        <a
+          href={ONBOARDING_BOOKING_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() =>
+            track('cta_click', {
+              cta_text: 'Agendar conversa de 15 minutos',
+              cta_type: 'b2b_onboarding_booking',
+              cta_location: 'register_company_success',
+              channel: 'app',
+              booking_provider: 'zoho',
+            })
+          }
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#ffb900] px-4 py-2 text-center text-sm font-semibold text-[#15284c] hover:bg-[#e5a600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#15284c]"
+        >
+          Agendar conversa de 15 minutos
+          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </a>
+      </section>
 
       <div className="flex flex-col sm:flex-row gap-3 w-full">
         <Button variant="outline" className="flex-1 h-11" onClick={onHome}>
@@ -727,7 +759,7 @@ export default function RegisterCompanyPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              {step === 3 ? 'Cadastro concluído' : 'Cadastrar nova empresa'}
+              {step === 3 ? 'Cadastro enviado' : 'Cadastrar nova empresa'}
             </h1>
             {step < 3 && <p className="text-sm text-gray-500">{STEP_LABELS[step - 1]}</p>}
           </div>
