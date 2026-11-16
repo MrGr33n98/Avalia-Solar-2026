@@ -15,12 +15,13 @@ RSpec.describe 'Companies create API', type: :request do
     { 'Content-Type' => 'application/json', 'Authorization' => "Bearer #{token}" }
   end
 
-  it 'blocks anonymous attempts to create companies' do
+  it 'rejects public requests that omit consent and applicant verification details' do
     expect {
       post '/api/v1/companies', params: { company: { name: 'Unauthorized' } }.to_json,
            headers: { 'Content-Type' => 'application/json' }
     }.not_to change(Company, :count)
-    expect(response).to have_http_status(:unauthorized)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(JSON.parse(response.body).fetch('code')).to eq('CONSENT_REQUIRED')
   end
 
   it 'creates a pending company without a redundant pending change' do
@@ -56,6 +57,67 @@ RSpec.describe 'Companies create API', type: :request do
     expect(company.moderation_status).to eq('pending_review')
     expect(company.submitted_at).to be_present
     expect(PendingChange.where(company: company)).to be_empty
-    expect(company.company_members.find_by(user: owner)&.owner?).to be(true)
+    owner_member = company.company_members.find_by(user: owner)
+    expect(owner_member&.owner?).to be(true)
+    expect(owner_member&.pending?).to be(true)
+    expect(company.company_access_requests.find_by(user: owner)&.status).to eq('pending')
+  end
+
+
+  it 'accepts a public app application with no active owner and requires explicit consent' do
+    payload = {
+      company: {
+        name: 'Empresa Pública Solar', description: 'Solicitação pelo formulário público.',
+        cnpj: '11222333000181', email: 'empresa@solar.example',
+        email_public: 'atendimento@solar.example', state: 'SP',
+        city: 'São Paulo', phone: '11999999999', category_ids: [category.id],
+        plan_id: 999, verified: true, status: 'active'
+      },
+      applicant: {
+        name: 'Responsável Comercial', email: 'pessoa@solar.example',
+        phone: '11999999999', relationship: 'owner'
+      },
+      terms_accepted: true,
+      declaration_accepted: true
+    }
+
+    expect do
+      post '/api/v1/companies', params: payload.to_json,
+           headers: { 'Content-Type' => 'application/json' }
+    end.to change(Company, :count).by(1)
+
+    expect(response).to have_http_status(:created)
+    company = Company.find(JSON.parse(response.body).dig('company', 'id'))
+    applicant = User.find_by!(email: 'pessoa@solar.example')
+
+    expect(company).to be_pending_status
+    expect(company.verified).to be false
+    expect(company.company_members).to be_empty
+    expect(applicant.status).to eq('pending')
+    expect(applicant.confirmed?).to be(false)
+    expect(company.company_access_requests.find_by!(user: applicant).status).to eq('pending')
+  end
+
+  it 'does not create a duplicate company for an existing CNPJ' do
+    existing = create(:company, cnpj: '11222333000181')
+    params = {
+      company: {
+        name: 'Cópia', cnpj: existing.cnpj, email: 'duplicate@solar.example',
+        state: 'SP', city: 'São Paulo', category_ids: [category.id]
+      },
+      applicant: {
+        name: 'Outro Responsável', email: 'outro@solar.example',
+        phone: '11999999999', relationship: 'owner'
+      },
+      terms_accepted: true,
+      declaration_accepted: true
+    }
+
+    expect do
+      post '/api/v1/companies', params: params.to_json,
+           headers: { 'Content-Type' => 'application/json' }
+    end.not_to change(Company, :count)
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(existing.reload.name).not_to eq('Cópia')
   end
 end
