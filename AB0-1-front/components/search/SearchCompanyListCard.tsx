@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, MapPin, Clock, CheckCircle, ChevronRight, Info, Globe } from 'lucide-react';
+import { Star, MapPin, CheckCircle, ChevronRight, Info, Globe } from 'lucide-react';
 import { Company } from '@/lib/api';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
@@ -46,12 +46,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
   return (
     <article
       className={cn(
-        'flex min-w-0 flex-col xl:flex-row items-stretch overflow-hidden rounded-xl border border-[#dde1e6] bg-white shadow-[0_3px_14px_rgba(9,23,47,0.035)] transition-[border-color,box-shadow] duration-200 hover:shadow-[0_8px_24px_rgba(9,23,47,0.075)] hover:border-[#a6c8ff]',
+        'grid min-w-0 grid-cols-1 items-stretch overflow-hidden rounded-xl border border-[#dde1e6] bg-white shadow-[0_3px_14px_rgba(9,23,47,0.035)] transition-[border-color,box-shadow] duration-200 hover:shadow-[0_8px_24px_rgba(9,23,47,0.075)] hover:border-[#a6c8ff] lg:grid-cols-[minmax(260px,0.85fr)_minmax(0,1.15fr)]',
         className
       )}
     >
       {/* Left Column: Logo & Info */}
-      <div className="flex w-full xl:w-[31%] flex-col justify-center p-4 border-b xl:border-b-0 xl:border-r border-slate-100">
+      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 sm:p-5 lg:border-r">
         <div className="flex items-center gap-4">
           <Link href={href} className="shrink-0">
             <CompanyLogo
@@ -174,96 +174,89 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Middle Column 1: Description & Quick Features */}
-      <div className="flex flex-1 flex-col justify-center p-4 border-b xl:border-b-0 xl:border-r border-slate-100">
-        <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed">
+      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 sm:p-5">
+        <p className="line-clamp-3 break-words text-xs leading-relaxed text-slate-600 sm:text-sm">
           {description}
         </p>
-        <div className="mt-3 flex items-center gap-4 text-[11px] sm:text-xs text-slate-500">
-          {coverageLabel !== 'Não informado' ? (
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />{coverageLabel}
-            </span>
-          ) : null}
-          {slaLabel !== 'Não informado' ? (
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle className="h-3.5 w-3.5 shrink-0 text-slate-400" />Resp: {slaLabel}
-            </span>
-          ) : null}
-        </div>
+        {coverageLabel !== 'Não informado' || slaLabel !== 'Não informado' ? (
+          <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
+            {coverageLabel !== 'Não informado' ? (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <span className="truncate">Cobertura: {coverageLabel}</span>
+              </span>
+            ) : null}
+            {slaLabel !== 'Não informado' ? (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <span className="truncate">Respostas: {slaLabel}</span>
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {/* Middle Column 2: Stats (Respostas / Cobertura) */}
-      <div className="hidden xl:flex w-[105px] flex-col justify-center items-center gap-4 p-3 border-r border-slate-100 text-center bg-slate-50/30">
-        <div>
-          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-            Respostas
-          </span>
-          <span className="font-bold text-slate-900 text-sm">{slaLabel}</span>
-        </div>
-        <div>
-          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-            Cobertura
-          </span>
-          <span className="font-bold text-slate-900 text-sm">{coverageLabel}</span>
-        </div>
-      </div>
-
-      {/* Middle Column 3: Secondary Actions */}
-      <div className="hidden xl:flex flex-col justify-center items-start gap-2 p-3 border-r border-slate-100 w-[122px]">
-        <ComparisonToggleButton
-          company={company as any}
-          variant="default"
-          size="sm"
-        />
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="w-full h-8 rounded-lg text-[11px] font-bold border-slate-200 text-blue-600 hover:bg-slate-50 shadow-none gap-1.5"
-        >
-          <Link href={reviewsHref}>
-            <Star className="w-3.5 h-3.5 fill-blue-600" />
-            Avaliar
-          </Link>
-        </Button>
-      </div>
-
-      {/* Right Column: Primary CTA — desktop only (xl+) */}
-      <div className="hidden min-w-0 shrink-0 xl:flex xl:w-[178px] flex-col justify-center gap-2 p-3 bg-slate-50/50">
-        {canRequestQuote && (
-          <QuoteCTA
-            context="card"
-            shortLabel="Solicitar orçamento"
-            source="search-list-card"
-            className="w-full"
-            onRequest={() =>
-              openLeadModal({
-                preferredCompanyId: company.id,
-                source: 'search-list-card',
-                type: 'quick',
-              })
-            }
+      {/* Desktop: a single action rail avoids squeezing description into five columns.
+          Keep the original comparison, review, quote and profile contracts intact. */}
+      <div
+        data-testid="search-card-desktop-actions"
+        className="hidden min-w-0 gap-3 border-t border-slate-100 bg-slate-50/50 px-4 py-2.5 sm:px-5 lg:col-span-2 lg:flex lg:flex-wrap lg:items-center lg:justify-between"
+      >
+        <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+          <ComparisonToggleButton
+            company={company as any}
+            variant="default"
+            size="sm"
           />
-        )}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="h-10 rounded-lg px-3 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+          >
+            <Link href={reviewsHref}>
+              <Star className="h-4 w-4" aria-hidden="true" />
+              Avaliar
+            </Link>
+          </Button>
+        </div>
 
-        <Button
-          asChild
-          variant={canRequestQuote ? 'outline' : 'default'}
-          className={cn(
-            'w-full h-10 rounded-xl font-bold text-xs shadow-none gap-1.5 transition-all',
-            canRequestQuote
-              ? 'border-blue-200 text-blue-600 hover:bg-blue-50 bg-white hover:text-blue-700'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {canRequestQuote && (
+            <QuoteCTA
+              context="card"
+              shortLabel="Solicitar orçamento"
+              source="search-list-card"
+              className="min-h-10"
+              onRequest={() =>
+                openLeadModal({
+                  preferredCompanyId: company.id,
+                  source: 'search-list-card',
+                  type: 'quick',
+                })
+              }
+            />
           )}
-        >
-          <Link href={reviewCount > 0 ? reviewsHref : href}>
-            {reviewCount > 0 ? `Ver avaliações ${reviewCount}` : 'Ver perfil'} <ChevronRight className="w-4 h-4" />
-          </Link>
-        </Button>
+          <Button
+            asChild
+            variant={canRequestQuote ? 'outline' : 'default'}
+            className={cn(
+              'h-10 min-w-[126px] rounded-lg px-4 text-xs font-bold shadow-none',
+              canRequestQuote
+                ? 'border-blue-200 bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            )}
+          >
+            <Link href={reviewCount > 0 ? reviewsHref : href}>
+              {reviewCount > 0 ? `Ver avaliações ${reviewCount}` : 'Ver perfil'}
+              <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Mobile footer: todas as ações numa barra inferior separada */}
-      <div className="flex xl:hidden w-full border-t border-slate-100 bg-slate-50/50">
+      <div className="flex w-full border-t border-slate-100 bg-slate-50/50 lg:hidden">
         {canRequestQuote ? (
           // Com orçamento: [Comparar] [Avaliar] | [Solicitar orçamento (destaque)]
           <>
