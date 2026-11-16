@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldCheck, Lock, ChevronRight, ChevronLeft, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { ShieldCheck, ChevronRight, ChevronLeft, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { AvaliaPadlockIcon } from "@/components/brand/AvaliaPadlockIcon";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/lib/api";
@@ -121,9 +122,7 @@ export default function RelatedCompaniesCarousel({
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-              <Lock className="h-5 w-5" aria-hidden="true" />
-            </div>
+            <AvaliaPadlockIcon className="h-11 w-11 shrink-0" locked={true} />
             <div>
               <h4 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5 uppercase">
                 Perfil Protegido Exclusivo
