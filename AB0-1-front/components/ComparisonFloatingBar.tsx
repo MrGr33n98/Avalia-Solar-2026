@@ -549,7 +549,16 @@ export default function ComparisonFloatingBar() {
 
       <CompanyComparisonModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setIsClosedByUser(true);
+          setDockState('hidden');
+        }}
+        onMinimize={() => {
+          setIsModalOpen(false);
+          setIsClosedByUser(false);
+          setDockState('minimized');
+        }}
         companies={comparisonList}
         onRemoveCompany={removeFromComparison}
         onClearAll={clearComparison}
