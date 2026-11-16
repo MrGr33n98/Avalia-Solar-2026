@@ -232,6 +232,7 @@ RSpec.describe B2b::OnboardingSessionService do
           state: 'awaiting_photos',
           draft_payload: { 'cnpj_data' => cnpj_data, 'user_email' => 'contato@novasolar.com.br' }
         )
+        allow(SecureRandom).to receive(:urlsafe_base64).and_call_original
         allow(SecureRandom).to receive(:urlsafe_base64).with(32).and_return('Z' * 43)
 
         described_class.process_message!(session, { 'body' => 'pular' })
