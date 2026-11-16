@@ -1,0 +1,98 @@
+name: Brand Page Hero Carousel Contract Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-front/app/companies/**'
+      - 'AB0-1-front/app/dashboard/**'
+      - 'AB0-1-front/lib/api.ts'
+      - 'AB0-1-back/app/services/brand_hero/**'
+      - 'AB0-1-back/app/models/company_hero_slide.rb'
+      - 'AB0-1-back/app/admin/company_hero_slides.rb'
+      - 'AB0-1-back/app/controllers/api/v1/company_dashboard_hero_slides_controller.rb'
+      - 'AB0-1-back/db/migrate/*company_hero_slides*'
+      - '.github/workflows/brand-hero-carousel-contract-gate.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brand-hero-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Brand Hero TypeScript + Jest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: |
+          npm test -- --runInBand --runTestsByPath \
+            app/companies/'[id]'/components/CompanyHeroCarousel.spec.tsx \
+            app/companies/'[id]'/components/CompanyHeroBanner.spec.tsx \
+            utils/company-banner.spec.ts
+
+  backend:
+    name: Brand Hero Domain + Security RSpec
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: AB0-1-back
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+      SECRET_KEY_BASE: ci-only-brand-hero-test-no-prod-secrets
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+      - name: Syntax
+        run: |
+          ruby -c app/models/company_hero_slide.rb
+          ruby -c app/services/brand_hero/publisher.rb
+          ruby -c app/services/brand_hero/image_ingest.rb
+          ruby -c app/controllers/api/v1/company_dashboard_hero_slides_controller.rb
+          ruby -c app/admin/company_hero_slides.rb
+      - run: bundle exec rails db:create db:schema:load db:migrate
+      - run: |
+          bundle exec rspec \
+            spec/models/company_hero_slide_spec.rb \
+            spec/services/brand_hero/eligibility_spec.rb \
+            spec/services/brand_hero/publisher_spec.rb \
+            spec/services/brand_hero/plan_catalog_spec.rb \
+            spec/requests/api/v1/company_dashboard_hero_slides_spec.rb

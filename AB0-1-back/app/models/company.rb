@@ -211,6 +211,7 @@ end
   has_many :company_financing_partners, dependent: :destroy
   accepts_nested_attributes_for :company_financing_partners, allow_destroy: true
   has_many :company_financing_offers, dependent: :destroy
+  has_many :company_hero_slides, dependent: :destroy
   has_many :banners, dependent: :nullify
   has_many :banner_events, dependent: :nullify
   has_many :banner_subscriptions, dependent: :destroy
@@ -1196,6 +1197,12 @@ end
   end
 
   # Attachment não concede direito comercial ao banner customizado.
+  # Institutional carousel is distinct from the advertising promo_banner gate.
+  # Gate is resolved in Rails, never inferred from a client's plan label.
+  def brand_hero_carousel_entitled?
+    BrandHero::Eligibility.allowed?(self)
+  end
+
   def custom_banner_entitled?
     entitled?(:promo_banner)
   rescue StandardError => e

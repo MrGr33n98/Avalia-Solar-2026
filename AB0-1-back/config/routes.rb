@@ -566,6 +566,13 @@ Rails.application.routes.draw do
         post 'update_info', to: 'company_dashboard#update_info'
         post 'update_logo', to: 'company_dashboard#update_logo'
         post 'update_banner', to: 'company_dashboard#update_banner'
+        # Institutional Brand Page hero slides — separate from advertising /banners.
+        get 'hero_slides', to: 'company_dashboard_hero_slides#index'
+        post 'hero_slides', to: 'company_dashboard_hero_slides#create'
+        patch 'hero_slides/reorder', to: 'company_dashboard_hero_slides#reorder'
+        patch 'hero_slides/:id', to: 'company_dashboard_hero_slides#update'
+        post 'hero_slides/:id/submit', to: 'company_dashboard_hero_slides#submit'
+        delete 'hero_slides/:id', to: 'company_dashboard_hero_slides#destroy'
         post 'add_categories', to: 'company_dashboard#add_categories'
         post 'remove_category', to: 'company_dashboard#remove_category'
         post 'update_ctas', to: 'company_dashboard#update_ctas'

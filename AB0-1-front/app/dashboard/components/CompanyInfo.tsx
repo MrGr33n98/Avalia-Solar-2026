@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SellerInformationPanel, { type SellerEditorMode } from './SellerInformationPanel';
+import BrandHeroCarouselManager from './BrandHeroCarouselManager';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -999,7 +1000,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
             </div>
             <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
               <span>Formato recomendado: 1920x600px (16:5) em PNG ou JPG. Mantenha textos e logos afastados das bordas.</span>
-              <span className="font-semibold text-brand-blue">Banner da Empresa</span>
+              <span className="font-semibold text-brand-blue">Banner legado da Empresa</span>
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">Carrossel institucional (até 3 imagens)</h3>
+              <BrandHeroCarouselManager
+                companyId={companyId}
+                companyName={displayText(currentData.name)}
+                legacyBannerUrl={currentData.banner_url}
+              />
             </div>
           </div>
         </SectionCard>

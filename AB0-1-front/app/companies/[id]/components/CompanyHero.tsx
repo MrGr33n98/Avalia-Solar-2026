@@ -4,6 +4,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import CompanyBannerPlaceholder from './CompanyBannerPlaceholder';
 import CompanyFreeBannerPlaceholder from './CompanyFreeBannerPlaceholder';
 import CompanyFluidBanner from './CompanyFluidBanner';
+import CompanyHeroCarousel from './CompanyHeroCarousel';
 import { resolveCompanyHeroBannerState } from '@/utils/company-banner';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, Share2, ArrowLeft, MapPin, Star } from 'lucide-react';
@@ -70,9 +71,12 @@ export default function CompanyHero({
   const router = useRouter();
   const [isSharing, setIsSharing] = useState(false);
   const [badgeImageError, setBadgeImageError] = useState(false);
+  const [carouselError, setCarouselError] = useState(false);
+  const slides = company.hero_carousel?.enabled ? company.hero_carousel.slides ?? [] : [];
+  const hasCarousel = slides.length > 0 && !carouselError;
   const bannerState = resolveCompanyHeroBannerState(company, bannerUrl, bannerError);
-  const showTechnicalPlaceholder =
-    bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error';
+  const showTechnicalPlaceholder = !hasCarousel &&
+    (bannerState.kind === 'paid-empty' || bannerState.kind === 'paid-load-error');
   const { user, isAuthenticated } = useAuth();
   const canUseBuyerChat = isAuthenticated && user?.role === 'review';
   const directChatAvailable =
@@ -198,7 +202,22 @@ export default function CompanyHero({
           {/* Institutional / fallback banners determine their own height; no letterboxing. */}
 
           {/* Banner Image */}
-          {bannerState.kind === 'free-plan-placeholder' ? (
+          {hasCarousel && slides.length >= 2 ? (
+            <CompanyHeroCarousel
+              companyId={company.id}
+              companyName={company.name}
+              carousel={company.hero_carousel}
+              onAllFailed={() => setCarouselError(true)}
+            />
+          ) : hasCarousel && slides.length === 1 ? (
+            <CompanyFluidBanner
+              src={slides[0].image_url}
+              alt={slides[0].alt_text || `Banner da empresa ${company.name}`}
+              priority
+              quality={90}
+              onError={() => setCarouselError(true)}
+            />
+          ) : bannerState.kind === 'free-plan-placeholder' ? (
             <CompanyFreeBannerPlaceholder alt="Banner institucional Avalia Solar" priority />
           ) : bannerState.kind === 'company-banner' ? (
             <CompanyFluidBanner
