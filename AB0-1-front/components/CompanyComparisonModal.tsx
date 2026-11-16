@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { X, Building2, Plus, FileText } from 'lucide-react';
 import { getFullImageUrl } from '@/utils/image';
 import { canUsePaidConversion, type FeatureAccessMap } from '@/lib/feature-access';
@@ -112,7 +111,7 @@ function ComparisonBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[9.5px] font-semibold leading-tight text-center !min-h-[19px] !h-auto !min-w-0 max-w-full',
+        'inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-tight text-center !min-h-[24px] !h-auto !min-w-0 max-w-full',
         styles[variant],
         className
       )}
@@ -485,7 +484,7 @@ const CRITERIA_ROWS: CriterionConfig[] = [
           type="button"
           onClick={() => onQuote(company.id)}
           aria-label={`Solicitar orçamento para ${company.name}`}
-          className="w-full max-w-[124px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs transition-colors py-1 px-1.5 flex items-center justify-center gap-1 text-[10px] font-bold leading-tight !min-h-[28px] !min-w-0"
+          className="w-full max-w-[124px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs transition-colors py-1 px-1.5 flex items-center justify-center gap-1 text-[10px] font-bold leading-tight !min-h-[36px] !min-w-0"
         >
           <FileText className="h-3 w-3 shrink-0" aria-hidden="true" />
           <span className="flex flex-col items-center justify-center leading-[1.05]">
@@ -498,6 +497,12 @@ const CRITERIA_ROWS: CriterionConfig[] = [
   },
 ];
 
+// The modal is a decision preview. /compare remains the full report.
+const CORE_CRITERION_IDS = new Set([
+  'ratings', 'verification', 'region', 'quote_turnaround',
+  'technical_visit', 'financing', 'warranty', 'quote_cta',
+]);
+
 export function CompanyComparisonModal({
   isOpen,
   onClose,
@@ -508,6 +513,18 @@ export function CompanyComparisonModal({
 }: CompanyComparisonModalProps) {
   const router = useRouter();
   const [servicesModalCompany, setServicesModalCompany] = useState<ComparisonCompany | null>(null);
+  const [showAllCriteria, setShowAllCriteria] = useState(false);
+  const rowsToDisplay = showAllCriteria
+    ? CRITERIA_ROWS
+    : CRITERIA_ROWS.filter((row) => CORE_CRITERION_IDS.has(row.id));
+  const extraCriteriaCount = CRITERIA_ROWS.filter((row) => !CORE_CRITERION_IDS.has(row.id)).length;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAllCriteria(false);
+      setServicesModalCompany(null);
+    }
+  }, [isOpen]);
 
   const handleQuoteClick = (companyId: number) => {
     const company = companies.find((item) => item.id === companyId);
@@ -694,7 +711,7 @@ export function CompanyComparisonModal({
                       >
                         <span className="line-clamp-2">{company.name}</span>
                       </Link>
-                      <span className="block text-[9px] text-slate-500 leading-none truncate mt-0.5">
+                      <span className="block text-[11px] text-slate-500 leading-tight truncate mt-0.5">
                         📍 {[company.city, company.state].filter(Boolean).join(', ') || 'Localização'}
                       </span>
                     </div>
@@ -702,7 +719,7 @@ export function CompanyComparisonModal({
                       type="button"
                       onClick={() => onRemoveCompany(company.id)}
                       aria-label={`Remover ${company.name} da comparação`}
-                      className="absolute top-0.5 right-0.5 p-0.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="absolute top-0 right-0 flex h-8 w-8 items-start justify-end rounded-lg p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                       title="Remover"
                     >
                       <X className="h-2.5 w-2.5" />
@@ -714,7 +731,7 @@ export function CompanyComparisonModal({
 
             {/* Tabela dos 14 Critérios + Linha Final de CTA */}
             <div className="divide-y divide-slate-100 rounded-lg border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-              {CRITERIA_ROWS.map((row) => (
+              {rowsToDisplay.map((row) => (
                 <div
                   key={`mobile-row-${row.id}`}
                   className={cn(
@@ -723,7 +740,7 @@ export function CompanyComparisonModal({
                   )}
                 >
                   {/* Coluna de Rótulo (Texto puro, normal sentence case, sem ícones) */}
-                  <div className="px-1.5 py-0.5 bg-slate-50/70 flex items-center justify-start text-[10px] font-semibold text-slate-700 leading-tight">
+                  <div className="px-1.5 py-0.5 bg-slate-50/70 flex items-center justify-start text-[11px] font-semibold text-slate-700 leading-tight">
                     {row.label}
                   </div>
 
@@ -743,7 +760,7 @@ export function CompanyComparisonModal({
                     return (
                       <div
                         key={`mobile-data-cell-${row.id}-${company.id}`}
-                        className="px-1 py-0.5 flex items-center justify-center text-center text-[10px] leading-tight overflow-hidden"
+                        className="px-1 py-0.5 flex items-center justify-center text-center text-[11px] leading-tight overflow-hidden"
                       >
                         {row.render(company, handleQuoteClick, (c) => setServicesModalCompany(c))}
                       </div>
@@ -752,6 +769,14 @@ export function CompanyComparisonModal({
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowAllCriteria((value) => !value)}
+              aria-expanded={showAllCriteria}
+              className="mt-2 flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {showAllCriteria ? 'Mostrar menos critérios' : `Ver mais ${extraCriteriaCount} critérios`}
+            </button>
           </div>
 
           {/* ═══════════════════════════════════════════════════════════════════════
@@ -760,13 +785,19 @@ export function CompanyComparisonModal({
           <div className="hidden md:block min-h-0 overflow-y-auto p-2.5">
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
               {/* Header das Empresas Desktop */}
-              <div className="grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200">
+              <div data-testid="comparison-desktop-header"
+                className={cn(
+                  'grid divide-x divide-slate-100 bg-slate-50/80 border-b border-slate-200',
+                  desktopCompanies.length === 2
+                    ? 'grid-cols-[150px_repeat(2,minmax(0,1fr))]'
+                    : 'grid-cols-[150px_repeat(3,minmax(0,1fr))]'
+                )}>
                 <div className="flex items-center px-3 py-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
                     Critérios
                   </span>
                 </div>
-                {[0, 1, 2].map((index) => {
+                {desktopCompanies.map((_, index) => {
                   const company = desktopCompanies[index];
                   if (!company) {
                     return (
@@ -826,7 +857,7 @@ export function CompanyComparisonModal({
                         type="button"
                         onClick={() => onRemoveCompany(company.id)}
                         aria-label={`Remover ${company.name} da comparação`}
-                        className="shrink-0 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         title="Remover"
                       >
                         <X className="h-3 w-3" />
@@ -838,18 +869,21 @@ export function CompanyComparisonModal({
 
               {/* Tabela Desktop: Mesmos 14 Critérios + Linha Final de CTA */}
               <div className="divide-y divide-slate-100">
-                {CRITERIA_ROWS.map((row) => (
+                {rowsToDisplay.map((row) => (
                   <div
                     key={`desktop-row-${row.id}`}
                     className={cn(
-                      'grid grid-cols-[150px_repeat(3,minmax(0,1fr))] divide-x divide-slate-100 items-stretch',
+                      'grid divide-x divide-slate-100 items-stretch',
+                      desktopCompanies.length === 2
+                        ? 'grid-cols-[150px_repeat(2,minmax(0,1fr))]'
+                        : 'grid-cols-[150px_repeat(3,minmax(0,1fr))]',
                       row.id === 'quote_cta' ? 'bg-slate-50/80 min-h-[34px]' : 'bg-white min-h-[25px]'
                     )}
                   >
                     <div className="px-3 py-1 bg-slate-50/70 flex items-center text-[10.5px] font-semibold text-slate-700">
                       {row.label}
                     </div>
-                    {[0, 1, 2].map((index) => {
+                    {desktopCompanies.map((_, index) => {
                       const company = desktopCompanies[index];
                       if (!company) {
                         return (
@@ -874,6 +908,14 @@ export function CompanyComparisonModal({
                 ))}
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowAllCriteria((value) => !value)}
+              aria-expanded={showAllCriteria}
+              className="mt-2 flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {showAllCriteria ? 'Mostrar menos critérios' : `Ver mais ${extraCriteriaCount} critérios`}
+            </button>
           </div>
 
             </>
@@ -892,7 +934,7 @@ export function CompanyComparisonModal({
                 onClose();
                 router.push('/search?tab=companies');
               }}
-              className="md:hidden !min-h-[38px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors flex items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
+              className="md:hidden !min-h-[44px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors flex items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
             >
               {companies.length >= COMPARISON_LIMITS.mobile ? (
                 <span className="leading-tight">Limite atingido ({COMPARISON_LIMITS.mobile}/{COMPARISON_LIMITS.mobile})</span>
@@ -909,7 +951,7 @@ export function CompanyComparisonModal({
                 onClose();
                 router.push('/search?tab=companies');
               }}
-              className="hidden md:flex !min-h-[38px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
+              className="hidden md:flex !min-h-[44px] !min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-50 disabled:text-slate-400 transition-colors items-center justify-center text-center cursor-pointer disabled:cursor-not-allowed"
             >
               {companies.length >= COMPARISON_LIMITS.desktop ? (
                 <span className="leading-tight">Limite atingido ({COMPARISON_LIMITS.desktop}/{COMPARISON_LIMITS.desktop})</span>
@@ -925,7 +967,7 @@ export function CompanyComparisonModal({
                 onClose();
                 router.push('/compare');
               }}
-              className="!min-h-[38px] !min-w-0 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-[11px] font-bold text-white shadow-xs px-2 py-1 transition-colors flex items-center justify-center gap-1 text-center cursor-pointer"
+              className="!min-h-[44px] !min-w-0 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-[11px] font-bold text-white shadow-xs px-2 py-1 transition-colors flex items-center justify-center gap-1 text-center cursor-pointer"
             >
               <span className="leading-tight">Ver comparação completa</span>
               <span aria-hidden="true">→</span>
