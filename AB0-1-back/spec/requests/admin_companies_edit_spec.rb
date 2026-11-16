@@ -70,6 +70,45 @@ RSpec.describe 'Admin Companies Edit', type: :request do
     end
   end
 
+  describe 'PUT /admin/companies/:id/approve with pending company access' do
+    it 'keeps the company and owner pending until the approved applicant confirms email' do
+      company.update!(status: 'pending', moderation_status: 'pending_review')
+      user_member.update!(status: :pending, role: 'company', approved_by_admin: false)
+      user_member.update_columns(confirmed_at: nil)
+      member = create(:company_member, company: company, user: user_member,
+                       role: :owner, status: :pending)
+      request = create(:company_access_request, company: company, user: user_member,
+                        status: 'pending', message: 'Cadastro pelo aplicativo: titularidade pendente.')
+
+      put approve_admin_company_path(company)
+
+      expect(response).to redirect_to(admin_company_path(company))
+      expect(request.reload.status).to eq('approved')
+      expect(company.reload.status).to eq('pending')
+      expect(member.reload.status).to eq('pending')
+      expect(user_member.reload.approved_by_admin?).to be(true)
+      expect(user_member.status).to eq('pending')
+    end
+
+    it 'activates company and owner when a confirmed applicant is approved' do
+      company.update!(status: 'pending', moderation_status: 'pending_review')
+      user_member.update!(role: 'company', status: :active, approved_by_admin: false)
+      user_member.update_columns(confirmed_at: Time.current)
+      member = create(:company_member, company: company, user: user_member,
+                       role: :owner, status: :pending)
+      request = create(:company_access_request, company: company, user: user_member,
+                        status: 'pending', message: 'Cadastro pelo aplicativo: titularidade pendente.')
+
+      put approve_admin_company_path(company)
+
+      expect(response).to redirect_to(admin_company_path(company))
+      expect(request.reload.status).to eq('approved')
+      expect(company.reload.status).to eq('active')
+      expect(member.reload.status).to eq('active')
+      expect(user_member.reload.approved_by_admin?).to be(true)
+    end
+  end
+
   describe 'GET /admin/companies/new' do
     it 'defaults the new company status to pending' do
       get new_admin_company_path
