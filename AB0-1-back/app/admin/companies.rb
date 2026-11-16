@@ -551,24 +551,34 @@ ActiveAdmin.register Company do
           )
         end
 
-        f.template.concat(
+        # ActiveAdmin form capture does not automatically render raw SafeBuffers.
+        # text_node explicitly inserts the slot cards/links into the form's content tree.
+        text_node(
           f.template.content_tag(
-            :div,
-            f.template.safe_join(cards),
-            style: 'display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;'
+            :li,
+            f.template.content_tag(
+              :div,
+              f.template.safe_join(cards),
+              style: 'display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;'
+            ),
+            class: 'input hero-slide-slots'
           )
         )
-        f.template.concat(
-          f.template.link_to(
-            'Ver todas as revisões e aprovar banners',
-            admin_company_hero_slides_path(q: { company_id_eq: f.object.id }),
-            class: 'button'
+        text_node(
+          f.template.content_tag(
+            :li,
+            f.template.link_to(
+              'Ver todas as revisões e aprovar banners',
+              admin_company_hero_slides_path(q: { company_id_eq: f.object.id }),
+              class: 'button'
+            ),
+            class: 'input'
           )
         )
         if limit.zero?
-          f.template.concat(
-            f.template.content_tag(:p, 'Ative o recurso e defina a quantidade em Planos antes de enviar imagens.',
-                                   class: 'inline-hints')
+          text_node(
+            f.template.content_tag(:li, 'Ative o recurso e defina a quantidade em Planos antes de enviar imagens.',
+                                   class: 'input inline-hints')
           )
         end
       else
