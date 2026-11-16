@@ -13,6 +13,7 @@ ActiveAdmin.register Plan do
 
   FEATURE_GROUP_LABELS = {
     'public_profile' => 'Perfil Público',
+    'brand_hero' => 'Carrossel institucional da Brand Page',
     'conversion' => 'Conversão',
     'trust' => 'Prova Social e Destaque',
     'content' => 'Conteúdo',
@@ -24,6 +25,7 @@ ActiveAdmin.register Plan do
   FEATURE_GROUP_ORDER = %w[
     operations
     public_profile
+    brand_hero
     conversion
     trust
     content
@@ -33,6 +35,7 @@ ActiveAdmin.register Plan do
 
   FEATURE_GROUP_DESCRIPTIONS = {
     'public_profile' => 'Configurações de exibição do perfil da empresa para visitantes.',
+    'brand_hero' => 'Controle comercial do carrossel institucional: habilitar e definir até três banners por empresa. Não são anúncios patrocinados.',
     'conversion' => 'Recursos voltados para transformar visitantes em leads qualificados.',
     'trust' => 'Sinais de credibilidade, badges e avaliações que geram confiança.',
     'content' => 'Gestão de ativos de mídia, downloads e materiais ricos.',
@@ -266,6 +269,7 @@ ActiveAdmin.register Plan do
                 current_value,
                 id: input_id,
                 min: 0,
+                max: key == 'brand_hero_slides_limit' ? 3 : nil,
                 step: 1,
                 placeholder: default_value || '0',
                 data: input_metadata
