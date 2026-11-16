@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import RegistrationPendingSuccess from './RegistrationPendingSuccess';
+import RegistrationPendingSuccess, { getOnboardingBookingUrl } from './RegistrationPendingSuccess';
 import { track } from '@/lib/analytics';
 
 jest.mock('@/lib/analytics', () => ({ track: jest.fn() }));
@@ -21,6 +21,17 @@ describe('RegistrationPendingSuccess', () => {
     expect(screen.getByText(/Estamos analisando as informações da/)).toBeInTheDocument();
     expect(screen.getByText(/Acesso ao painel liberado após aprovação/)).toBeInTheDocument();
     expect(screen.queryByText(/Empresa cadastrada com sucesso!/)).not.toBeInTheDocument();
+  });
+
+  it('accepts only the official secure booking origin and falls back on invalid configuration', () => {
+    const defaultUrl = getOnboardingBookingUrl(undefined);
+    expect(defaultUrl).toContain('https://avaliasolar.zohobookings.com/');
+    expect(getOnboardingBookingUrl('http://avaliasolar.zohobookings.com/unsafe')).toBe(defaultUrl);
+    expect(getOnboardingBookingUrl('https://avaliasolar.zohobookings.com.evil.example/')).toBe(defaultUrl);
+    expect(getOnboardingBookingUrl('javascript:alert(1)')).toBe(defaultUrl);
+    expect(getOnboardingBookingUrl('https://avaliasolar.zohobookings.com/booking-test')).toBe(
+      'https://avaliasolar.zohobookings.com/booking-test'
+    );
   });
 
   it('offers an optional 15-minute meeting via Zoho without blocking status actions', () => {
