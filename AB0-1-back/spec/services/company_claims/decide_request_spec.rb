@@ -17,6 +17,9 @@ RSpec.describe CompanyClaims::DecideRequest do
 
   it 'requires verified email before activating a pending WhatsApp company owner' do
     candidate_company = create(:company, status: 'pending', moderation_status: 'pending_review')
+    # The Company factory attaches a category only for already-active records.
+    # A pending company must still satisfy activation requirements on approval.
+    candidate_company.categories << create(:category)
     candidate = create(:user, role: 'company', status: :pending,
                               company: nil, confirmed_at: nil, approved_by_admin: false)
     claim = create(:company_access_request, user: candidate, company: candidate_company, status: 'pending')
