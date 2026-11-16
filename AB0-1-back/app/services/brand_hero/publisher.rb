@@ -3,7 +3,7 @@
 module BrandHero
   class Publisher
     class InvalidPublication < StandardError; end
-    ASPECT_TOLERANCE = 0.01
+    ASPECT_TOLERANCE = 0.001
 
     def self.call(slide:, reviewer_id: nil)
       company = slide.company
