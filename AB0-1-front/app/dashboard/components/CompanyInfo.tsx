@@ -1268,7 +1268,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                     ? 'Em análise'
                     : 'Não verificada'}
               </span>
-              <span className="block text-[10px] text-slate-400 mt-0.5">Definido por validação de CNPJ</span>
+              <span className="block text-[10px] text-slate-400 mt-0.5">Status cadastral definido pela Avalia Solar; não implica verificação de cada declaração comercial</span>
             </div>
 
             <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
