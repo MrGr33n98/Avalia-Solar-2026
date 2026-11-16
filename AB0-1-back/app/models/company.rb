@@ -273,6 +273,23 @@ end
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validate :validate_cnpj_format
   validates :cnpj, uniqueness: { message: 'já está cadastrado' }, allow_blank: true
+  # Defense-in-depth: no admin form or batch update may activate a company
+  # with an outstanding owner claim before a reviewed, confirmed owner exists.
+  validate :prevent_unreviewed_claim_activation, if: :activating_company_with_claim?
+
+  def activating_company_with_claim?
+    will_save_change_to_status? && status == 'active' &&
+      company_access_requests.where(status: %w[pending approved]).exists?
+  end
+
+  def prevent_unreviewed_claim_activation
+    has_verified_owner = company_access_requests.approved.includes(:user).any? do |claim|
+      claim.reviewed_by_admin_user_id.present? && claim.user&.confirmed? &&
+        company_members.active.where(user_id: claim.user_id, role: :owner).exists?
+    end
+    errors.add(:status, 'não pode ser ativo antes da aprovação da titularidade e confirmação do e-mail') unless has_verified_owner
+  end
+
   validate :validate_state_in_dataset
   validate :validate_city_in_dataset
   validate :validate_ticket_range
