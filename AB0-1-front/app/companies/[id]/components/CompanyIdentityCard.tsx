@@ -178,7 +178,7 @@ export default function CompanyIdentityCard({
       {/* Linha Principal de Identidade: Logo + Nome/Badges (Esquerda) + Ações (Direita) */}
       <div className="flex w-full flex-row items-start justify-between gap-2 md:flex-col md:gap-1.5 lg:flex-row lg:gap-4">
         {/* Lado Esquerdo: Logo + Nome + Badges */}
-        <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-4 lg:gap-5">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 lg:gap-5">
           {/* Box da Logo (Overlapping no Banner) - Moldura única de 2px e 62px mobile */}
           <div className="relative shrink-0 -mt-6 sm:-mt-9 lg:-mt-12 overflow-visible z-30">
             <div className="relative h-[62px] w-[62px] max-[359px]:h-[52px] max-[359px]:w-[52px] sm:h-[84px] sm:w-[84px] lg:h-[96px] lg:w-[96px] overflow-hidden rounded-[14px] border-2 border-white bg-white shadow-sm flex items-center justify-center">
@@ -258,7 +258,7 @@ export default function CompanyIdentityCard({
         {/* Mobile: ícones na primeira linha e Comparar abaixo, à direita. Desktop mantém a ordem anterior. */}
         <div
           data-testid="company-quick-actions"
-          className="ml-auto flex w-auto shrink-0 flex-col-reverse items-end gap-0 pt-0.5 sm:gap-1.5 md:w-full md:flex-row md:items-center md:justify-end lg:w-auto lg:pt-1.5"
+          className="ml-auto flex w-auto shrink-0 flex-col-reverse items-end gap-1 pt-0.5 sm:gap-1.5 md:w-full md:flex-row md:items-center md:justify-end lg:w-auto lg:pt-1.5"
         >
           {compareControl && (
             <div data-testid="company-compare-action" className="ml-auto flex min-w-0 shrink-0 items-center md:ml-0">
@@ -310,10 +310,10 @@ export default function CompanyIdentityCard({
       </div>
 
       {/* Linha 2: Metadados (Esquerda) + CTA Shelf (Direita no Desktop) */}
-      <div className="mt-1 flex flex-col gap-1.5 sm:gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="mt-3 flex flex-col gap-1.5 sm:mt-2 sm:gap-3 lg:flex-row lg:items-end lg:justify-between">
         {/* Lado Esquerdo: Metadados */}
         <div className="flex flex-col min-w-0 flex-1">
-          <div className="mt-0.5 space-y-1 w-full">
+          <div className="mt-1 space-y-1.5 w-full">
             {/* Descrição curta */}
             {(company.description || company.about) && (
               <p className="line-clamp-2 text-xs font-medium text-slate-500 max-w-2xl leading-tight">
