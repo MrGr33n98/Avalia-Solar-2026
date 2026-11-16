@@ -416,6 +416,7 @@ Rails.application.routes.draw do
 
       resources :companies do
         collection do
+          get :compare, to: 'companies#comparison_snapshots'
           get :states
           get :cities
           get :locations
