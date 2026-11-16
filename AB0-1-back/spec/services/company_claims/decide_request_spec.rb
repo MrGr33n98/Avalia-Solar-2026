@@ -17,6 +17,24 @@ RSpec.describe CompanyClaims::DecideRequest do
     expect(company.reload.verified).to eq(verified_before)
   end
 
+  it 'approves a confirmed company applicant whose account is active but has no access yet' do
+    applicant = create(
+      :user, role: 'company', status: :active, approved_by_admin: false,
+      company: nil, confirmed_at: Time.current
+    )
+    expect(applicant).to be_active_status
+    expect(applicant).not_to be_active
+
+    claim = create(:company_access_request, user: applicant, company: company, status: 'pending')
+    expect(described_class.call(request: claim, admin: admin)).to be true
+
+    expect(claim.reload).to be_approved
+    expect(applicant.reload.approved_by_admin?).to be(true)
+    expect(applicant).to be_active
+    expect(CompanyMember.find_by!(user: applicant, company: company))
+      .to have_attributes(role: 'owner', status: 'active')
+  end
+
   it 'requires verified email before activating a pending WhatsApp company owner' do
     candidate_company = create(:company, status: 'pending', moderation_status: 'pending_review')
     # The Company factory attaches a category only for already-active records.
