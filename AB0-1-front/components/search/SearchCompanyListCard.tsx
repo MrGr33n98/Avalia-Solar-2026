@@ -51,7 +51,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       )}
     >
       {/* Left Column: Logo & Info */}
-      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 sm:p-5 lg:border-r">
+      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 lg:p-5 lg:border-r">
         <div className="flex items-center gap-4">
           <Link href={href} className="shrink-0">
             <CompanyLogo
@@ -174,7 +174,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
       </div>
 
       {/* Middle Column 1: Description & Quick Features */}
-      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 sm:p-5">
+      <div className="flex min-w-0 flex-col justify-center border-b border-slate-100 p-4 lg:p-5">
         <p className="line-clamp-3 break-words text-xs leading-relaxed text-slate-600 sm:text-sm">
           {description}
         </p>
