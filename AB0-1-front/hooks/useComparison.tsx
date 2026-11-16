@@ -68,14 +68,15 @@ export function useComparison() {
             const details = await Promise.all(
               storedIds.map((id) => companiesApi.getById(id))
             );
-            const companies = details.filter(
-              (item): item is Company => Boolean(item && item.status === 'active')
-            );
-            if (companies.length === 0) throw new Error('Comparison refresh unavailable');
+            // An old backend can resolve public company details, but a partial
+            // network failure must never silently delete saved selections.
+            if (details.some((item) => !item || item.status !== 'active')) {
+              throw new Error('Incomplete comparison fallback');
+            }
             return {
               schema_version: 1,
-              companies,
-              missing_ids: storedIds.filter((id) => !companies.some((company) => company.id === id)),
+              companies: details as Company[],
+              missing_ids: [] as number[],
               refreshed_at: new Date().toISOString(),
             };
           });
