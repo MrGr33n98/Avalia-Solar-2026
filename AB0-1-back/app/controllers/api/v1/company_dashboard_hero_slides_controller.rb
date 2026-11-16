@@ -117,12 +117,19 @@ module Api
         @current_company ||= if current_user&.admin?
                                ::Company.find_by(id: params[:company_id]) || current_user.company
                              else
-                               candidate_id = params[:company_id].presence || cookies.signed[:active_company_id] ||
-                                              current_user.company_id
-                               if candidate_id && current_user.active_membership_for?(candidate_id)
-                                 ::Company.find_by(id: candidate_id)
+                               # An explicit tenant ID must never silently fall back to
+                               # another company in this authenticated write surface.
+                               explicit_id = params[:company_id].presence
+                               if explicit_id
+                                 current_user.active_membership_for?(explicit_id) ?
+                                   ::Company.find_by(id: explicit_id) : nil
                                else
-                                 current_user.active_member_companies.first
+                                 candidate_id = cookies.signed[:active_company_id] || current_user.company_id
+                                 if candidate_id && current_user.active_membership_for?(candidate_id)
+                                   ::Company.find_by(id: candidate_id)
+                                 else
+                                   current_user.active_member_companies.first
+                                 end
                                end
                              end
       end
