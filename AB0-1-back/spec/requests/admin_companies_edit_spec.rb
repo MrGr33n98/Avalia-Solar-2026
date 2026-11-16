@@ -88,6 +88,12 @@ RSpec.describe 'Admin Companies Edit', type: :request do
       expect(member.reload.status).to eq('pending')
       expect(user_member.reload.approved_by_admin?).to be(true)
       expect(user_member.status).to eq('pending')
+
+      user_member.confirm
+      expect(user_member.reload).to be_confirmed
+      expect(user_member).to be_active
+      expect(company.reload.status).to eq('active')
+      expect(member.reload.status).to eq('active')
     end
 
     it 'activates company and owner when a confirmed applicant is approved' do
