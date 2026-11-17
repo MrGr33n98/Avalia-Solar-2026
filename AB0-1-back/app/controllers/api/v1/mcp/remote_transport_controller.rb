@@ -55,7 +55,9 @@ module Api
           # Modern MCP transports are independent and stateless. Preserve
           # the legacy handshake preview for 2025-11-25 clients.
           if modern_request?(params)
-            outcome = ::Mcp::ModernPreviewProtocol.new(headers: request.headers, message: message).response
+            outcome = ::Mcp::ModernPreviewProtocol.new(
+              headers: request.headers, message: message, auth_context: @mcp_auth_context
+            ).response
             return render json: outcome.fetch(:body), status: outcome.fetch(:status)
           end
 

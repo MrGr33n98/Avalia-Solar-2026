@@ -13,9 +13,10 @@ module Mcp
     UNSUPPORTED_VERSION = -32_022
     MAX_HEADER_LENGTH = 512
 
-    def initialize(headers:, message:)
+    def initialize(headers:, message:, auth_context: nil)
       @headers = headers
       @message = message
+      @auth_context = auth_context
     end
 
     def response
@@ -65,13 +66,41 @@ module Mcp
 
         success(id, { tools: Mcp::PublicToolRegistry.list, ttlMs: 0, cacheScope: 'private' })
       when 'tools/call'
-        error(id, -32_001, 'Tool execution is unavailable in transport preview.')
+        return error(id, -32_001, 'Tool execution is unavailable in transport preview.') unless execution_authorized?
+
+        begin
+          data = ::Mcp::Public::Executor.call(
+            name: params['name'], arguments: params.fetch('arguments', {}),
+            principal: @auth_context.fetch(:subject)
+          )
+          success(id, {
+            content: [{ type: 'text', text: JSON.generate(data) }],
+            structuredContent: data, isError: false
+          })
+        rescue ::Mcp::Public::Executor::NotAvailable
+          error(id, -32_001, 'Tool not yet available.')
+        rescue ::Mcp::Public::InputValidator::Invalid
+          error(id, -32_602, 'Invalid public tool arguments.', :bad_request)
+        rescue ::Mcp::Public::DirectoryService::NotFound
+          error(id, -32_602, 'Public company not found.', :not_found)
+        end
       else
         error(id, -32_601, 'Method not found.', :not_found)
       end
     end
 
     private
+
+    def execution_authorized?
+      ENV['MCP_PUBLIC_TOOLS_EXECUTION_ENABLED'] == 'true' &&
+        ENV['MCP_REMOTE_POLICY_ENABLED'] == 'true' &&
+        ENV['MCP_REMOTE_AUTH_MODE'] == 'oauth' &&
+        ENV['MCP_REMOTE_OAUTH_ENABLED'] == 'true' &&
+        @auth_context.is_a?(Hash) &&
+        @auth_context[:subject].present? &&
+        @auth_context[:client_id].present? &&
+        Array(@auth_context[:scopes]).include?('mcp:public:read')
+    end
 
     def validated_name_header?(raw_header, expected)
       return false if raw_header.empty? || raw_header.bytesize > MAX_HEADER_LENGTH
