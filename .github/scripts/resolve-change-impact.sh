@@ -24,8 +24,23 @@ case "${GITHUB_EVENT_NAME:-}" in
       fallback_reason="MISSING_EVENT_PAYLOAD"
     fi
     ;;
-  schedule|workflow_dispatch)
+  schedule)
     fallback_reason="SCHEDULED_OR_MANUAL_FULL"
+    ;;
+  workflow_dispatch)
+    if [[ "${TEST_SUITE_INPUT:-}" == "docs_only" ]]; then
+      # A manual docs-only run must compare the entire branch with the
+      # trusted merge-base of origin/main, never HEAD~1 or a user-supplied SHA.
+      if ! git fetch --no-tags origin main >/dev/null 2>&1; then
+        fallback_reason="BASE_FETCH_FAILED"
+      elif ! base_sha="$(git merge-base "$head_sha" FETCH_HEAD)"; then
+        fallback_reason="MERGE_BASE_FAILED"
+      elif [[ -z "$base_sha" ]]; then
+        fallback_reason="MERGE_BASE_FAILED"
+      fi
+    else
+      fallback_reason="SCHEDULED_OR_MANUAL_FULL"
+    fi
     ;;
   *)
     fallback_reason="UNSUPPORTED_GITHUB_EVENT"
