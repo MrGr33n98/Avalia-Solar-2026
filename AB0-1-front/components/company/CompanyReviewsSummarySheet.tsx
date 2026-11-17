@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, PenSquare, ShieldCheck, Star, ThumbsUp } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Star, ThumbsUp } from 'lucide-react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
 } from '@/components/ui/sheet';
