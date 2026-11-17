@@ -103,9 +103,9 @@ module Api
 
           response.headers['Cache-Control'] = 'no-store'
           render json: {
-            resource: ::Mcp::OAuth::ResourceAuthorization.resource,
-            authorization_servers: [::Mcp::OAuth::ResourceAuthorization.issuer],
-            scopes_supported: [::Mcp::OAuth::ResourceAuthorization::REQUIRED_SCOPE],
+            resource: ::Mcp::Oauth::ResourceAuthorization.resource,
+            authorization_servers: [::Mcp::Oauth::ResourceAuthorization.issuer],
+            scopes_supported: [::Mcp::Oauth::ResourceAuthorization::REQUIRED_SCOPE],
             bearer_methods_supported: ['header']
           }, status: :ok
         end
@@ -126,7 +126,7 @@ module Api
           when 'preview'
             return if ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s.bytesize >= 32
           when 'oauth'
-            return if ::Mcp::OAuth::ResourceAuthorization.configured?
+            return if ::Mcp::Oauth::ResourceAuthorization.configured?
           end
 
           head :not_found
@@ -162,15 +162,15 @@ module Api
         end
 
         def authorize_oauth!
-          @mcp_auth_context = ::Mcp::OAuth::ResourceAuthorization.new(
+          @mcp_auth_context = ::Mcp::Oauth::ResourceAuthorization.new(
             authorization_header: request.headers['Authorization']
           ).verify!
-        rescue ::Mcp::OAuth::ResourceAuthorization::Failure => e
+        rescue ::Mcp::Oauth::ResourceAuthorization::Failure => e
           # The resource server never redirects, issues access tokens or
           # infers trust from the User-Agent, cookie, tenant headers or MCP args.
           return head :not_found if e.type == :unavailable
 
-          challenge = %(Bearer resource_metadata="#{::Mcp::OAuth::ResourceAuthorization.metadata_url}")
+          challenge = %(Bearer resource_metadata="#{::Mcp::Oauth::ResourceAuthorization.metadata_url}")
           if e.type == :insufficient_scope
             response.headers['WWW-Authenticate'] = %(#{challenge}, error="insufficient_scope", scope="mcp:public:read")
             return head :forbidden
