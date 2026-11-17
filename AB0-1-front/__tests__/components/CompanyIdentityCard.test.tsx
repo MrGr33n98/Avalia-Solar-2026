@@ -105,4 +105,21 @@ describe('CompanyIdentityCard Responsive Layout', () => {
       'flex-col-reverse', 'md:flex-row'
     );
   });
+  test('only invites the first review when there are no approved reviews', () => {
+    render(
+      <CompanyIdentityCard
+        company={mockCompany}
+        companyStats={{ rating: '0', reviewCount: 0 }}
+        logoUrl={null}
+        logoError={false}
+        setLogoError={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/Sem avaliações/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Novo perfil/)).not.toBeInTheDocument();
+    const firstReviewLink = screen.getByRole('link', { name: 'Seja o primeiro a avaliar' });
+    expect(firstReviewLink).toHaveAttribute('href', expect.stringContaining('/review'));
+  });
+
 });

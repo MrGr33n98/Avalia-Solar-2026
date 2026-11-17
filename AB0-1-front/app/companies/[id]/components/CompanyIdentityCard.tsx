@@ -382,11 +382,15 @@ export default function CompanyIdentityCard({
                   </span>
                 </div>
               ) : (
-                <span>Sem avaliações · Seja o primeiro</span>
+                <Link
+                  href={reviewPath}
+                  className="font-semibold text-blue-600 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                >
+                  Seja o primeiro a avaliar
+                </Link>
               )}
 
-              <span className="text-slate-300 select-none" aria-hidden="true">·</span>
-              <CompanyViewCounter companyId={company.id} />
+              <CompanyViewCounter companyId={company.id} hideLowCount showSeparator />
             </div>
           </div>
         </div>

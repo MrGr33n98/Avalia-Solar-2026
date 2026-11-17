@@ -6,6 +6,10 @@ import { useProfileViewTracker } from '@/hooks/useProfileViewTracker';
 
 interface Props {
   companyId: number | string;
+  /** Hide the "Novo perfil" placeholder when views are still below 100. */
+  hideLowCount?: boolean;
+  /** Let the counter own its separator so no orphan bullet remains when hidden. */
+  showSeparator?: boolean;
 }
 
 /**
@@ -18,7 +22,7 @@ interface Props {
  *   1.000–9.999 → "1,2 mil visualizações"
  *   10.000+    → "12,3 mil visualizações"
  */
-export default function CompanyViewCounter({ companyId }: Props) {
+export default function CompanyViewCounter({ companyId, hideLowCount = false, showSeparator = false }: Props) {
   const [count, setCount] = useState<number | null>(null);
 
   // Rastreia a visualização com timer de 3s + Page Visibility
@@ -43,7 +47,7 @@ export default function CompanyViewCounter({ companyId }: Props) {
 
   if (count === null) return null; // loading — não exibe skeleton para não poluir header
 
-  const label = formatViewCount(count);
+  const label = hideLowCount && count < 100 ? null : formatViewCount(count);
   if (!label) return null; // 0 visualizações — não exibe
 
   return (
@@ -51,6 +55,9 @@ export default function CompanyViewCounter({ companyId }: Props) {
       className="flex items-center gap-1 text-slate-500"
       aria-label={`${count} visualizações do perfil`}
     >
+      {showSeparator && (
+        <span className="mr-1 select-none text-slate-300" aria-hidden="true">·</span>
+      )}
       <Eye className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
       <span className="text-xs sm:text-sm">{label}</span>
     </span>
