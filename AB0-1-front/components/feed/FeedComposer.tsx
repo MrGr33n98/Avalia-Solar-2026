@@ -6,6 +6,7 @@ import { PenSquare, Star, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeedStore } from '@/store/feedStore';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { ReviewAction } from '@/components/company/ReviewAction';
 
 export function FeedComposer() {
   const { user } = useAuth();
@@ -33,13 +34,7 @@ export function FeedComposer() {
           <PenSquare className="h-4 w-4 text-emerald-500" />
           <span>Escrever Artigo</span>
         </Link>
-        <Link
-          href="/reviews/my"
-          className="flex items-center gap-2 hover:text-primary transition-colors py-1 px-2 rounded-lg hover:bg-muted/50"
-        >
-          <Star className="h-4 w-4 text-amber-500" />
-          <span>Avaliar Empresa</span>
-        </Link>
+        <ReviewAction href="/reviews/my" compactLabel="Avaliar" className="px-2" />
         <button
           type="button"
           onClick={openComposer}
