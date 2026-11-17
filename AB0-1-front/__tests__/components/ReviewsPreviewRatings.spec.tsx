@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import ReviewsPreview from '@/app/companies/[id]/components/ReviewsPreview';
 import type { Company } from '@/lib/api';
 
@@ -72,4 +72,28 @@ describe('ReviewsPreview — estrelas da reputação geral', () => {
     expect(screen.queryByRole('img', { name: /Avaliação: .* de 5 estrelas/ })).not.toBeInTheDocument();
     expect(screen.queryByText('(0 opiniões)')).not.toBeInTheDocument();
   });
+  it('usa opção 07 na Brand Page, mantendo o link e abertura da aba no estado vazio', () => {
+    const onTabChange = jest.fn();
+    render(
+      <ReviewsPreview
+        company={{ ...baseCompany, rating_avg: 0, rating_count: 0 }}
+        reviews={[]}
+        reviewsLoading={false}
+        onTabChange={onTabChange}
+      />
+    );
+
+    const headerLink = screen.getByTestId('reviews-preview-review-cta');
+    const emptyButton = screen.getByTestId('reviews-empty-review-cta');
+
+    expect(headerLink).toHaveAttribute('href', '/companies/empresa-de-teste/review');
+    expect(headerLink).toHaveAccessibleName('Deixe sua avaliação de Empresa de teste');
+    expect(headerLink.querySelector('svg')).toHaveClass('lucide-message-circle');
+
+    expect(emptyButton).toHaveAccessibleName('Deixe sua avaliação de Empresa de teste');
+    expect(emptyButton).toHaveTextContent('Deixe sua avaliação');
+    fireEvent.click(emptyButton);
+    expect(onTabChange).toHaveBeenCalledWith('reviews');
+  });
+
 });
