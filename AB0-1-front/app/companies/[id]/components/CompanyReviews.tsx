@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Link from 'next/link';
 import { Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Review, type CompanyReviewWhatsAppChannel } from '@/lib/api';
 import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
 import { ReviewAction } from '@/components/company/ReviewAction';
