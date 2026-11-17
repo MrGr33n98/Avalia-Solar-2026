@@ -18,6 +18,7 @@ import {
 import { CompareCheckboxControl } from '@/components/compare/CompareCheckboxControl';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
+import { ReviewAction } from '@/components/company/ReviewAction';
 import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -722,14 +723,12 @@ export default function CompanyCard({
                 <span className="truncate">Ver perfil</span>
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full min-h-12 h-auto py-2 rounded-lg border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] sm:text-xs font-medium inline-flex items-center justify-center gap-1 px-1"
+              <ReviewAction
                 onClick={handleReviewClick}
-              >
-                <Star className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                <span className="truncate">Avaliar</span>
-              </Button>
+                compactLabel="Avaliar"
+                ariaLabel={`Avaliar empresa: ${name}`}
+                className="min-h-12 w-full px-1"
+              />
             )}
 
             {/* 3. MENU DE MAIS AÇÕES (••• Mais) */}
