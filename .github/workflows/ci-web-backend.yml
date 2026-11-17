@@ -55,6 +55,8 @@ jobs:
         run: python3 .github/scripts/test_classify_change_impact.py
       - name: Contract tests for documentation validator
         run: python3 .github/scripts/test_validate_docs_pr.py
+      - name: Regression manual documentation dispatch (trusted whole-branch diff)
+        run: python3 .github/scripts/test_docs_manual_dispatch.py
       - name: Contract tests for CI timing metrics
         run: python3 .github/scripts/test_analyze_ci_runs.py
       - name: Resolve changed paths and publish advisory summary
