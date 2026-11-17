@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Separator } from '@/components/ui/separator';
 import { reviewerNavItems, isNavItemActive, type ReviewerNavItem } from '../reviewerNavigation';
 import { layout } from '../tokens';
+import { ReviewerIdentityCard } from './ReviewerIdentityCard';
 
 const STORAGE_KEY = 'reviewer_sidebar_collapsed';
 
@@ -49,6 +50,7 @@ export function ReviewerSidebar() {
           </div>
         )}
         {collapsed && <div className="pt-4" />}
+        {!collapsed && <ReviewerIdentityCard />}
 
         {/* Main nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-1">
