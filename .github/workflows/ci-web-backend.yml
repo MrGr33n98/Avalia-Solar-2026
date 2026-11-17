@@ -388,6 +388,8 @@ jobs:
         run: npm run typecheck
       - name: Run Navbar and registration ticker tests
         run: npm test -- CompanyRegistrationTicker Navbar.test --runInBand
+      - name: Run Related Companies compact layout regression
+        run: npm test -- --runInBand RelatedCompaniesTable RelatedCompaniesCarousel
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 
