@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
   test.beforeEach(async ({ page }) => {
+    await page.context().addCookies([
+      { name: 'jwt_token', value: 'e2e-reviewer-token', domain: 'localhost', path: '/', httpOnly: true },
+    ]);
     await page.route('**/api/v1/auth/me', (route) =>
       route.fulfill({
         status: 200,
