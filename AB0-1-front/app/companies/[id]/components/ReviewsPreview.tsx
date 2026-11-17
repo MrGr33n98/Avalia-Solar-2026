@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MessageSquare, Star, ArrowRight } from 'lucide-react';
+import { MessageSquare, MessageCircle, Star, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Company, Review } from '@/lib/api';
@@ -10,7 +10,6 @@ import { RatingStars } from '@/components/RatingStars';
 import { getFullImageUrl } from '@/utils/image';
 
 import { buildCompanySubPath } from '@/lib/slug';
-import { ReviewAction } from '@/components/company/ReviewAction';
 import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
 
 interface ReviewsPreviewProps {
@@ -97,13 +96,14 @@ export default function ReviewsPreview({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <ReviewAction
+            <Link
               href={reviewPath}
-              compactLabel="Avaliar"
-              ariaLabel={`Deixe sua avaliação de ${company.name}`}
-              testId="reviews-preview-review-cta"
-              className="shrink-0"
-            />
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-3 text-xs font-bold text-slate-900 transition-colors hover:bg-amber-500/[0.12]"
+            >
+              <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="hidden sm:inline">Avaliar empresa</span>
+              <span className="sm:hidden">Avaliar</span>
+            </Link>
             {ratingCount > 0 && (
               <Button
                 variant="ghost"
@@ -279,12 +279,16 @@ export default function ReviewsPreview({
               instalação de energia solar.
             </p>
             <div className="flex w-full flex-col items-stretch justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <ReviewAction
+              <Button
+                type="button"
+                size="sm"
+                data-testid="brand-empty-review-cta"
                 onClick={() => onTabChange('reviews')}
-                ariaLabel={`Deixe sua avaliação de ${company.name}`}
-                testId="reviews-empty-review-cta"
-                className="w-full sm:w-auto"
-              />
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-[#E1E5EB] bg-[#F2F4F6] px-4 py-2 text-xs font-semibold leading-4 text-[#101F3F] shadow-none transition-colors hover:border-[#C4CEDA] hover:bg-[#E8EDF2] hover:text-[#101F3F] focus-visible:ring-2 focus-visible:ring-[#0F62FE] focus-visible:ring-offset-2 sm:w-auto"
+              >
+                <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Deixe aqui sua Avaliação
+              </Button>
               <ReviewWhatsAppButton
                 companyId={company.id}
                 companyName={company.name}

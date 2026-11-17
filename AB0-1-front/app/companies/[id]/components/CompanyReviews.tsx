@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Review, type CompanyReviewWhatsAppChannel } from '@/lib/api';
 import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
-import { ReviewAction } from '@/components/company/ReviewAction';
 import ReviewCard from '@/components/ReviewCard';
 import { buildCompanySubPath } from '@/lib/slug';
 import { EditorialReviewCard, ReviewV2 } from '@/components/EditorialReviewCard';
@@ -126,7 +127,12 @@ export default function CompanyReviews({
           </p>
         </div>
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <ReviewAction href={reviewPath} ariaLabel={`Deixe sua avaliação de ${companyName || 'esta empresa'}`} />
+          <Button
+            asChild
+            className="min-h-11 rounded-lg bg-[#0B1F4B] px-5 text-xs font-bold shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
+          >
+            <Link href={reviewPath}>Avaliar Agora</Link>
+          </Button>
           <ReviewWhatsAppButton
             companyId={companyId}
             companyName={companyName || 'esta empresa'}
@@ -178,7 +184,13 @@ export default function CompanyReviews({
               : 'Esta empresa ainda não recebeu avaliações específicas para este serviço.'}
             Seja o primeiro a compartilhar sua experiência!
           </p>
-          <ReviewAction href={reviewPath} ariaLabel={`Deixe sua avaliação de ${companyName || 'esta empresa'}`} />
+          <Button
+            asChild
+            variant="outline"
+            className="min-h-11 rounded-lg border-slate-900 px-8 font-bold"
+          >
+            <Link href={reviewPath}>Deixar Primeira Avaliação</Link>
+          </Button>
         </div>
       )}
     </section>

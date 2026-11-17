@@ -53,7 +53,7 @@ describe('CompanyHero', () => {
       <CompanyHero {...baseProps} company={{ ...(baseCompany as any), active_admin: false }} />
     );
 
-    expect(screen.getByRole('link', { name: /Deixe sua avaliação/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /orçamento/i })).not.toBeInTheDocument();
   });
 
@@ -76,7 +76,7 @@ describe('CompanyHero', () => {
 
     expect(screen.queryByRole('button', { name: /whatsapp/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /solicitar orçamento/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Deixe sua avaliação/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Avaliar/i })).toBeInTheDocument();
   });
 
   it('preserva a identidade visual da empresa sem duplicar informações de contato', () => {

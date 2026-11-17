@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Cpu,
@@ -10,7 +11,7 @@ import {
   X,
   Plus,
 } from 'lucide-react';
-import { ReviewAction } from '@/components/company/ReviewAction';
+import { Button } from '@/components/ui/button';
 
 export interface UserSolution {
   id: string;
@@ -85,12 +86,16 @@ export function UserSolutionChip({ solution, onRemove }: UserSolutionChipProps) 
 
       <div className="flex items-center gap-1.5 ml-2 border-l border-gray-100 pl-2">
         {solution.type === 'company' && solution.companyId && (
-          <ReviewAction
-            href={`/companies/${solution.companyId}#review-form`}
-            label="Avaliar"
-            ariaLabel={`Deixe sua avaliação de ${solution.name}`}
-            className="px-2"
-          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 rounded-lg bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 transition-colors"
+            asChild
+          >
+            <Link href={`/companies/${solution.companyId}#review-form`}>
+              Avaliar
+            </Link>
+          </Button>
         )}
 
         <button

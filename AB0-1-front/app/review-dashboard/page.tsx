@@ -7,7 +7,6 @@ import { useDashboardContext } from './DashboardLayoutClient';
 import { track } from '@/lib/analytics/lazy';
 import { ReviewCompanyAvatar } from '@/components/review-dashboard/ReviewCompanyAvatar';
 import { ReviewMetricStrip } from '@/components/review-dashboard/ReviewMetricStrip';
-import { ReviewAction } from '@/components/company/ReviewAction';
 
 function statusLabel(status?: string) {
   if (status === 'approved') return 'Publicada';
@@ -83,7 +82,9 @@ export default function ReviewerOverviewPage() {
           Veja o status, acompanhe a moderação e compartilhe experiências reais.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:flex">
-          <ReviewAction href="/companies" compactLabel="Avaliar" className="w-full sm:w-auto" />
+          <Link href="/companies" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#0F62FE] px-2 text-center text-[11px] font-semibold text-white transition hover:bg-[#0043CE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F62FE] sm:px-5 sm:text-sm">
+            + Avaliar empresa
+          </Link>
           <Link href="/review-dashboard/reviews" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[#C6C6C6] bg-white px-2 text-center text-[11px] font-semibold text-[#0F2F64] transition hover:bg-[#EDF5FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F62FE] sm:px-5 sm:text-sm">
             Minhas avaliações
           </Link>

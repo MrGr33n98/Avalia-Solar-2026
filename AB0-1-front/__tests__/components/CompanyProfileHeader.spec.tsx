@@ -293,19 +293,12 @@ describe('SPEC-UI-027 — Perfil de Empresas Header & Identidade Visual', () => 
       expect(review).toHaveAttribute('href', expect.stringMatching(/\/review(?:\/|$)/));
 
       expect(icons).toHaveClass('gap-0', 'md:gap-1.5');
-      // Favoritar/Compartilhar mantêm seus wrappers Tailwind anteriores.
-      for (const control of [favorite, share]) {
+      for (const control of [favorite, share, review]) {
         expect(control).toHaveClass('h-10', 'w-10', 'md:h-11', 'md:w-11', 'focus-visible:ring-2');
         expect(control.firstElementChild).toHaveClass('h-7', 'w-7', 'md:h-9', 'md:w-9');
         expect(control.querySelector('svg')).toHaveClass('h-3.5', 'w-3.5', 'md:h-[17px]', 'md:w-[17px]');
         expect(control).toHaveTextContent('');
       }
-      // ReviewAction v7 é link acessível, usa CSS Module com alvo 44x44,
-      // foco visível e ícone de conversa (em vez do wrapper antigo Tailwind).
-      expect(review).toHaveClass('iconOnly', 'shrink-0');
-      expect(review).toHaveAttribute('title', 'Deixe sua avaliação de WEG Solar');
-      expect(review.querySelector('svg')).toHaveClass('lucide-message-circle');
-      expect(review).toHaveTextContent('');
       expect(share).not.toHaveClass('hidden', 'lg:flex');
       expect(review).not.toHaveClass('lg:hidden');
       expect(screen.getAllByRole('link', { name: 'Avaliar empresa: WEG Solar' })).toHaveLength(1);
