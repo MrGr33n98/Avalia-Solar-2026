@@ -4,6 +4,18 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ProductCategoryCard } from './ProductCategoryCard';
 import type { ResolvedQuickProductCategory } from '@/lib/products/quick-product-categories';
 
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({
+    alt = '',
+    unoptimized: _unoptimized,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement> & { unoptimized?: boolean }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt={alt} {...props} />
+  ),
+}));
+
 const base: ResolvedQuickProductCategory = {
   key: 'inversores',
   label: 'Inversores',
