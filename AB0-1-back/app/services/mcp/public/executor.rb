@@ -11,6 +11,8 @@ module Mcp
         list_integrators
         show_integrator_profile
         list_solar_categories
+        get_integrator_reputation
+        compare_integrators
       ].freeze
 
       class << self
@@ -18,7 +20,14 @@ module Mcp
           raise InputValidator::Invalid, 'Unknown public tool.' unless Mcp::PublicToolRegistry.names.include?(name)
           raise NotAvailable, 'Tool not available in the current release.' unless DIRECTORY_TOOLS.include?(name)
 
-          DirectoryService.new(principal: principal).call(name: name, arguments: arguments)
+          case name
+          when 'get_integrator_reputation'
+            ReputationService.new.call(arguments: arguments)
+          when 'compare_integrators'
+            ComparisonService.new.call(arguments: arguments)
+          else
+            DirectoryService.new(principal: principal).call(name: name, arguments: arguments)
+          end
         end
       end
     end
