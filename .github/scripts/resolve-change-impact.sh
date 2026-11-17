@@ -24,8 +24,23 @@ case "${GITHUB_EVENT_NAME:-}" in
       fallback_reason="MISSING_EVENT_PAYLOAD"
     fi
     ;;
-  schedule|workflow_dispatch)
+  schedule)
     fallback_reason="SCHEDULED_OR_MANUAL_FULL"
+    ;;
+  workflow_dispatch)
+    if [[ "${TEST_SUITE_INPUT:-}" == "docs_only" ]]; then
+      # A manual docs-only run must compare the entire branch with the
+      # trusted merge-base of origin/main, never HEAD~1 or a user-supplied SHA.
+      if ! git fetch --no-tags origin main >/dev/null 2>&1; then
+        fallback_reason="BASE_FETCH_FAILED"
+      elif ! base_sha="$(git merge-base "$head_sha" FETCH_HEAD)"; then
+        fallback_reason="MERGE_BASE_FAILED"
+      elif [[ -z "$base_sha" ]]; then
+        fallback_reason="MERGE_BASE_FAILED"
+      fi
+    else
+      fallback_reason="SCHEDULED_OR_MANUAL_FULL"
+    fi
     ;;
   *)
     fallback_reason="UNSUPPORTED_GITHUB_EVENT"
@@ -61,7 +76,7 @@ import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
     plan = json.load(f)
 with open(sys.argv[2], "a", encoding="utf-8") as out:
-    for key in ("release_scope", "risk", "fallback", "css_canary_eligible"):
+    for key in ("release_scope", "risk", "fallback", "css_canary_eligible", "docs_only"):
         value = plan[key]
         out.write("{}={}\n".format(key, str(value).lower() if isinstance(value, bool) else value))
 PY
