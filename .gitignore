@@ -73,6 +73,8 @@ AB0-1-front/public/avalia-solar-upgrade-assets/
 !AB0-1-front/__tests__/contexts/LocationContext.test.tsx
 !AB0-1-front/__tests__/components/CompanyMarketplaceProposalsWorkspaceDeepLink.test.tsx
 !AB0-1-front/__tests__/components/sales/OpportunityCard.test.tsx
+!AB0-1-front/components/user-profile/__tests__/
+!AB0-1-front/components/user-profile/__tests__/UserProfile.test.tsx
 !AB0-1-front/__tests__/components/sales/SalesAnalyticsReport.test.tsx
 !AB0-1-front/components/sales/leads/create/CreateLeadModal.board-refresh.test.tsx
 !AB0-1-front/__tests__/navigation/MobileBottomNav.test.tsx
