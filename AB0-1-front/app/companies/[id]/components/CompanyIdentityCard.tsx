@@ -13,6 +13,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { track } from '@/lib/analytics/lazy';
 import { cn } from '@/lib/utils';
 import { buildCompanySubPath } from '@/lib/slug';
+import { ReviewAction } from '@/components/company/ReviewAction';
 
 import CompanyViewCounter from './CompanyViewCounter';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
@@ -294,17 +295,14 @@ export default function CompanyIdentityCard({
                 <Share2 className="h-3.5 w-3.5 md:h-[17px] md:w-[17px] text-slate-600" aria-hidden="true" />
               </span>
             </button>
-            <Link
+            <ReviewAction
               href={reviewPath}
-              aria-label={`Avaliar empresa: ${company.name}`}
-              title={`Avaliar empresa: ${company.name}`}
-              data-testid="company-review-star"
-              className="group inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-xl md:h-11 md:w-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-[9px] border border-amber-200 md:h-9 md:w-9 md:rounded-xl bg-amber-50 text-amber-500 transition-colors group-hover:border-amber-300 group-hover:bg-amber-100">
-                <Star className="h-3.5 w-3.5 md:h-[17px] md:w-[17px] fill-amber-400 text-amber-500" aria-hidden="true" />
-              </span>
-            </Link>
+              iconOnly
+              ariaLabel={`Avaliar empresa: ${company.name}`}
+              title={`Deixe sua avaliação de ${company.name}`}
+              testId="company-review-star"
+              className="shrink-0"
+            />
             </div>
         </div>
       </div>
