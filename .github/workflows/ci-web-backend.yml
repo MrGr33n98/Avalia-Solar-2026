@@ -390,6 +390,12 @@ jobs:
         run: npm test -- CompanyRegistrationTicker Navbar.test --runInBand
       - name: Run Related Companies compact layout regression
         run: npm test -- --runInBand RelatedCompaniesTable RelatedCompaniesCarousel
+      - name: Run Buyer Proposals Carbon UI regression
+        run: >-
+          npm test -- --runInBand
+          components/reviewer/proposals/ProjectJourneyStepper.spec.tsx
+          __tests__/components/ProposalStatusSummary.test.tsx
+          __tests__/components/ProposalCompactCard.test.tsx
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 
