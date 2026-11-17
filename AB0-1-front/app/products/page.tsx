@@ -7,8 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
 import { ProductCategoryRail } from '@/components/products/ProductCategoryRail';
+import { ProductViewToggle } from '@/components/products/ProductViewToggle';
 import { Button } from '@/components/ui/button';
-import { Filter, Building2, ChevronRight, RefreshCw, Grid, List } from 'lucide-react';
+import { Filter, Building2, ChevronRight, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -260,11 +261,11 @@ function ProductsPageContent() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-auto">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 self-end sm:w-auto sm:gap-3 sm:self-auto">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ordenar por</span>
+              <span className="hidden text-xs font-bold uppercase tracking-wider text-slate-400 sm:inline">Ordenar por</span>
               <Select value={filters.sort} onValueChange={(val) => handleFilterChange('sort', val)}>
-                <SelectTrigger className="h-10 w-44 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold shadow-sm">
+                <SelectTrigger className="h-10 w-36 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold shadow-sm sm:w-44">
                   <SelectValue placeholder="Mais relevantes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -276,31 +277,8 @@ function ProductsPageContent() {
               </Select>
             </div>
 
-            {/* Alternador de Layout */}
-            <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm h-10">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'h-8 w-8 rounded-md',
-                  viewMode === 'list' && 'bg-blue-50 text-blue-600'
-                )}
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'h-8 w-8 rounded-md',
-                  viewMode === 'grid' && 'bg-blue-50 text-blue-600'
-                )}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* Alternador de layout compacto, com alvos acessíveis e sem overflow no PWA. */}
+            <ProductViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           </div>
         </div>
 
