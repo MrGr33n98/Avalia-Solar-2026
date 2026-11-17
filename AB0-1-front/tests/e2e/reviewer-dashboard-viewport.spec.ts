@@ -2,6 +2,13 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
   test.beforeEach(async ({ page }) => {
+    // Existing browser sessions carry this client-side hint. The actual JWT remains
+    // an httpOnly cookie and is issued/validated by Rails; this flag is not an auth bypass.
+    // Without it, AuthContext skips /auth/me even when the test has a valid login cookie.
+    await page.addInitScript(() => {
+      window.localStorage.setItem('avalia.auth.session_hint', '1');
+    });
+
     // Authenticate against the disposable CI Rails backend, just like auth-logout.spec.ts.
     // A synthetic jwt_token is invalid for Devise and leads to AuthContext rejecting the
     // session before the dashboard shell is rendered (false E2E failures).
