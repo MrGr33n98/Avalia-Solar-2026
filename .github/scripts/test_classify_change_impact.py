@@ -74,6 +74,7 @@ class PolicyContract(unittest.TestCase):
                 self.assertEqual(plan["fallback"], area == "unknown")
                 self.assertTrue(plan["advisory_only"])
                 self.assertEqual(plan["test_plan"]["required_gate"], "build")
+                self.assertEqual(plan["docs_only"], area == "docs_only")
 
     def test_css_canary_is_only_for_isolated_module_css_changes(self):
         approved = ci.make_plan([ci.Change("M", "AB0-1-front/components/cards/Card.module.css")])
@@ -187,6 +188,29 @@ class PolicyContract(unittest.TestCase):
         payload = json.dumps(ci.make_plan([ci.Change("M", "AB0-1-front/components/Card.tsx")]))
         self.assertNotIn("token", payload.lower())
         self.assertIn('"advisory_only": true', payload)
+
+    def test_docs_only_pr_is_true(self):
+        four_docs = ci.make_plan([
+            ci.Change("M", "docs/architecture/ADR.md"),
+            ci.Change("M", "docs/guides/setup.md"),
+            ci.Change("M", "README.md"),
+            ci.Change("A", "docs/ci-cd-performance.md"),
+        ])
+        self.assertTrue(four_docs["docs_only"])
+        self.assertEqual(four_docs["risk"], "low")
+        self.assertEqual(four_docs["release_scope"], "none")
+
+    def test_mixed_docs_and_code_is_not_docs_only(self):
+        mixed = ci.make_plan([
+            ci.Change("M", "docs/guides/setup.md"),
+            ci.Change("M", "AB0-1-back/app/models/company.rb"),
+        ])
+        self.assertFalse(mixed["docs_only"])
+        self.assertNotEqual(mixed["release_scope"], "none")
+
+    def test_fallback_is_not_docs_only(self):
+        result = ci.fallback("DIFF_UNAVAILABLE")
+        self.assertFalse(result["docs_only"])
 
 
 if __name__ == "__main__":

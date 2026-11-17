@@ -236,6 +236,7 @@ def make_plan(changes: Iterable[Change], *, base_sha: str | None = None, head_sh
         "fallback": "unknown" in areas,
         "advisory_only": True,
         "css_canary_eligible": css_canary_eligible,
+        "docs_only": docs_only,
         "changed_files_count": len(items),
     }
     return plan

@@ -4,14 +4,20 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Suite de testes para executar'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - 'full'
+          - 'critical'
+          - 'docs_only'
   push:
     branches: [ "main", "develop", "staging" ]
   pull_request:
     branches: [ "main", "develop" ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
 
 concurrency:
   group: enterprise-ci-${{ github.ref }}
@@ -28,30 +34,58 @@ env:
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
-  # Observational only: no existing job or production release gate depends on it.
+  # Evaluates change impact and determines test scopes (docs_only, css_canary, rspec, e2e)
   change-impact-shadow:
-    name: Change Impact (Shadow Mode)
+    name: Change Impact & Risk Classification
     runs-on: ubuntu-24.04
     timeout-minutes: 3
-    continue-on-error: true
     permissions:
       contents: read
     outputs:
       css_canary_eligible: ${{ steps.impact.outputs.css_canary_eligible }}
+      docs_only: ${{ steps.impact.outputs.docs_only }}
+      risk: ${{ steps.impact.outputs.risk }}
+      release_scope: ${{ steps.impact.outputs.release_scope }}
+      fallback: ${{ steps.impact.outputs.fallback }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Contract tests for impact classifier
         run: python3 .github/scripts/test_classify_change_impact.py
+      - name: Contract tests for documentation validator
+        run: python3 .github/scripts/test_validate_docs_pr.py
       - name: Contract tests for CI timing metrics
         run: python3 .github/scripts/test_analyze_ci_runs.py
       - name: Resolve changed paths and publish advisory summary
         id: impact
         run: bash .github/scripts/resolve-change-impact.sh
 
+  docs-validation:
+    name: Documentation Quality & Integrity Gate
+    needs: change-impact-shadow
+    if: >-
+      ${{ !cancelled() &&
+          needs.change-impact-shadow.result == 'success' &&
+          ((github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') ||
+           (github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate documentation changes and links
+        run: bash .github/scripts/validate-docs-pr.sh
+
   fast-feedback:
     name: Code Quality & Security Scan
+    needs: change-impact-shadow
+    if: >-
+      ${{ !cancelled() &&
+          needs.change-impact-shadow.result == 'success' &&
+          !(github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -123,7 +157,12 @@ jobs:
 
   backend-tests:
     name: Backend Unit Tests (RSpec)
-    needs: fast-feedback
+    needs: [change-impact-shadow, fast-feedback]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          !(github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
@@ -196,7 +235,10 @@ jobs:
 
   ranking-performance-gate:
     name: Ranking Performance Contract
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: >-
+      ${{ !cancelled() &&
+          (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.test_suite == 'full' || inputs.test_suite == ''))) &&
+          needs.fast-feedback.result == 'success' }}
     needs: fast-feedback
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -314,7 +356,12 @@ jobs:
 
   ranking-frontend-gate:
     name: Ranking Performance Frontend Contract
-    needs: fast-feedback
+    needs: [change-impact-shadow, fast-feedback]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          !(github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -340,7 +387,12 @@ jobs:
 
   category-seo-contract-gate:
     name: Category Discovery & SEO Contract Gate
-    needs: fast-feedback
+    needs: [change-impact-shadow, fast-feedback]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          !(github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -390,7 +442,7 @@ jobs:
 
   e2e-tests:
     name: E2E Playwright Tests
-    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, change-impact-shadow]
+    needs: [change-impact-shadow, fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
     if: >-
       ${{ !cancelled() &&
           needs.fast-feedback.result == 'success' &&
@@ -400,11 +452,15 @@ jobs:
           (needs.ranking-performance-gate.result == 'success' ||
            needs.ranking-performance-gate.result == 'skipped') &&
           !(github.event_name == 'pull_request' &&
+            needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' &&
+            inputs.test_suite == 'docs_only') &&
+          !(github.event_name == 'pull_request' &&
             vars.SMART_CI_ENABLED == 'true' &&
             needs.change-impact-shadow.result == 'success' &&
             needs.change-impact-shadow.outputs.css_canary_eligible == 'true') }}
     runs-on: ubuntu-24.04
-    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 120 || 30 }}
+    timeout-minutes: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.test_suite == 'full' || inputs.test_suite == ''))) && 120 || 30 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -461,7 +517,7 @@ jobs:
         run: npm run test:banners
 
       - name: Run critical release E2E (Chromium)
-        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+        if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.test_suite == 'critical')
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
@@ -480,8 +536,8 @@ jobs:
           && npx playwright test --project=chromium
           tests/e2e/category-seo.spec.ts --grep @critical
 
-      - name: Run extended E2E suite (scheduled or manual)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      - name: Run extended E2E suite (scheduled or manual full)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && (inputs.test_suite == 'full' || inputs.test_suite == ''))
         working-directory: ./AB0-1-front
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
@@ -509,20 +565,23 @@ jobs:
 
   build:
     name: build
-    needs: [fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, change-impact-shadow, e2e-tests]
+    needs: [change-impact-shadow, docs-validation, fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, e2e-tests]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Verify all mandatory checks and approved CSS-only PR canary skips
+      - name: Verify all mandatory checks and approved skips (Smart CI Gate)
         env:
+          IMPACT_RESULT: ${{ needs.change-impact-shadow.result }}
+          DOCS_RESULT: ${{ needs.docs-validation.result }}
+          DOCS_ONLY: ${{ needs.change-impact-shadow.outputs.docs_only }}
           FAST_RESULT: ${{ needs.fast-feedback.result }}
           BACKEND_RESULT: ${{ needs.backend-tests.result }}
           RANKING_GATE_RESULT: ${{ needs.ranking-performance-gate.result }}
           RANKING_FRONTEND_RESULT: ${{ needs.ranking-frontend-gate.result }}
           CATEGORY_RESULT: ${{ needs.category-seo-contract-gate.result }}
           E2E_RESULT: ${{ needs.e2e-tests.result }}
-          IMPACT_RESULT: ${{ needs.change-impact-shadow.result }}
           CSS_CANARY_ELIGIBLE: ${{ needs.change-impact-shadow.outputs.css_canary_eligible }}
           SMART_CI_ENABLED: ${{ vars.SMART_CI_ENABLED || 'false' }}
+          TEST_SUITE_INPUT: ${{ inputs.test_suite || 'default' }}
         run: bash .github/scripts/verify-smart-ci-gate.sh

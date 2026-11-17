@@ -4,6 +4,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 gate="$ROOT/.github/scripts/verify-smart-ci-gate.sh"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
+
 check() {
   local name="$1" expected="$2"
   shift 2
@@ -14,6 +15,7 @@ check() {
     RANKING_GATE_RESULT=skipped IMPACT_RESULT=success \
     E2E_RESULT=success CSS_CANARY_ELIGIBLE=false \
     SMART_CI_ENABLED=false GITHUB_EVENT_NAME=pull_request \
+    DOCS_RESULT=skipped DOCS_ONLY=false \
     "$@" bash "$gate" >"$tmp/result" 2>&1; then
     observed="allow"
   fi
@@ -24,6 +26,8 @@ check() {
   fi
   echo "PASS: $name => $observed"
 }
+
+# Standard and CSS canary checks
 check "normal green" allow
 check "css-only canary enabled" allow E2E_RESULT=skipped CSS_CANARY_ELIGIBLE=true SMART_CI_ENABLED=true
 check "disabled canary never skips" block E2E_RESULT=skipped CSS_CANARY_ELIGIBLE=true
@@ -42,4 +46,16 @@ check "ranking failure blocks" block RANKING_GATE_RESULT=failure
 check "E2E failure never bypassed" block E2E_RESULT=failure CSS_CANARY_ELIGIBLE=true SMART_CI_ENABLED=true
 check "E2E cancelled never bypassed" block E2E_RESULT=cancelled CSS_CANARY_ELIGIBLE=true SMART_CI_ENABLED=true
 check "invalid toggle blocks" block E2E_RESULT=skipped CSS_CANARY_ELIGIBLE=true SMART_CI_ENABLED=maybe
+
+# Documentation-only PR checks
+check "docs-only PR allowed" allow DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success
+check "docs-only PR with failed docs job blocks" block DOCS_ONLY=true DOCS_RESULT=failure FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success
+check "docs-only PR with cancelled docs job blocks" block DOCS_ONLY=true DOCS_RESULT=cancelled FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success
+check "docs-only PR with failed impact blocks" block DOCS_ONLY=true DOCS_RESULT=success IMPACT_RESULT=failure FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped
+check "docs-only PR with failed code job blocks" block DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=failure BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success
+check "docs-only on main push never skips code" block DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success GITHUB_EVENT_NAME=push
+check "docs-only on schedule never skips code" block DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success GITHUB_EVENT_NAME=schedule
+check "docs-only manual dispatch allowed with docs_only input" allow DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success GITHUB_EVENT_NAME=workflow_dispatch TEST_SUITE_INPUT=docs_only
+check "docs-only manual dispatch with default suite blocks code skips" block DOCS_ONLY=true DOCS_RESULT=success FAST_RESULT=skipped BACKEND_RESULT=skipped RANKING_FRONTEND_RESULT=skipped CATEGORY_RESULT=skipped E2E_RESULT=skipped RANKING_GATE_RESULT=skipped IMPACT_RESULT=success GITHUB_EVENT_NAME=workflow_dispatch TEST_SUITE_INPUT=default
+
 echo "Smart CI required gate contract: all scenarios passed."
