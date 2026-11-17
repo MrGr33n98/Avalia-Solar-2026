@@ -10,57 +10,70 @@ export type UserTabId =
   | 'profile_details'
   | 'privacy_settings';
 
+/**
+ * Âncora de confiança exibida no card lateral.
+ *
+ * Regras de integridade:
+ * - Campos textuais vazios significam "não informado" e nunca recebem valores fictícios.
+ * - `is_verified` só pode ser `true` quando houver fonte persistida e confiável no backend.
+ *   Hoje não existe verificação profissional individual, portanto o mapper sempre envia `false`.
+ * - `trust_score` só é numérico quando calculado por serviço real; `null` oculta o indicador.
+ */
 export interface TrustAnchor {
   full_name: string;
-  display_name: string;
   avatar_url: string | null;
   role: string;
   company: string;
-  member_since: string;
+  member_since: string | null;
   is_verified: boolean;
   verification_type?: 'linkedin' | 'crea' | 'work_email' | null;
-  trust_score: number;
-  connected_accounts: ('linkedin' | 'google' | 'apple')[];
+  trust_score: number | null;
 }
 
+/** Campos persistidos: nome (users.name), headline (reviewer_profiles.profession), resumo (bio). */
 export interface PersonalDetails {
   first_name: string;
   last_name: string;
-  pronouns: string;
+  /** Somente leitura: derivado de users.city/state. */
   region: string;
   headline: string;
   summary: string;
 }
 
+/** Apenas `company_name` possui persistência (reviewer_profiles.company_name). */
 export interface ProfessionalDetails {
   company_name: string;
-  industry: string;
-  company_size: string;
-  role_function: string;
 }
 
+/**
+ * Preferências de privacidade.
+ * Não há endpoint de atualização nem regra pública única que as aplique,
+ * por isso a aba é exibida como indisponível e os valores ficam neutros.
+ */
 export interface PrivacySettings {
-  anonymize_last_name: boolean;
-  email_frequency: 'immediately' | 'daily' | 'weekly' | 'never';
-  profile_visibility: 'public' | 'verified_only' | 'private';
+  anonymize_last_name: boolean | null;
+  email_frequency: 'immediately' | 'daily' | 'weekly' | 'never' | null;
+  profile_visibility: 'public' | 'verified_only' | 'private' | null;
 }
 
+/** `null` = sem fonte confiável (indisponível). Zero só quando a fonte confirma ausência. */
 export interface UserProfileStats {
-  reviews_count: number;
-  saved_reviews_count: number;
-  drafts_count: number;
-  equipments_count: number;
+  reviews_count: number | null;
+  saved_reviews_count: number | null;
+  drafts_count: number | null;
+  equipments_count: number | null;
 }
 
+/** Espelha ReviewerSolution#as_json do Rails (GET /api/v1/reviewer_solutions). */
 export interface EquipmentItem {
   id: string;
-  brand: string;
-  model: string;
-  category: 'inverter' | 'module' | 'battery' | 'structure' | 'monitoring';
-  status: 'active' | 'evaluating' | 'replaced';
-  date_added: string;
-  rating?: number;
-  has_review?: boolean;
+  name: string;
+  type: 'company' | 'product' | 'service' | 'technology' | string;
+  category: string;
+  verified: boolean;
+  status: 'active' | 'rejected' | 'disabled' | string;
+  companyId?: string | null;
+  created_at?: string | null;
 }
 
 export interface UserProfileData {
@@ -70,6 +83,11 @@ export interface UserProfileData {
   professional_details: ProfessionalDetails;
   privacy_settings: PrivacySettings;
   stats: UserProfileStats;
-  equipments: EquipmentItem[];
+  /** `null` = falha ao carregar; `[]` = usuário sem equipamentos. */
+  equipments: EquipmentItem[] | null;
 }
 
+export interface ProfileSavePayload {
+  personal: PersonalDetails;
+  professional: ProfessionalDetails;
+}
