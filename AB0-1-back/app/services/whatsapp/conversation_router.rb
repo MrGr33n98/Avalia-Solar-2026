@@ -102,10 +102,12 @@ module Whatsapp
               "Deseja gerenciar este perfil? Responda *REIVINDICAR* ou *PLANOS* para conhecer os recursos de destaque."
         send_reply(msg)
       else
-        msg = "🔎 *Consultar Página de Empresa*\n\n" \
-              "Para ver como uma empresa aparece no Avalia Solar, envie:\n" \
-              "• O *CNPJ* (14 dígitos), ou\n" \
-              "• Acesse o diretório completo em: https://www.avaliasolar.com.br/companies"
+        msg = "🔎 *Consultar Perfil de Empresa — Avalia Solar*\n\n" \
+              "Para localizar a página de uma empresa no portal, por favor responda:\n\n" \
+              "👉 O *CNPJ da empresa* (14 dígitos), ou\n" \
+              "👉 O *Nome da empresa* (ex: *Perfil da WEG*)\n\n" \
+              "• Você também pode explorar o diretório completo em: https://www.avaliasolar.com.br/companies\n" \
+              "• Para voltar ao menu principal, envie *MENU*."
         send_reply(msg)
       end
     end
@@ -149,9 +151,10 @@ module Whatsapp
       end
 
       msg = "⭐ *Avaliar uma Empresa de Energia Solar*\n\n" \
-            "Você pode registrar sua avaliação por *áudio ou texto* de duas formas:\n" \
-            "1️⃣ Escaneando o QR Code ou clicando em *Avaliar pelo WhatsApp* na página da empresa em: https://www.avaliasolar.com.br/companies\n" \
-            "2️⃣ Ou respondendo aqui: *Quero avaliar a [Nome da Empresa]*"
+            "Você pode registrar sua avaliação por *áudio ou texto*:\n\n" \
+            "👉 Responda com: *Avaliar [Nome da Empresa]* (ex: *Avaliar WEG*)\n" \
+            "👉 Ou escaneie o QR Code na página da empresa em: https://www.avaliasolar.com.br/companies\n\n" \
+            "• Para voltar ao menu principal, envie *MENU*."
       send_reply(msg)
     end
 

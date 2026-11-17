@@ -80,4 +80,57 @@ RSpec.describe Whatsapp::ConversationRouter do
 
     expect(onboarding.reload.state).to eq('needs_human_review')
   end
+
+  describe 'roteamento de números do menu (BUGFIX-NUMERIC-ROUTING)' do
+    it 'roteia dígito 5 para apresentação de planos comerciais (sem acionar atendimento humano)' do
+      expect(gateway).to receive(:send_message).with(
+        anything,
+        satisfy { |msg|
+          msg.include?('Planos & Destaque para Integradores') &&
+            !msg.include?('Atendimento Humano')
+        }
+      )
+
+      described_class.call(
+        provider: 'waha',
+        provider_session: 'avalia-solar-voice',
+        contact: contact,
+        message: { 'id' => 'msg-num-5', 'text' => '5' }
+      )
+    end
+
+    it 'roteia dígito 4 para prompt interativo de consulta de perfil' do
+      expect(gateway).to receive(:send_message).with(
+        anything,
+        satisfy { |msg|
+          msg.include?('Consultar Perfil de Empresa') &&
+            msg.include?('CNPJ da empresa')
+        }
+      )
+
+      described_class.call(
+        provider: 'waha',
+        provider_session: 'avalia-solar-voice',
+        contact: contact,
+        message: { 'id' => 'msg-num-4', 'text' => '4' }
+      )
+    end
+
+    it 'roteia dígito 1 para instruções de avaliação de empresa' do
+      expect(gateway).to receive(:send_message).with(
+        anything,
+        satisfy { |msg|
+          msg.include?('Avaliar uma Empresa de Energia Solar') &&
+            msg.include?('Avaliar [Nome da Empresa]')
+        }
+      )
+
+      described_class.call(
+        provider: 'waha',
+        provider_session: 'avalia-solar-voice',
+        contact: contact,
+        message: { 'id' => 'msg-num-1', 'text' => '1' }
+      )
+    end
+  end
 end
