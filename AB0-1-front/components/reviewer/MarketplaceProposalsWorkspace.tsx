@@ -818,18 +818,18 @@ export function MarketplaceProposalsWorkspace() {
 
           {/* Banner de Comparação Direta do Projeto */}
           {activeProject && activeProject.receivedCount >= 1 && (
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                  <GitCompareArrows className="h-5 w-5" />
+            <div data-testid="buyer-proposal-alert" className="flex flex-col items-start justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50/60 p-2.5 sm:flex-row sm:items-center sm:p-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 sm:h-9 sm:w-9">
+                  <GitCompareArrows className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                  <h4 className="text-[13px] font-semibold leading-[18px] text-slate-900 sm:text-sm">
                     {activeProject.receivedCount === 1
                       ? '1 empresa enviou proposta para o seu projeto'
                       : `${activeProject.receivedCount} empresas enviaram propostas para o seu projeto`}
                   </h4>
-                  <p className="mt-0.5 text-xs sm:text-sm text-slate-600">
+                  <p className="mt-0.5 text-xs leading-[18px] text-slate-600">
                     Compare os valores, garantias e potência antes de tomar uma decisão.
                   </p>
                 </div>
@@ -847,7 +847,7 @@ export function MarketplaceProposalsWorkspace() {
                     query.set('compare', topIds.join(','));
                     router.push(pathname + '?' + query.toString(), { scroll: false });
                   }}
-                  className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-4 h-9 shadow-xs shrink-0"
+                  className="h-11 !min-h-11 shrink-0 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white shadow-none hover:bg-blue-700"
                 >
                   <GitCompareArrows className="h-4 w-4 mr-1.5" />
                   <span>Comparar propostas</span>
@@ -860,7 +860,7 @@ export function MarketplaceProposalsWorkspace() {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
               <span>Visão geral</span>
-              <span className="text-[11px] text-slate-400 font-normal">Situação atual</span>
+              <span className="text-[11px] font-normal text-slate-500">Todas as propostas</span>
             </div>
             <ProposalStatusSummary
               stats={stats}
@@ -870,7 +870,7 @@ export function MarketplaceProposalsWorkspace() {
           </div>
 
           {/* ── EMPRESAS E PROPOSTAS ── */}
-          <div className="space-y-3 pt-1 sm:pt-2">
+          <div className="space-y-2.5 pt-0 sm:space-y-3">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
               <span>Empresas e propostas</span>
               {(filter !== 'all' || Boolean(searchQuery.trim()) || regionFilter !== 'all' || companyFilter !== 'all' || sortBy !== 'recent') && (
@@ -895,7 +895,7 @@ export function MarketplaceProposalsWorkspace() {
             </div>
 
             {/* Abas em Pílula com rolagem horizontal controlada */}
-            <div className="flex items-center gap-1.5 p-1 rounded-full border border-slate-200/80 bg-white overflow-x-auto max-w-full scrollbar-none">
+            <div className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-slate-200 bg-white p-0.5 scrollbar-none">
               {filterTabs.map((tab) => {
                 const isActive = filter === tab.id;
                 return (
@@ -904,9 +904,9 @@ export function MarketplaceProposalsWorkspace() {
                     type="button"
                     onClick={() => handleFilterChange(tab.id)}
                     className={cn(
-                      'px-4 sm:px-6 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap',
+                      'h-11 !min-h-11 shrink-0 rounded-md px-3 text-xs font-semibold transition-colors whitespace-nowrap sm:px-4 sm:text-sm',
                       isActive
-                        ? 'bg-blue-600 text-white shadow-2xs'
+                        ? 'bg-blue-600 text-white'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     )}
                   >
@@ -917,7 +917,7 @@ export function MarketplaceProposalsWorkspace() {
             </div>
 
             {/* Barra de Ferramentas / Busca */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               {/* Campo de Busca (1 linha no mobile com min-w-0 flex-1) */}
               <div className="relative min-w-0 flex-1">
                 <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -926,7 +926,7 @@ export function MarketplaceProposalsWorkspace() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Buscar empresa ou proposta..."
-                  className="h-10 sm:h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-8 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-8 text-xs text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -948,7 +948,7 @@ export function MarketplaceProposalsWorkspace() {
                 onClick={() => setFiltersSheetOpen(true)}
                 aria-label="Abrir filtros avançados"
                 className={cn(
-                  'h-10 sm:h-11 w-10 sm:w-11 shrink-0 p-0 rounded-xl border-slate-200 bg-white sm:hidden',
+                  'h-11 w-11 !min-h-11 !min-w-11 shrink-0 rounded-lg border-slate-200 bg-white p-0 shadow-none sm:hidden',
                   (filter !== 'all' || regionFilter !== 'all' || companyFilter !== 'all' || sortBy !== 'recent') &&
                     'border-blue-500 bg-blue-50/60 text-blue-600 ring-1 ring-blue-500'
                 )}
@@ -1042,7 +1042,7 @@ export function MarketplaceProposalsWorkspace() {
             </div>
 
             {/* Contador de Solicitações Encontradas */}
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-0.5">
+            <div className="flex items-center justify-between gap-2 pt-0 text-xs font-medium text-slate-600">
               <span>
                 {filteredProposals.length}{' '}
                 {filteredProposals.length === 1 ? 'proposta encontrada' : 'propostas encontradas'}
@@ -1139,7 +1139,7 @@ export function MarketplaceProposalsWorkspace() {
             </div>
           ) : (
             /* Modo Cards Responsivo: 1 col PWA, 2 col tablet/md, até 3 col desktop */
-            <div className="grid grid-cols-1 gap-3 sm:gap-3.5 md:grid-cols-2 xl:grid-cols-3 items-start">
+            <div className={densityStyles.cardsContainer}><div data-testid="buyer-proposals-card-grid" className={densityStyles.cardsGrid}>
               {filteredProposals.map((proposal) => (
                 <ProposalCompactCard
                   key={proposal.id}
@@ -1157,7 +1157,7 @@ export function MarketplaceProposalsWorkspace() {
                   }}
                 />
               ))}
-            </div>
+            </div></div>
           )}
 
           {/* ── CARD INFORMATIVO DE RODAPÉ "COMO FUNCIONA?" ─────────────── */}
@@ -1189,8 +1189,8 @@ export function MarketplaceProposalsWorkspace() {
           )}
 
           {/* Barra flutuante de comparação posicionada acima do rodapé mobile e respeitando safe-area */}
-          {compareIds.length >= 1 && (
-            <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 left-1/2 -translate-x-1/2 z-40 lg:z-50 rounded-2xl border border-slate-200 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md flex items-center gap-4 max-w-[95%] sm:max-w-md">
+          {compareIds.length >= 1 && !isKeyboardOpen && (
+            <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-40 flex w-[calc(100%-24px)] max-w-md -translate-x-1/2 flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/95 p-2.5 shadow-lg backdrop-blur-md lg:bottom-6 lg:z-50">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900">
                   Comparar propostas ({compareIds.length})
