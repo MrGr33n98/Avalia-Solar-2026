@@ -1,3 +1,4 @@
+import * as React from 'react';
 import Image from 'next/image';
 
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ export function ProductCategoryCard({
   selected,
   onSelect,
 }: ProductCategoryCardProps) {
+  const [imageFailed, setImageFailed] = React.useState(false);
   const available = category.categoryId !== null;
   const countLabel =
     category.count === null
@@ -34,32 +36,41 @@ export function ProductCategoryCard({
         'border-slate-200 bg-white px-2 py-2 text-center shadow-sm',
         'transition-colors focus-visible:outline-none focus-visible:ring-2',
         'focus-visible:ring-blue-600 focus-visible:ring-offset-2',
-        'sm:h-[112px] md:px-2.5 lg:h-[116px]',
+        'md:h-[112px] md:px-2.5 lg:h-[116px]',
         available
           ? 'cursor-pointer hover:border-blue-300 hover:bg-blue-50/30'
           : 'cursor-not-allowed opacity-65',
         selected && 'border-blue-600 bg-blue-50 ring-1 ring-blue-600/20'
       )}
     >
-      <Image
-        src={category.imageSrc}
-        width={48}
-        height={48}
-        alt=""
-        aria-hidden="true"
-        unoptimized={category.imageSrc.endsWith('.svg')}
-        className="h-10 w-10 shrink-0 object-contain sm:h-11 sm:w-11 lg:h-12 lg:w-12"
-      />
+      {imageFailed ? (
+        <span
+          aria-hidden="true"
+          data-testid="product-category-image-fallback"
+          className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 md:h-11 md:w-11 lg:h-12 lg:w-12"
+        />
+      ) : (
+        <Image
+          src={category.imageSrc}
+          width={48}
+          height={48}
+          alt=""
+          aria-hidden="true"
+          unoptimized={category.imageSrc.endsWith('.svg')}
+          onError={() => setImageFailed(true)}
+          className="h-10 w-10 shrink-0 object-contain md:h-11 md:w-11 lg:h-12 lg:w-12"
+        />
+      )}
       <span
         className={cn(
           'mt-1 flex min-h-[24px] w-full items-center justify-center text-[11px]',
-          'font-semibold leading-[1.1] text-slate-900 sm:text-xs',
+          'font-semibold leading-[1.1] text-slate-900 md:text-xs',
           selected && 'text-blue-700'
         )}
       >
         <span className="line-clamp-2 break-words">{category.label}</span>
       </span>
-      <span className="mt-auto whitespace-nowrap text-[10px] font-medium leading-tight text-slate-500 sm:text-[11px]">
+      <span className="mt-auto whitespace-nowrap text-[10px] font-medium leading-tight text-slate-500 md:text-[11px]">
         {countLabel}
       </span>
     </button>
