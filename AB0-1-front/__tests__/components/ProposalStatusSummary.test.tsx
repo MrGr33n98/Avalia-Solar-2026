@@ -15,6 +15,7 @@ describe('ProposalStatusSummary', () => {
 
     const section = screen.getByRole('region', { name: 'Resumo de status' });
     expect(section).toHaveClass('grid-cols-3');
+    expect(screen.getByRole('button', { name: /5 propostas ativas/i })).toHaveClass('min-h-[64px]', 'rounded-xl');
 
     expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();

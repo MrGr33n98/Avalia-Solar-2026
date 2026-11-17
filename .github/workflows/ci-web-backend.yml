@@ -400,6 +400,12 @@ jobs:
           components/CompanyCard.spec.tsx
           __tests__/components/CompanyIdentityCard.test.tsx
           components/company/ReviewWhatsAppButton.spec.tsx
+      - name: Run Buyer Proposals Carbon UI regression
+        run: >-
+          npm test -- --runInBand
+          components/reviewer/proposals/ProjectJourneyStepper.spec.tsx
+          __tests__/components/ProposalStatusSummary.test.tsx
+          __tests__/components/ProposalCompactCard.test.tsx
       - name: Lint Ranking Performance files
         run: npx eslint app/dashboard/components/RankingPerformanceTab.tsx app/dashboard/components/ranking app/dashboard/components/MagicQuadrant.tsx
 

@@ -70,30 +70,30 @@ export function ProposalStatusSummary({
             aria-label={item.accessibleLabel}
             aria-pressed={item.isActive}
             className={cn(
-              'flex min-w-0 min-h-[76px] sm:min-h-[84px] flex-col justify-center rounded-2xl border bg-white px-2.5 py-2 sm:px-3 sm:py-2.5 text-left shadow-2xs transition-all hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+              'flex min-h-[64px] min-w-0 flex-col justify-center rounded-xl border bg-white p-2 text-left shadow-none transition-colors hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:min-h-[72px] sm:p-3',
               item.isActive ? item.activeRing : 'border-slate-200/90'
             )}
           >
-            <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="flex min-w-0 items-center gap-2">
               <div
+                aria-hidden="true"
                 className={cn(
-                  'flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg sm:rounded-xl',
+                  'hidden h-6 w-6 shrink-0 items-center justify-center rounded-md min-[430px]:flex sm:h-7 sm:w-7',
                   item.iconBg
                 )}
-                aria-hidden="true"
               >
-                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[2]" />
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
-              <strong className="text-xl sm:text-2xl font-bold tabular-nums leading-none text-slate-900">
-                {item.count}
-              </strong>
+              <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                <span className="text-[11px] font-medium leading-4 text-slate-600 sm:text-xs">
+                  {item.label}
+                  {item.desktopSuffix && <span className="hidden lg:inline">{item.desktopSuffix}</span>}
+                </span>
+                <strong className="text-xl font-bold leading-6 tabular-nums text-slate-900 sm:text-2xl">
+                  {item.count}
+                </strong>
+              </div>
             </div>
-            <span className="mt-1.5 min-w-0 text-[11px] sm:text-xs font-semibold leading-tight text-slate-600 truncate">
-              {item.label}
-              {item.desktopSuffix && (
-                <span className="hidden sm:inline">{item.desktopSuffix}</span>
-              )}
-            </span>
           </button>
         );
       })}

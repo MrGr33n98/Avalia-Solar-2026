@@ -25,11 +25,11 @@ describe('ProposalCompactCard', () => {
     render(<ProposalCompactCard proposal={baseProposal} onOpen={onOpen} />);
 
     expect(screen.getByText('WEG')).toBeInTheDocument();
-    expect(screen.getByText('#16')).toBeInTheDocument();
     expect(screen.getByText(/Florianópolis, SC/i)).toBeInTheDocument();
     expect(screen.getByText('Em análise')).toBeInTheDocument();
     expect(screen.getByText('Aguardando resposta da empresa')).toBeInTheDocument();
-    expect(screen.getByText('Proposta comercial ainda não publicada.')).toBeInTheDocument();
+    expect(screen.queryByText(/Ver proposta \(PDF\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /Comparar proposta de WEG/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Prazo estimado: até 24h/i)).not.toBeInTheDocument();
 
     const cta = screen.getByRole('button', { name: /Acompanhar solicitação de WEG/i });
@@ -75,14 +75,35 @@ describe('ProposalCompactCard', () => {
       />
     );
 
-    expect(screen.getByText('Proposta recebida')).toBeInTheDocument();
-    expect(screen.getByText('7.5 kWp')).toBeInTheDocument();
-    expect(screen.getByText('950 kWh/mês')).toBeInTheDocument();
+    // O badge contém ✓ e a data de recebimento; a versão compacta não reduz o status a texto fixo.
+    expect(screen.getByText(/^✓ Proposta recebida/)).toBeInTheDocument();
+    // Potência aparece no resumo e na grade técnica; geração mensal não integra esse grid.
+    expect(screen.getAllByText('7.5 kWp').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('A definir').length).toBe(2); // garantia e prazo não informados
     expect(screen.getByText(/29\.900/i)).toBeInTheDocument();
 
-    const compareBtn = screen.getByRole('button', { name: /Comparar proposta de WEG/i });
-    expect(compareBtn).toBeInTheDocument();
-    fireEvent.click(compareBtn);
+    const compareControl = screen.getByRole('checkbox', { name: /Comparar proposta de WEG/i });
+    expect(compareControl).not.toBeChecked();
+    fireEvent.click(compareControl);
+    expect(onToggleCompare).toHaveBeenCalledTimes(1);
     expect(onToggleCompare).toHaveBeenCalledWith(102);
   });
+  it('mantém nome longo e preço sem truncamento, com controles de toque compactos', () => {
+    const longName = 'Empresa Integradora Solar e Mobilidade Elétrica com Nome Extenso Santa Catarina';
+    const proposal = {
+      ...baseProposal,
+      company: { ...baseProposal.company, name: longName },
+    };
+    render(<ProposalCompactCard proposal={proposal} onOpen={jest.fn()} />);
+
+    const card = screen.getByTestId('buyer-proposal-card');
+    const name = screen.getByRole('heading', { name: longName });
+    const action = screen.getByRole('button', { name: `Acompanhar solicitação de ${longName}` });
+
+    expect(card).toHaveClass('rounded-xl', 'p-3');
+    expect(name).not.toHaveClass('truncate');
+    expect(action).toHaveClass('!min-h-11', 'h-11');
+    expect(screen.getByText('Aguardando resposta da empresa')).toBeInTheDocument();
+  });
+
 });

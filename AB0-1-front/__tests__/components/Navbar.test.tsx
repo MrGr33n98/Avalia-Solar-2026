@@ -273,6 +273,16 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
   });
 
+  it('oculta ticker empresarial no painel comprador e preserva no marketplace público', () => {
+    mockUsePathname.mockReturnValue('/review-dashboard/proposals');
+    const { rerender } = render(<Navbar />);
+    expect(screen.queryByTestId('company-registration-ticker')).not.toBeInTheDocument();
+
+    mockUsePathname.mockReturnValue('/');
+    rerender(<Navbar />);
+    expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
+  });
+
   it('keeps /f routes without global chrome', () => {
     mockUsePathname.mockReturnValue('/f/convite');
     const { container } = render(<Navbar />);
