@@ -4,9 +4,27 @@ on:
   pull_request:
     branches:
       - main
+      - feat/mcp-02b-recovery-main-20261117
+      - feat/mcp-04-oauth-resource-20261117
+      - feat/mcp-05-remote-policy-20261117
+      - feat/mcp-06-public-directory-20261117
+      - feat/mcp-07-public-trust-comparison-20261117
+      - feat/mcp-08-observability-20261117
+      - test/mcp-09-adversarial-conformance-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
+      - 'AB0-1-back/app/services/mcp/oauth/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_resource_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/production_activation_spec.rb'
+      - 'AB0-1-back/app/services/mcp/remote_quota_policy.rb'
+      - 'AB0-1-back/spec/services/mcp/remote_quota_policy_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/remote_quota_spec.rb'
+      - 'AB0-1-back/app/services/mcp/public/**'
+      - 'AB0-1-back/spec/services/mcp/public/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/public_directory_execution_spec.rb'
+      - 'AB0-1-back/app/services/mcp/remote_telemetry.rb'
+      - 'AB0-1-back/spec/services/mcp/remote_telemetry_spec.rb'
       - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
@@ -62,6 +80,17 @@ jobs:
         run: |
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
           ruby -c app/services/mcp/modern_preview_protocol.rb
+          ruby -c app/services/mcp/oauth/resource_authorization.rb
+          ruby -c app/services/mcp/remote_quota_policy.rb
+          ruby -c app/services/mcp/public/directory_service.rb
+          ruby -c app/services/mcp/public/executor.rb
+          ruby -c app/services/mcp/public/input_validator.rb
+          ruby -c app/services/mcp/public/cursor.rb
+          ruby -c app/services/mcp/public/reputation_service.rb
+          ruby -c app/services/mcp/public/comparison_service.rb
+          ruby -c app/services/mcp/remote_telemetry.rb
+          ruby -c app/services/mcp/public/output_validator.rb
+          ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c app/services/mcp/public_tool_registry.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
@@ -70,4 +99,11 @@ jobs:
           bundle exec rspec \
             spec/requests/api/v1/mcp/remote_transport_spec.rb \
             spec/requests/api/v1/mcp/modern_transport_spec.rb \
+            spec/requests/api/v1/mcp/oauth_resource_spec.rb \
+            spec/requests/api/v1/mcp/production_activation_spec.rb \
+            spec/requests/api/v1/mcp/remote_quota_spec.rb \
+            spec/services/mcp/remote_quota_policy_spec.rb \
+            spec/services/mcp/public/*_spec.rb \
+            spec/services/mcp/remote_telemetry_spec.rb \
+            spec/requests/api/v1/mcp/public_directory_execution_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb

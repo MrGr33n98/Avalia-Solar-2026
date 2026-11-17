@@ -1,0 +1,39 @@
+name: MCP Staging — External OAuth Interoperability Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type STAGING_ONLY to run against the approved staging host'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-staging-interop
+  cancel-in-progress: false
+
+jobs:
+  staging-smoke:
+    name: Staging HTTPS MCP Smoke (read-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    environment: mcp-staging
+    env:
+      CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SMOKE_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
+      MCP_SMOKE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+    steps:
+      - name: Verify explicit staging authorization
+        run: |
+          test "$CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Explicit staging acknowledgement required."; exit 1; }
+          test -n "$MCP_SMOKE_RESOURCE_URL" || { echo "::error::MCP_STAGING_RESOURCE_URL missing."; exit 1; }
+          test -n "$MCP_SMOKE_ACCESS_TOKEN" || { echo "::error::MCP_STAGING_ACCESS_TOKEN missing."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+      - name: Run staging-only external bearer and protocol smoke
+        run: ruby .github/scripts/mcp_staging_smoke.rb
