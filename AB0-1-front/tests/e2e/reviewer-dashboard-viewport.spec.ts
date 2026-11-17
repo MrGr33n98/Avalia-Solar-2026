@@ -2,39 +2,19 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
   test.beforeEach(async ({ page }) => {
-    await page.context().addCookies([
-      { name: 'jwt_token', value: 'e2e-reviewer-token', domain: 'localhost', path: '/', httpOnly: true },
-    ]);
-    await page.route('**/api/v1/auth/me', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 1,
-            name: 'Reviewer Test',
-            email: 'reviewer@example.com',
-            role: 'review',
-            status: 'active',
-          },
-        }),
-      })
-    );
-    await page.route('**/api/v1/auth/validate-token', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 1,
-            name: 'Reviewer Test',
-            email: 'reviewer@example.com',
-            role: 'review',
-            status: 'active',
-          },
-        }),
-      })
-    );
+    // Authenticate against the disposable CI Rails backend, just like auth-logout.spec.ts.
+    // A synthetic jwt_token is invalid for Devise and leads to AuthContext rejecting the
+    // session before the dashboard shell is rendered (false E2E failures).
+    const loginResponse = await page.request.post('/api/v1/auth/login', {
+      data: {
+        email: process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br',
+        password: process.env.E2E_USER_PASSWORD || 'Password123',
+      },
+    });
+    expect(loginResponse.ok(), 'E2E reviewer fixture must authenticate successfully').toBe(true);
+    const cookies = await page.context().cookies();
+    expect(cookies.some((cookie) => cookie.name === 'jwt_token'))
+      .toBe(true);
     await page.route('**/api/v1/review_dashboard/summary', (route) =>
       route.fulfill({
         status: 200,
@@ -85,7 +65,7 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     await page.goto('/review-dashboard');
 
     // Sidebar deve ser visível no Desktop
-    const sidebar = page.locator('aside');
+    const sidebar = page.getByRole('complementary', { name: 'Navegação do painel' });
     await expect(sidebar).toBeVisible();
 
     // Container visual único "review-dashboard-enterprise" deve estar presente
@@ -99,7 +79,7 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     await page.goto('/review-dashboard');
 
     // Sidebar de desktop deve estar oculta ou colapsada
-    const sidebar = page.locator('aside');
+    const sidebar = page.getByRole('complementary', { name: 'Navegação do painel', includeHidden: true });
     await expect(sidebar).toBeHidden();
 
     // Barra de navegação móvel inferior deve ser exibida
