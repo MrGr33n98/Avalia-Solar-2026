@@ -225,7 +225,7 @@ export default function RelatedCompaniesCarousel({
   return (
     <section
       aria-label="Empresas Relacionadas"
-      className="w-full flex flex-col gap-4 mt-8"
+      className="w-full min-w-0 flex flex-col gap-3 mt-0"
       onMouseEnter={() => setIsInteracting(true)}
       onMouseLeave={() => setIsInteracting(false)}
       onFocus={() => setIsInteracting(true)}
