@@ -73,6 +73,7 @@ module Mcp
             name: params['name'], arguments: params.fetch('arguments', {}),
             principal: @auth_context.fetch(:subject)
           )
+          data = ::Mcp::Public::OutputValidator.validate!(name: params['name'], payload: data)
           success(id, {
             content: [{ type: 'text', text: JSON.generate(data) }],
             structuredContent: data, isError: false
@@ -83,6 +84,8 @@ module Mcp
           error(id, -32_602, 'Invalid public tool arguments.', :bad_request)
         rescue ::Mcp::Public::DirectoryService::NotFound
           error(id, -32_602, 'Public company not found.', :not_found)
+        rescue ::Mcp::Public::OutputValidator::Invalid
+          error(id, -32_603, 'Public tool result validation failed.', :internal_server_error)
         end
       else
         error(id, -32_601, 'Method not found.', :not_found)
