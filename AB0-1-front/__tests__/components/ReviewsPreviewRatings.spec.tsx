@@ -72,7 +72,7 @@ describe('ReviewsPreview — estrelas da reputação geral', () => {
     expect(screen.queryByRole('img', { name: /Avaliação: .* de 5 estrelas/ })).not.toBeInTheDocument();
     expect(screen.queryByText('(0 opiniões)')).not.toBeInTheDocument();
   });
-  it('usa opção 07 na Brand Page, mantendo o link e abertura da aba no estado vazio', () => {
+  it('altera somente o CTA do estado vazio; mantém Avaliar no cabeçalho e abre a aba', () => {
     const onTabChange = jest.fn();
     render(
       <ReviewsPreview
@@ -83,17 +83,22 @@ describe('ReviewsPreview — estrelas da reputação geral', () => {
       />
     );
 
-    const headerLink = screen.getByTestId('reviews-preview-review-cta');
-    const emptyButton = screen.getByTestId('reviews-empty-review-cta');
-
-    expect(headerLink).toHaveAttribute('href', '/companies/empresa-de-teste/review');
-    expect(headerLink).toHaveAccessibleName('Deixe sua avaliação de Empresa de teste');
-    expect(headerLink.querySelector('svg')).toHaveClass('lucide-message-circle');
-
-    expect(emptyButton).toHaveAccessibleName('Deixe sua avaliação de Empresa de teste');
-    expect(emptyButton).toHaveTextContent('Deixe sua avaliação');
-    fireEvent.click(emptyButton);
+    const emptyCta = screen.getByRole('button', { name: 'Deixe aqui sua Avaliação' });
+    expect(emptyCta).toHaveAttribute('data-testid', 'brand-empty-review-cta');
+    expect(emptyCta).toHaveClass('rounded-full', 'min-h-12', 'bg-[#F2F4F6]');
+    expect(emptyCta.querySelector('svg')).toHaveClass('lucide-message-circle');
+    const headerCta = screen.getByRole('link', { name: /Avaliar/ });
+    expect(headerCta).toHaveAttribute('href', '/companies/empresa-de-teste/review');
+    expect(headerCta).toHaveTextContent('Avaliar');
+    fireEvent.click(emptyCta);
+    expect(onTabChange).toHaveBeenCalledTimes(1);
     expect(onTabChange).toHaveBeenCalledWith('reviews');
+  });
+
+  it('não mostra a chamada longa quando já existem avaliações', () => {
+    renderReviewsPreview(4.9, 8);
+    expect(screen.queryByRole('button', { name: 'Deixe aqui sua Avaliação' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Avaliar/ })).toHaveTextContent('Avaliar');
   });
 
 });

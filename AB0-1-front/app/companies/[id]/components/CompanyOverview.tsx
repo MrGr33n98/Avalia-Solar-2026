@@ -438,7 +438,8 @@ function MobileCompanyOverview({ company }: { company: Company }) {
       <section className={whatsappHref ? "grid grid-cols-[1.15fr_0.85fr] gap-3" : "grid grid-cols-1 gap-3"}>
         <ReviewCompanyButton
           company={company}
-          className="h-11 w-full"
+          className="h-14 rounded-2xl bg-blue-700 text-base font-black text-white shadow-[0_16px_30px_-18px_rgba(29,78,216,0.85)] hover:bg-blue-800"
+          iconClassName="h-5 w-5 fill-white text-white"
         />
 
         {whatsappHref ? (

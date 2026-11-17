@@ -40,7 +40,7 @@ describe('CompanyReviewsSummarySheet V2 — dados reais e UX responsivo', () => 
     expect(screen.getByText('Avaliações da comunidade')).toBeInTheDocument();
     expect(screen.getByText('Ainda não há avaliações')).toBeInTheDocument();
     expect(screen.getByText(/Sua experiência pode ajudar outras pessoas a escolher/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Deixe sua avaliação de Growatt Brasil/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Avaliar esta empresa/i })).toBeInTheDocument();
     expect(screen.queryByText(/100% dos clientes recomendam/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Positivo')).not.toBeInTheDocument();
     expect(screen.queryByText('100%')).not.toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('CompanyReviewsSummarySheet V2 — dados reais e UX responsivo', () => 
     expect(screen.getByText('Recomendação')).toBeInTheDocument();
     expect(screen.getByText(/dos clientes recomendam/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Ver todas as avaliações/i })).toHaveAttribute('href', defaultProps.reviewsPath);
-    expect(screen.getByRole('link', { name: /Deixe sua avaliação de Growatt Brasil/i })).toHaveAttribute('href', defaultProps.reviewActionPath);
+    expect(screen.getByRole('link', { name: /Avaliar esta empresa/i })).toHaveAttribute('href', defaultProps.reviewActionPath);
   });
 
   it('abre com layout mobile bottom sheet e desktop painel à direita, sem alterar a Brand Page', () => {

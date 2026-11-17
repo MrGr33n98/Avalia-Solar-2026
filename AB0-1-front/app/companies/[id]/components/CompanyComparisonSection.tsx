@@ -293,7 +293,8 @@ export default function CompanyComparisonSection({
                 )}>
                   <ReviewCompanyButton
                     company={company}
-                    className="h-11 w-full"
+                    className="h-14 w-full rounded-2xl bg-blue-600 font-black text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.02] hover:bg-blue-700"
+                    iconClassName="fill-white text-white"
                   />
                 </div>
               ))}

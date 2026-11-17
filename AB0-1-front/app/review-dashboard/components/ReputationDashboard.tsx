@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ReviewAction } from '@/components/company/ReviewAction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -667,7 +666,12 @@ export function ReputationDashboard({
                 </p>
               </div>
             </div>
-            <ReviewAction href="/companies" compactLabel="Avaliar" className="shrink-0" />
+            <Link
+              href="/companies"
+              className="flex-shrink-0 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              Avaliar empresa
+            </Link>
           </div>
         )}
         {reviews.length > 0 && !hasSolarReview && (
@@ -684,12 +688,12 @@ export function ReputationDashboard({
                 </p>
               </div>
             </div>
-            <ReviewAction
+            <Link
               href="/categories/energia-solar"
-              compactLabel="Avaliar"
-              ariaLabel="Deixe sua avaliação de uma empresa solar"
-              className="shrink-0"
-            />
+              className="flex-shrink-0 rounded-none bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              Avaliar empresa solar
+            </Link>
           </div>
         )}
 
@@ -911,7 +915,9 @@ function CompaniesTable({
                         ? 'Nenhuma empresa avaliada ainda.'
                         : 'Nenhum resultado para os filtros.'}
                     </p>
-                    <ReviewAction href="/companies" className="mt-3" />
+                    <Button asChild className="mt-3 rounded-xl bg-emerald-600 hover:bg-emerald-700">
+                      <Link href="/companies">Avaliar empresa</Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1256,7 +1262,12 @@ function ReviewEmptyStateCompact({
       <p className="mt-2 text-sm font-semibold text-slate-900">{title}</p>
       <p className="mt-1 max-w-xs text-xs font-normal text-slate-500">{description}</p>
       {href && action && (
-        <ReviewAction href={href} className="mt-3" />
+        <Button
+          asChild
+          className="mt-3 h-9 rounded-xl bg-emerald-700 px-4 text-xs font-medium hover:bg-emerald-800"
+        >
+          <Link href={href}>{action}</Link>
+        </Button>
       )}
     </div>
   );
@@ -1686,7 +1697,13 @@ function AiRecommendations({
                   {ratingStars(company.rating)}
                   <span className="ml-1 text-xs font-semibold">{company.rating}</span>
                 </div>
-                <ReviewAction href="/companies" label="Avaliar" />
+                <Button
+                  size="sm"
+                  className="h-8 rounded-xl bg-emerald-700 text-xs font-medium hover:bg-emerald-800"
+                  asChild
+                >
+                  <Link href="/companies">Avaliar</Link>
+                </Button>
               </div>
             </div>
           ))

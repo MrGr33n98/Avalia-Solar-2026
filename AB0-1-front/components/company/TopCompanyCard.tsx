@@ -196,9 +196,9 @@ export default function TopCompanyCard({ company, rank, className }: Props) {
           ) : null}
           <ReviewCompanyButton
             company={company}
-            label="Deixe sua avaliação"
-            compactLabel="Avaliar"
-            className={cn('h-11 min-w-0', canRequestQuote ? '' : 'col-span-2')}
+            label="Avaliar"
+            className={cn('h-10 rounded-xl text-xs', canRequestQuote ? '' : 'col-span-2')}
+            iconClassName="h-3.5 w-3.5"
             stopPropagation
           />
         </div>
