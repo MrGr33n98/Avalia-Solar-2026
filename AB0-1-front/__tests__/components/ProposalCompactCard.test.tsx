@@ -85,4 +85,22 @@ describe('ProposalCompactCard', () => {
     fireEvent.click(compareBtn);
     expect(onToggleCompare).toHaveBeenCalledWith(102);
   });
+  it('mantém nome longo e preço sem truncamento, com controles de toque compactos', () => {
+    const longName = 'Empresa Integradora Solar e Mobilidade Elétrica com Nome Extenso Santa Catarina';
+    const proposal = {
+      ...baseProposal,
+      company: { ...baseProposal.company, name: longName },
+    };
+    render(<ProposalCompactCard proposal={proposal} onOpen={jest.fn()} />);
+
+    const card = screen.getByTestId('buyer-proposal-card');
+    const name = screen.getByRole('heading', { name: longName });
+    const action = screen.getByRole('button', { name: `Acompanhar solicitação de ${longName}` });
+
+    expect(card).toHaveClass('rounded-xl', 'p-3');
+    expect(name).not.toHaveClass('truncate');
+    expect(action).toHaveClass('!min-h-11', 'h-11');
+    expect(screen.getByText('Aguardando resposta da empresa')).toBeInTheDocument();
+  });
+
 });
