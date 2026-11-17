@@ -163,10 +163,13 @@ const fullReviewerNavItems: ReviewerNavItem[] = [
  * Routes included here already have owner-scoped API contracts.
  * Single source for desktop sidebar, mobile bar/drawer and reviewer avatar menu.
  */
-const REVIEWER_MVP_IDS = new Set(['dashboard', 'reviews', 'solutions', 'profile']);
+const REVIEWER_MVP_ORDER = ['dashboard', 'reviews', 'solutions', 'profile'];
+const REVIEWER_MVP_IDS = new Set(REVIEWER_MVP_ORDER);
 
 export const reviewerNavItems: ReviewerNavItem[] = (REVIEWS_ONLY_MVP
-  ? fullReviewerNavItems.filter(item => REVIEWER_MVP_IDS.has(item.id))
+  ? fullReviewerNavItems
+      .filter(item => REVIEWER_MVP_IDS.has(item.id))
+      .sort((a, b) => REVIEWER_MVP_ORDER.indexOf(a.id) - REVIEWER_MVP_ORDER.indexOf(b.id))
   : fullReviewerNavItems
 ).map(item => item.id === 'dashboard'
   ? { ...item, label: 'Visão geral', shortLabel: 'Início' }
