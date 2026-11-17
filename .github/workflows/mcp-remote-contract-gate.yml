@@ -10,11 +10,13 @@ on:
       - feat/mcp-06-public-directory-20261117
       - feat/mcp-07-public-trust-comparison-20261117
       - feat/mcp-08-observability-20261117
+      - test/mcp-09-adversarial-conformance-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
       - 'AB0-1-back/app/services/mcp/oauth/**'
       - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_resource_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/production_activation_spec.rb'
       - 'AB0-1-back/app/services/mcp/remote_quota_policy.rb'
       - 'AB0-1-back/spec/services/mcp/remote_quota_policy_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_quota_spec.rb'
@@ -98,6 +100,7 @@ jobs:
             spec/requests/api/v1/mcp/remote_transport_spec.rb \
             spec/requests/api/v1/mcp/modern_transport_spec.rb \
             spec/requests/api/v1/mcp/oauth_resource_spec.rb \
+            spec/requests/api/v1/mcp/production_activation_spec.rb \
             spec/requests/api/v1/mcp/remote_quota_spec.rb \
             spec/services/mcp/remote_quota_policy_spec.rb \
             spec/services/mcp/public/*_spec.rb \
