@@ -50,6 +50,13 @@ module Api
           params = message['params'] || {}
           return rpc_error(id, -32602, 'Parameters must be an object.', :bad_request) unless params.is_a?(Hash)
 
+          # Modern MCP transports are independent and stateless. Preserve
+          # the legacy handshake preview for 2025-11-25 clients.
+          if modern_request?(params)
+            outcome = ::Mcp::ModernPreviewProtocol.new(headers: request.headers, message: message).response
+            return render json: outcome.fetch(:body), status: outcome.fetch(:status)
+          end
+
           version_header = request.headers['MCP-Protocol-Version'].to_s
           if version_header.present? && version_header != PROTOCOL_VERSION
             return rpc_error(id, -32602, 'Unsupported MCP protocol version.', :bad_request)
@@ -125,6 +132,12 @@ module Api
           return if provided.present? && ActiveSupport::SecurityUtils.secure_compare(provided, expected)
 
           head :not_found
+        end
+
+        def modern_request?(params)
+          request.headers['MCP-Protocol-Version'].to_s == ::Mcp::ModernPreviewProtocol::VERSION ||
+            request.headers['Mcp-Method'].present? ||
+            (params['_meta'].is_a?(Hash) && params['_meta'].key?('io.modelcontextprotocol/protocolVersion'))
         end
 
         def initialize_result(id, params)
