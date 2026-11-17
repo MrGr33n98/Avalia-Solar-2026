@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { ReviewAction } from '@/components/company/ReviewAction';
 import { companiesApi, reviewsApi, type Review } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -346,19 +347,13 @@ export function CompanyReviewsSummarySheet({
                 </Link>
               </Button>
             )}
-            <Button
-              asChild
-              variant={hasReviews ? 'outline' : 'default'}
-              className={cn(
-                'h-11 min-h-11 w-full rounded-xl text-xs font-semibold',
-                !hasReviews && 'bg-blue-600 text-white hover:bg-blue-700'
-              )}
-            >
-              <Link href={targetReviewUrl} onClick={() => onOpenChange(false)}>
-                <PenSquare aria-hidden="true" className="mr-1.5 h-4 w-4" />
-                Avaliar esta empresa
-              </Link>
-            </Button>
+            <ReviewAction
+              href={targetReviewUrl}
+              ariaLabel={`Deixe sua avaliação de ${companyName}`}
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+              testId="reviews-summary-write-review"
+            />
           </div>
         </SheetFooter>
       </SheetContent>
