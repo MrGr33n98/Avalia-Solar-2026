@@ -39,23 +39,48 @@ module Whatsapp
       cnpj_digits = @raw_text.gsub(/\D/, '')
       has_cnpj = cnpj_digits.length == 14
 
-      if @normalized.match?(/\A(?:5|ajuda|atendente|humano|suporte)\b/) || @normalized.match?(/(?:falar com (?:uma? )?(?:pessoa|atendente|especialista|humano|equipe)|preciso de ajuda|atendimento humano)/)
+      # 1. Roteamento numérico direto do menu (1 a 5) com suporte a emojis (1️⃣..5️⃣), pontuação e "opção X"
+      numeric_opt = extract_numeric_option
+      case numeric_opt
+      when 1
+        query = extract_company_query(/(?:avaliar(?:\s+a|\s+empresa)?)\s+([a-z0-9\s\-&.]{3,60})\z/i)
+        return { intent: 'evaluate_company', confidence: 1.0, slots: { company_query: query }.compact }
+      when 2
+        return { intent: 'register_company', confidence: 1.0, slots: { cnpj: (has_cnpj ? cnpj_digits : nil) }.compact }
+      when 3
+        return { intent: 'claim_company', confidence: 1.0, slots: { cnpj: (has_cnpj ? cnpj_digits : nil) }.compact }
+      when 4
+        query = extract_company_query(/(?:perfil\s+da\s+empresa|pagina\s+da\s+empresa|empresa|perfil\s+da|pagina\s+da)\s+(.+)\z/i)
+        return { intent: 'check_brand_page', confidence: 1.0, slots: { cnpj: (has_cnpj ? cnpj_digits : nil), company_query: query }.compact }
+      when 5
+        return { intent: 'ask_plans_pricing', confidence: 1.0, slots: {} }
+      end
+
+      # 2. Suporte humano via palavras-chave explícitas (sem o dígito 5)
+      if @normalized.match?(/\A(?:ajuda|atendente|humano|suporte)\b/) ||
+         @normalized.match?(/(?:falar com (?:uma? )?(?:pessoa|atendente|especialista|humano|equipe)|preciso de (?:ajuda|suporte)|atendimento humano)/)
         return { intent: 'human_support', confidence: 1.0, slots: {} }
       end
 
+      # 3. Menu de boas-vindas e saudações
       if @normalized.match?(/\A(?:menu|oi|ola|bom dia|boa tarde|boa noite|comecar|iniciar|opcoes|ajude)\b/) && !@normalized.include?('avaliar') && !@normalized.include?('cadastrar')
         return { intent: 'welcome_menu', confidence: 1.0, slots: {} }
       end
 
-      if @normalized.match?(/\A(?:3|reivindicar|reivindicacao|assumir perfil|ja tenho cadastro|minha empresa ja esta)\b/)
-        return { intent: 'claim_company', confidence: 1.0, slots: { cnpj: has_cnpj ? cnpj_digits : nil }.compact }
+      # 4. Reivindicação de empresa
+      if @normalized.match?(/\A(?:reivindicar|reivindicacao|reivindicação|assumir perfil|ja tenho cadastro|minha empresa ja esta)\b/)
+        return { intent: 'claim_company', confidence: 1.0, slots: { cnpj: (has_cnpj ? cnpj_digits : nil) }.compact }
       end
 
-      if @normalized.match?(/\A(?:2|cadastrar|cadastro|novo cadastro|sou integrador|quero cadastrar)\b/) || (has_cnpj && !@normalized.include?('reivindicar') && !@normalized.include?('perfil') && !@normalized.include?('pagina'))
-        return { intent: 'register_company', confidence: 1.0, slots: { cnpj: has_cnpj ? cnpj_digits : nil }.compact }
+      # 5. Cadastro de integrador ou envio de CNPJ isolado
+      if @normalized.match?(/\A(?:cadastrar|cadastro|novo cadastro|sou integrador|quero cadastrar)\b/) ||
+         (has_cnpj && !@normalized.include?('reivindicar') && !@normalized.include?('perfil') && !@normalized.include?('pagina'))
+        return { intent: 'register_company', confidence: 1.0, slots: { cnpj: (has_cnpj ? cnpj_digits : nil) }.compact }
       end
 
-      if @normalized.match?(/\A(?:4|perfil)\z/) || @normalized.match?(/(?:como minha empresa aparece|ver (?:o |meu )?perfil|pagina da (?:minha )?empresa|brand page|link da (?:minha )?empresa)/)
+      # 6. Consulta de Brand Page / Perfil
+      if @normalized.match?(/\A(?:perfil)\z/) ||
+         @normalized.match?(/(?:como minha empresa aparece|ver (?:o |meu )?perfil|pagina da (?:minha )?empresa|brand page|link da (?:minha )?empresa)/)
         query = extract_company_query(/(?:perfil\s+da\s+empresa|pagina\s+da\s+empresa|empresa|perfil\s+da|pagina\s+da)\s+(.+)\z/i)
         return {
           intent: 'check_brand_page',
@@ -64,11 +89,14 @@ module Whatsapp
         }
       end
 
-      if @normalized.match?(/(?:plano|planos|preco|precos|mensalidade|destaque|patrocinado|gerar leads|receber leads|receber orcamentos|como funciona o pago)/)
+      # 7. Planos, Preços e Monetização
+      if @normalized.match?(/\A(?:planos?|precos?|tabela de precos?)\b/) ||
+         @normalized.match?(/(?:plano|planos|preco|precos|mensalidade|destaque|patrocinado|gerar leads|receber leads|receber orcamentos|como funciona o pago)/)
         return { intent: 'ask_plans_pricing', confidence: 0.95, slots: {} }
       end
 
-      if @normalized.match?(/\A(?:1)\z/) || @normalized.match?(/(?:quero avaliar|gostaria de avaliar|avaliar (?:a |uma )?empresa|deixar (?:uma )?avaliacao|fazer (?:uma )?avaliacao)/)
+      # 8. Avaliação de empresa por texto ou áudio
+      if @normalized.match?(/(?:quero avaliar|gostaria de avaliar|avaliar (?:a |uma )?empresa|deixar (?:uma )?avaliacao|fazer (?:uma )?avaliacao)/)
         query = extract_company_query(/(?:avaliar(?:\s+a|\s+empresa)?)\s+([a-z0-9\s\-&.]{3,60})\z/i)
         return {
           intent: 'evaluate_company',
@@ -78,6 +106,13 @@ module Whatsapp
       end
 
       { intent: 'unknown', confidence: 0.3, slots: {} }
+    end
+
+    def extract_numeric_option
+      clean = I18n.transliterate(@raw_text).to_s.gsub(/[️⃣#]/, '').strip
+      if (match = clean.match(/\A(?:opcao|numero|num|n)?\s*([1-5])(?:\.|\b|\z)/i))
+        match[1].to_i
+      end
     end
 
     def extract_company_query(regex)
