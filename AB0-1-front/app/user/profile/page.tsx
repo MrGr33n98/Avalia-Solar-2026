@@ -1,17 +1,21 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import React, { Suspense } from 'react';
-import {
-  UserProfileContent,
-  UserProfileLoading,
-} from '@/components/user-profile/UserProfilePageContent';
+const VALID_TABS = new Set([
+  'profile_details',
+  'my_reviews',
+  'products_used',
+  'privacy_settings',
+]);
 
-export default function UserProfilePage() {
-  // useSearchParams() vive dentro de UserProfileShell; o Next.js 14 exige Suspense
-  // em torno dessa subárvore para a pré-renderização estática.
-  return (
-    <Suspense fallback={<UserProfileLoading />}>
-      <UserProfileContent />
-    </Suspense>
-  );
+/** Compatibility alias for links created by PR #164. No second dashboard is mounted. */
+export default function LegacyUserProfilePage({
+  searchParams,
+}: {
+  searchParams?: { tab?: string | string[] };
+}) {
+  const tab = typeof searchParams?.tab === 'string' ? searchParams.tab : null;
+  if (tab && VALID_TABS.has(tab)) {
+    redirect(`/review-dashboard/profile?tab=${encodeURIComponent(tab)}`);
+  }
+  redirect('/review-dashboard/profile');
 }

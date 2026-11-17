@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ChevronDown,
   LayoutDashboard,
@@ -20,6 +20,7 @@ import { getFullImageUrl } from '@/utils/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { reviewerNavItems } from '@/components/review-dashboard/reviewerNavigation';
 
 function initialsFromName(name: string) {
   const parts = name.split(' ').filter(Boolean);
@@ -45,19 +46,26 @@ export function UserAvatarDropdown({
 }) {
   const { user, logout, reviewerProfile } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const [open, setOpen] = React.useState(false);
 
   if (!user) return null;
 
+  // Reviewer-specific navigation only in the reviewer area; other roles stay unchanged.
+  const isReviewerContext = user.role === 'review' && !!pathname?.startsWith('/review-dashboard');
+
   const handleLogout = async () => {
+    setOpen(false);
     await logout();
     router.push('/login');
   };
 
   const isCreator = reviewerProfile?.creator_enabled === true;
   const creatorSlug = reviewerProfile?.public_slug;
+  const memberSince = user.created_at ? formatMonthYear(user.created_at) : null;
 
   return (
-    <Popover>
+    <Popover open={isReviewerContext ? open : undefined} onOpenChange={isReviewerContext ? setOpen : undefined}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -104,7 +112,12 @@ export function UserAvatarDropdown({
 
       <PopoverContent
         align="end"
-        className="w-80 rounded-2xl border-slate-200/80 p-0 shadow-2xl overflow-hidden bg-white z-[2000]"
+        className={cn(
+          'rounded-2xl border-slate-200/80 p-0 shadow-2xl bg-white z-[2000]',
+          isReviewerContext
+            ? 'w-[min(20rem,calc(100vw-1rem))] max-h-[min(80dvh,680px)] overflow-y-auto overscroll-contain'
+            : 'w-80 overflow-hidden'
+        )}
       >
         {/* Card de Perfil */}
         <div className="flex flex-col items-center p-6 text-center bg-slate-50/50">
@@ -123,66 +136,99 @@ export function UserAvatarDropdown({
                 {initialsFromName(user.name)}
               </div>
             )}
-            <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-white shadow">
-              <CheckCircle2 className="h-3 w-3 fill-white text-emerald-500" />
-            </div>
+            {!isReviewerContext && (
+              <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white border-2 border-white shadow">
+                <CheckCircle2 className="h-3 w-3 fill-white text-emerald-500" />
+              </div>
+            )}
           </div>
 
           <h4 className="text-base font-bold text-slate-900 line-clamp-1">{user.name}</h4>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Membro desde {formatMonthYear(user.created_at)}
-          </p>
+          {isReviewerContext && reviewerProfile?.profession && (
+            <p className="mt-1 text-xs text-slate-600">{reviewerProfile.profession}</p>
+          )}
+          {isReviewerContext && reviewerProfile?.company_name && (
+            <p className="mt-1 text-xs text-slate-600">{reviewerProfile.company_name}</p>
+          )}
+          {(!isReviewerContext || memberSince) && (
+            <p className="text-xs text-slate-400 mt-0.5">
+              {memberSince ? `Membro desde ${memberSince}` : 'Conta Avalia Solar'}
+            </p>
+          )}
         </div>
 
         <Separator />
 
         {/* Links do Menu */}
         <div className="p-2 space-y-0.5">
-          {SOCIAL_FEED_ENABLED && <Link
-            href="/feed"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <Globe className="h-4.5 w-4.5 text-slate-400" />
-            Feed
-          </Link>}
-
-          <Link
-            href="/review-dashboard"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <LayoutDashboard className="h-4.5 w-4.5 text-slate-400" />
-            Meu Painel
-          </Link>
-
-          {CREATOR_EXPERIENCE_ENABLED && isCreator && (
+          {isReviewerContext ? (
+            reviewerNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-slate-50',
+                    pathname === item.href ? 'bg-blue-50 text-blue-700' : 'text-slate-700'
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                  {item.label}
+                </Link>
+              );
+            })
+          ) : (
             <>
-              <Link
-                href="/creator-studio"
+              {SOCIAL_FEED_ENABLED && <Link
+                href="/feed"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                <PenLine className="h-4.5 w-4.5 text-slate-400" />
-                Creator Studio
+                <Globe className="h-4.5 w-4.5 text-slate-400" />
+                Feed
+              </Link>}
+
+              <Link
+                href="/review-dashboard"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <LayoutDashboard className="h-4.5 w-4.5 text-slate-400" />
+                Meu Painel
               </Link>
 
-              {creatorSlug && (
-                <Link
-                  href={`/creators/${creatorSlug}`}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <ExternalLink className="h-4.5 w-4.5 text-slate-400" />
-                  Meu Perfil Público
-                </Link>
+              {CREATOR_EXPERIENCE_ENABLED && isCreator && (
+                <>
+                  <Link
+                    href="/creator-studio"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <PenLine className="h-4.5 w-4.5 text-slate-400" />
+                    Creator Studio
+                  </Link>
+
+                  {creatorSlug && (
+                    <Link
+                      href={`/creators/${creatorSlug}`}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <ExternalLink className="h-4.5 w-4.5 text-slate-400" />
+                      Meu Perfil Público
+                    </Link>
+                  )}
+                </>
               )}
+
+              <Link
+                href="/review-dashboard/settings"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <UserRound className="h-4.5 w-4.5 text-slate-400" />
+                Configurações
+              </Link>
+
             </>
           )}
-
-          <Link
-            href="/review-dashboard/settings"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <UserRound className="h-4.5 w-4.5 text-slate-400" />
-            Configurações
-          </Link>
         </div>
 
         <Separator />

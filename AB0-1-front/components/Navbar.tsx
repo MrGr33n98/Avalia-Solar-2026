@@ -301,6 +301,14 @@ export default function Navbar() {
           </Link>
         </div>
 
+        {/* Reviewer profile popover is also available in mobile/PWA.
+            Other account roles retain their existing global navigation. */}
+        {isAuthenticated && user?.role === 'review' && pathname?.startsWith('/review-dashboard') && (
+          <div className="flex shrink-0 items-center dashboard:hidden">
+            <UserAvatarDropdown compact />
+          </div>
+        )}
+
         {/* Mobile Hamburger Menu Button */}
         <div className="flex shrink-0 items-center dashboard:hidden">
           <Button

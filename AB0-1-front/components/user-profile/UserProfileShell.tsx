@@ -1,40 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { UserTabId, UserProfileData, EquipmentItem, ProfileSavePayload } from './types';
-import { UserProfileTrustCard } from './UserProfileTrustCard';
-import { UserProfileSidebarNav } from './UserProfileSidebarNav';
+import type { UserTabId, UserProfileData, EquipmentItem, ProfileSavePayload } from './types';
+import { validateAvatarFile } from './UserProfileTrustCard';
 import { ProfileDetailsTab } from './tabs/ProfileDetailsTab';
 import { ProductsIUseTab } from './tabs/ProductsIUseTab';
 import { PrivacySettingsTab } from './tabs/PrivacySettingsTab';
 import { MyReviewsTab } from './tabs/MyReviewsTab';
 
+/** Profile sections within the canonical review dashboard; future tabs stay gated. */
 export const USER_PROFILE_TABS: UserTabId[] = [
-  'activity_center',
-  'my_reviews',
-  'products_used',
-  'my_rewards',
-  'my_lists',
-  'community_qa',
-  'achievements',
-  'notifications',
-  'profile_details',
-  'privacy_settings',
+  'profile_details', 'my_reviews', 'products_used', 'privacy_settings',
+];
+
+const PROFILE_TAB_LINKS: Array<{ id: UserTabId; label: string }> = [
+  { id: 'profile_details', label: 'Dados do perfil' },
+  { id: 'my_reviews', label: 'Avaliações' },
+  { id: 'products_used', label: 'Produtos que uso' },
+  { id: 'privacy_settings', label: 'Privacidade' },
 ];
 
 export function isValidTab(tab: string | null | undefined): tab is UserTabId {
-  return !!tab && (USER_PROFILE_TABS as string[]).includes(tab);
+  return !!tab && USER_PROFILE_TABS.includes(tab as UserTabId);
 }
-
-const PLACEHOLDER_TABS: UserTabId[] = [
-  'activity_center',
-  'my_rewards',
-  'my_lists',
-  'community_qa',
-  'achievements',
-  'notifications',
-];
 
 interface UserProfileShellProps {
   data: UserProfileData;
@@ -49,8 +38,8 @@ interface UserProfileShellProps {
 }
 
 /**
- * Layout da central de perfil. Usa `useSearchParams()` e, por isso,
- * DEVE ser renderizado dentro de um <Suspense> (exigência do Next.js 14).
+ * Content-only profile. ReviewerDashboardShell owns the ONLY main sidebar.
+ * The caller must wrap this component in Suspense (Next.js 14 useSearchParams).
  */
 export function UserProfileShell({
   data,
@@ -65,71 +54,128 @@ export function UserProfileShell({
 }: UserProfileShellProps) {
   const searchParams = useSearchParams();
   const rawTab = searchParams?.get('tab') ?? null;
-
   const [activeTab, setActiveTab] = useState<UserTabId>(isValidTab(rawTab) ? rawTab : 'profile_details');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInput = useRef<HTMLInputElement>(null);
 
-  // Mantém a aba sincronizada com voltar/avançar do navegador.
   useEffect(() => {
-    if (isValidTab(rawTab)) setActiveTab(rawTab);
+    setActiveTab(isValidTab(rawTab) ? rawTab : 'profile_details');
   }, [rawTab]);
 
   const handleSelectTab = (tab: UserTabId) => {
     setActiveTab(tab);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
-    url.hash = 'main';
+    url.hash = 'profile-content';
     window.history.pushState({}, '', url.toString());
   };
 
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file || !onUploadAvatar) return;
+    setAvatarError(null);
+    const error = validateAvatarFile(file);
+    if (error) {
+      setAvatarError(error);
+      event.currentTarget.value = '';
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      await onUploadAvatar(file);
+    } catch {
+      setAvatarError('Não foi possível atualizar a foto. Tente novamente.');
+    } finally {
+      setAvatarUploading(false);
+      if (avatarInput.current) avatarInput.current.value = '';
+    }
+  };
+
   return (
-    <div className={`min-h-screen bg-slate-50/50 dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 ${className}`}>
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          {/* Coluna Esquerda: Trust Anchor & Navegação */}
-          <aside className="lg:col-span-1 space-y-4 lg:sticky lg:top-8 min-w-0">
-            <UserProfileTrustCard trustAnchor={data.trust_anchor} onUploadAvatar={onUploadAvatar} />
-
-            <UserProfileSidebarNav activeTab={activeTab} onSelectTab={handleSelectTab} stats={data.stats} />
-          </aside>
-
-          {/* Coluna Direita: Canvas de Conteúdo da Aba Ativa */}
-          <main
-            id="main"
-            className="lg:col-span-3 min-w-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-xs"
-          >
-            {activeTab === 'profile_details' && (
-              <ProfileDetailsTab
-                initialPersonal={data.personal_details}
-                initialProfessional={data.professional_details}
-                onSave={onSaveProfile}
-              />
-            )}
-
-            {activeTab === 'products_used' && (
-              <ProductsIUseTab
-                equipments={data.equipments}
-                onAddEquipment={onAddEquipment}
-                onRemoveEquipment={onRemoveEquipment}
-                onRetry={onRetryEquipments}
-                onLeaveReview={onLeaveReview}
-              />
-            )}
-
-            {activeTab === 'my_reviews' && <MyReviewsTab stats={data.stats} onWriteReview={onWriteReview} />}
-
-            {activeTab === 'privacy_settings' && <PrivacySettingsTab settings={data.privacy_settings} />}
-
-            {PLACEHOLDER_TABS.includes(activeTab) && (
-              <div className="text-center py-16" data-testid="tab-placeholder">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Seção em Expansão</h2>
-                <p className="text-sm text-slate-500 max-w-md mx-auto">
-                  A seção selecionada ainda não está disponível nesta central.
-                </p>
-              </div>
-            )}
-          </main>
+    <section className={`min-w-0 w-full space-y-4 ${className}`} data-testid="reviewer-profile-integrated">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Meu perfil</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Gerencie seus dados e acompanhe suas contribuições na Avalia Solar.
+          </p>
         </div>
+        {onUploadAvatar && (
+          <>
+            <input
+              ref={avatarInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-label="Selecionar nova foto de perfil"
+              className="sr-only"
+              onChange={(event) => { void handleAvatarChange(event); }}
+              data-testid="reviewer-profile-avatar-input"
+            />
+            <button
+              type="button"
+              onClick={() => avatarInput.current?.click()}
+              disabled={avatarUploading}
+              className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-blue-400 hover:text-blue-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              {avatarUploading ? 'Enviando foto...' : 'Alterar foto'}
+            </button>
+          </>
+        )}
+      </header>
+
+      {avatarError && <p role="alert" className="text-sm text-red-700">{avatarError}</p>}
+
+      <nav
+        aria-label="Seções do perfil"
+        className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900"
+      >
+        {PROFILE_TAB_LINKS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => handleSelectTab(id)}
+            aria-current={activeTab === id ? 'page' : undefined}
+            className={`min-h-11 shrink-0 rounded-lg px-3 text-xs font-semibold transition-colors sm:text-sm ${activeTab === id
+              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+              : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+            data-testid={`profile-tab-${id}`}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      <div
+        id="profile-content"
+        className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+      >
+        {activeTab === 'profile_details' && (
+          <ProfileDetailsTab
+            initialPersonal={data.personal_details}
+            initialProfessional={data.professional_details}
+            onSave={onSaveProfile}
+          />
+        )}
+
+        {activeTab === 'products_used' && (
+          <ProductsIUseTab
+            equipments={data.equipments}
+            onAddEquipment={onAddEquipment}
+            onRemoveEquipment={onRemoveEquipment}
+            onRetry={onRetryEquipments}
+            onLeaveReview={onLeaveReview}
+          />
+        )}
+
+        {activeTab === 'my_reviews' && (
+          <MyReviewsTab stats={data.stats} onWriteReview={onWriteReview} />
+        )}
+
+        {activeTab === 'privacy_settings' && (
+          <PrivacySettingsTab settings={data.privacy_settings} />
+        )}
       </div>
-    </div>
+    </section>
   );
 }

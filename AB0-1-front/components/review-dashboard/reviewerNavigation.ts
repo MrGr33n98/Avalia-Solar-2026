@@ -47,7 +47,7 @@ const fullReviewerNavItems: ReviewerNavItem[] = [
     icon: User,
     matchPath: '/review-dashboard/profile',
     section: 'main',
-    mobilePriority: 6,
+    mobilePriority: 3,
     analyticsKey: 'reviewer_nav_profile',
   },
   {
@@ -158,13 +158,28 @@ const fullReviewerNavItems: ReviewerNavItem[] = [
   },
 ];
 
-/** Only overview and reviews are first-class tabs in the MVP. */
-export const reviewerNavItems: ReviewerNavItem[] = REVIEWS_ONLY_MVP
-  ? fullReviewerNavItems.filter(item => item.id === 'dashboard' || item.id === 'reviews')
-      .map(item => item.id === 'dashboard'
-        ? { ...item, label: 'Visão geral', shortLabel: 'Início' }
-        : { ...item, label: 'Minhas avaliações', shortLabel: 'Avaliações' })
-  : fullReviewerNavItems;
+/**
+ * Reviews-only mode gates Creator/social/commercial flows, NOT the reviewer identity.
+ * Routes included here already have owner-scoped API contracts.
+ * Single source for desktop sidebar, mobile bar/drawer and reviewer avatar menu.
+ */
+const REVIEWER_MVP_ORDER = ['dashboard', 'reviews', 'solutions', 'profile'];
+const REVIEWER_MVP_IDS = new Set(REVIEWER_MVP_ORDER);
+
+export const reviewerNavItems: ReviewerNavItem[] = (REVIEWS_ONLY_MVP
+  ? fullReviewerNavItems
+      .filter(item => REVIEWER_MVP_IDS.has(item.id))
+      .sort((a, b) => REVIEWER_MVP_ORDER.indexOf(a.id) - REVIEWER_MVP_ORDER.indexOf(b.id))
+  : fullReviewerNavItems
+).map(item => item.id === 'dashboard'
+  ? { ...item, label: 'Visão geral', shortLabel: 'Início' }
+  : item.id === 'reviews'
+    ? { ...item, label: 'Minhas avaliações', shortLabel: 'Avaliações' }
+    : item.id === 'solutions'
+      ? { ...item, label: 'Produtos que uso' }
+      : item.id === 'profile'
+        ? { ...item, label: 'Detalhes do perfil', shortLabel: 'Perfil' }
+        : item);
 
 /** Items para o bottom nav mobile (mobilePriority 1-5 + "Mais") */
 export const mobileBottomNavItems = reviewerNavItems.filter((item) => item.mobilePriority <= 5);
