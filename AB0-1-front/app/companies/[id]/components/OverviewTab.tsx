@@ -342,17 +342,18 @@ export default function OverviewTab({
         </div>
       )}
 
-      {/* 6. Empresas Similares / Proteção (Related Companies) */}
-      <RelatedCompaniesCarousel
-        company={company}
-        mode={displayMode}
-        relatedCompanies={relatedCompanies.slice(0, 5)}
-        onRetry={handleRetryRelated}
-      />
-
-      {displayMode === 'results' && relatedCompanies.length > 0 && (
-        <RelatedCompaniesTable companies={relatedCompanies} />
-      )}
+      {/* 6. Bloco de empresas relacionadas: carrossel e lista compartilham um único espaçamento. */}
+      <div className="min-w-0 space-y-3">
+        <RelatedCompaniesCarousel
+          company={company}
+          mode={displayMode}
+          relatedCompanies={relatedCompanies.slice(0, 5)}
+          onRetry={handleRetryRelated}
+        />
+        {displayMode === 'results' && relatedCompanies.length > 0 && (
+          <RelatedCompaniesTable companies={relatedCompanies} />
+        )}
+      </div>
 
     </div>
   );
