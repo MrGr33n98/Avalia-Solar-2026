@@ -16,6 +16,21 @@ RSpec.describe Mcp::Public::ReputationService do
     expect(data.fetch(:rating_distribution).values.sum).to eq(0)
   end
 
+  it 'counts only approved reviews and excludes pending or rejected ratings' do
+    create(:review, company: company, status: :approved, rating: 5,
+                    headline: 'Approved review', comment: 'approved comment',
+                    capture_flow_source: :profile)
+    create(:review, company: company, status: :pending, rating: 1,
+                    headline: 'Pending review', comment: 'private pending message',
+                    capture_flow_source: :profile)
+    result = service.call(arguments: { 'company_id' => company.id })
+    data = result.fetch(:data)
+    expect(data.fetch(:total_approved)).to eq(1)
+    expect(data.fetch(:average_rating)).to eq(5.0)
+    expect(data.fetch(:rating_distribution).fetch('1')).to eq(0)
+    expect(JSON.generate(result)).not_to include('private pending message', 'approved comment')
+  end
+
   it 'never reveals a company that is inactive' do
     inactive = create(:company, status: :inactive)
     expect do
