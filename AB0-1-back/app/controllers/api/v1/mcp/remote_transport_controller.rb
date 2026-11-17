@@ -146,6 +146,13 @@ module Api
         def deny_unconfigured_preview!
           return head :not_found unless ENV['MCP_REMOTE_TRANSPORT_ENABLED'] == 'true'
 
+          # Separate production approval gate: accidental preview-token
+          # enablement can never activate this endpoint on the live app.
+          if Rails.env.production?
+            return head :not_found unless ENV['MCP_REMOTE_PRODUCTION_ENABLED'] == 'true' &&
+                                          ENV['MCP_REMOTE_AUTH_MODE'] == 'oauth'
+          end
+
           case ENV.fetch('MCP_REMOTE_AUTH_MODE', 'preview')
           when 'preview'
             return if ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s.bytesize >= 32
