@@ -105,7 +105,10 @@ module Mcp
         digest = Digest::SHA256.hexdigest("#{self.class.issuer}:#{claims['jti']}")
         raise Failure, :invalid_token if Rails.cache.read("mcp:oauth:revoked:#{digest}")
 
-        { subject: claims['sub'], token_id_digest: digest, scopes: scopes.freeze, issuer: self.class.issuer }.freeze
+        client_id = claims['client_id'] || claims['azp']
+        client_id = nil unless client_id.is_a?(String) && client_id.present? && client_id.bytesize <= 256
+        { subject: claims['sub'], client_id: client_id, token_id_digest: digest,
+          scopes: scopes.freeze, issuer: self.class.issuer }.freeze
       rescue Failure
         raise
       rescue JWT::DecodeError, JWT::VerificationError, OpenSSL::PKey::PKeyError, OpenSSL::PKey::RSAError,
