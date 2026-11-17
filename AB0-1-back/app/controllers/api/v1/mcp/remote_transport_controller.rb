@@ -17,6 +17,7 @@ module Api
         before_action :validate_host!
         before_action :validate_origin!
         before_action :authorize_remote_request!
+        before_action :enforce_remote_quota!, only: :create, if: -> { ENV['MCP_REMOTE_POLICY_ENABLED'] == 'true' }
         skip_before_action :authorize_remote_request!, only: :resource_metadata
 
         def create
@@ -156,7 +157,10 @@ module Api
 
           expected = ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s
           provided = request.headers['X-MCP-Preview-Key'].to_s
-          return if provided.present? && ActiveSupport::SecurityUtils.secure_compare(provided, expected)
+          if provided.present? && ActiveSupport::SecurityUtils.secure_compare(provided, expected)
+            @mcp_auth_context = { subject: 'preview', client_id: 'preview' }.freeze
+            return
+          end
 
           head :not_found
         end
@@ -178,6 +182,21 @@ module Api
 
           response.headers['WWW-Authenticate'] = %(#{challenge}, error="invalid_token")
           head :unauthorized
+        end
+
+        def enforce_remote_quota!
+          context = @mcp_auth_context || {}
+          ::Mcp::RemoteQuotaPolicy.new(
+            identity: context[:subject], client_id: context[:client_id],
+            remote_ip: request.remote_ip.to_s, mode: oauth_mode? ? :oauth : :preview
+          ).enforce!
+        rescue ::Mcp::RemoteQuotaPolicy::Failure => e
+          if e.type == :rate_limited
+            response.headers['Retry-After'] = e.retry_after.to_s
+            return head :too_many_requests
+          end
+
+          head :service_unavailable
         end
 
         def modern_request?(params)
