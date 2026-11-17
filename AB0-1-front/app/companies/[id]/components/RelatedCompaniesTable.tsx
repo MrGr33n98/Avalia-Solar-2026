@@ -113,11 +113,10 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
         data-testid="related-companies-grid"
         className="mt-3 min-w-0 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white"
       >
-        {paginatedCompanies.map((company, index) => (
+        {paginatedCompanies.map((company) => (
           <RelatedCompanyRow
             key={company.id}
             company={company}
-            position={startIndex + index + 1}
           />
         ))}
       </div>
@@ -178,7 +177,7 @@ export default function RelatedCompaniesTable({ companies }: RelatedCompaniesTab
   );
 }
 
-function RelatedCompanyRow({ company, position }: { company: Company; position: number }) {
+function RelatedCompanyRow({ company }: { company: Company }) {
   const rating = Number(company.rating_avg || company.rating || company.average_rating || 0);
   const reviewCount = company.rating_count || company.reviews_count || company.total_reviews || 0;
   const location = [company.city, company.state].filter(Boolean).join(', ') || 'Brasil';
@@ -215,9 +214,6 @@ function RelatedCompanyRow({ company, position }: { company: Company; position: 
 
       <div className="min-w-0">
         <div className="flex min-w-0 items-start gap-1.5">
-          <span className="shrink-0 pt-0.5 text-[11px] font-medium tabular-nums text-slate-500">
-            #{position}
-          </span>
           <Link
             href={href}
             className="min-w-0 text-[13px] font-semibold leading-[18px] text-blue-700 [overflow-wrap:anywhere] hover:underline sm:text-sm sm:leading-5"
