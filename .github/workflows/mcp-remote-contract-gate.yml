@@ -9,6 +9,7 @@ on:
       - feat/mcp-05-remote-policy-20261117
       - feat/mcp-06-public-directory-20261117
       - feat/mcp-07-public-trust-comparison-20261117
+      - feat/mcp-08-observability-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
@@ -86,6 +87,8 @@ jobs:
           ruby -c app/services/mcp/public/reputation_service.rb
           ruby -c app/services/mcp/public/comparison_service.rb
           ruby -c app/services/mcp/remote_telemetry.rb
+          ruby -c app/services/mcp/public/output_validator.rb
+          ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c app/services/mcp/public_tool_registry.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
