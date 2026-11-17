@@ -32,7 +32,7 @@ export function ReviewerDashboardShell({ children }: { children: React.ReactNode
         {/* Content area */}
         <main
           id="main-content"
-          className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col overflow-x-clip px-3 pb-[calc(var(--reviewer-mobile-nav-height)+20px)] pt-3 sm:px-5 sm:pt-6 lg:px-6 lg:pb-10 xl:px-8"
+          className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col overflow-x-clip px-3 pb-[calc(var(--reviewer-mobile-nav-height)+24px)] pt-2 min-[390px]:px-4 sm:px-5 sm:pt-4 lg:px-6 lg:pb-10 xl:px-8"
         >
           {children}
         </main>
