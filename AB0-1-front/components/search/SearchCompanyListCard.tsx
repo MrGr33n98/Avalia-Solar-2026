@@ -5,6 +5,7 @@ import { Star, MapPin, CheckCircle, ChevronRight, Info, Globe } from 'lucide-rea
 import { Company } from '@/lib/api';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Button } from '@/components/ui/button';
+import { ReviewAction } from '@/components/company/ReviewAction';
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { cn } from '@/lib/utils';
 import { buildCompanyPath } from '@/lib/slug';
@@ -208,17 +209,7 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
             variant="default"
             size="sm"
           />
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="h-10 rounded-lg px-3 text-xs font-semibold text-blue-600 hover:bg-blue-50"
-          >
-            <Link href={reviewsHref}>
-              <Star className="h-4 w-4" aria-hidden="true" />
-              Avaliar
-            </Link>
-          </Button>
+          <ReviewAction href={reviewsHref} compactLabel="Avaliar" ariaLabel={`Deixe sua avaliação de ${company.name}`} />
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -268,16 +259,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                   size="sm"
                 />
               </div>
-              <Button
-                asChild
-                variant="ghost"
-                className="flex-1 h-11 rounded-none text-xs font-bold text-blue-600 hover:bg-blue-50 shadow-none gap-1.5"
-              >
-                <Link href={reviewsHref}>
-                  <Star className="w-3.5 h-3.5 fill-blue-600" />
-                  Avaliar
-                </Link>
-              </Button>
+              <ReviewAction
+                href={reviewsHref}
+                compactLabel="Avaliar"
+                ariaLabel={`Deixe sua avaliação de ${company.name}`}
+                className="h-11 min-w-0 flex-1 px-2"
+              />
             </div>
             <Button
               onClick={() =>
@@ -302,16 +289,12 @@ export function SearchCompanyListCard({ company, className }: SearchCompanyListC
                 size="sm"
               />
             </div>
-            <Button
-              asChild
-              variant="ghost"
-              className="flex-1 h-11 rounded-none text-xs font-bold text-blue-600 hover:bg-blue-50 shadow-none gap-1.5"
-            >
-              <Link href={reviewsHref}>
-                <Star className="w-3.5 h-3.5 fill-blue-600" />
-                Avaliar
-              </Link>
-            </Button>
+            <ReviewAction
+              href={reviewsHref}
+              compactLabel="Avaliar"
+              ariaLabel={`Deixe sua avaliação de ${company.name}`}
+              className="h-11 min-w-0 flex-1 px-2"
+            />
             <Button
               asChild
               variant="ghost"
