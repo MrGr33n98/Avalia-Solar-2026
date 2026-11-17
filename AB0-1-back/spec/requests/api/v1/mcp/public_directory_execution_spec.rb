@@ -76,10 +76,24 @@ RSpec.describe 'MCP public directory tools/call', type: :request do
     expect(response.parsed_body.dig('error', 'code')).to eq(-32_602)
   end
 
-  it 'keeps reputation and comparisons blocked until their reviewed release' do
-    call_tool('get_integrator_reputation', { 'company_id' => 1 })
+  it 'returns approved-only reputation for an active company with no reviews' do
+    company = create(:company, status: :active)
+    call_tool('get_integrator_reputation', { 'company_id' => company.id })
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.dig('error', 'code')).to eq(-32_001)
+    data = response.parsed_body.dig('result', 'structuredContent', 'data')
+    expect(data['total_approved']).to eq(0)
+    expect(data['average_rating']).to be_nil
+  end
+
+  it 'returns a deterministic public comparison matrix without a sponsored winner' do
+    first = create(:company, status: :active)
+    second = create(:company, status: :active)
+    call_tool('compare_integrators', { 'company_ids' => [first.id, second.id] })
+    expect(response).to have_http_status(:ok)
+    data = response.parsed_body.dig('result', 'structuredContent', 'data')
+    expect(data['companies'].map { |row| row.fetch('id') }).to eq([first.id, second.id])
+    expect(data.fetch('comparison_matrix').keys).to include('reputation', 'categories')
+    expect(data.keys).not_to include('sponsored', 'winner')
   end
 
   it 'rejects unknown input fields before querying any domain services' do
