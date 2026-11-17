@@ -59,6 +59,8 @@ jobs:
         run: python3 .github/scripts/test_analyze_ci_runs.py
       - name: Resolve changed paths and publish advisory summary
         id: impact
+        env:
+          TEST_SUITE_INPUT: ${{ inputs.test_suite || 'full' }}
         run: bash .github/scripts/resolve-change-impact.sh
 
   docs-validation:
@@ -76,6 +78,8 @@ jobs:
         with:
           fetch-depth: 0
       - name: Validate documentation changes and links
+        env:
+          TEST_SUITE_INPUT: ${{ inputs.test_suite || 'full' }}
         run: bash .github/scripts/validate-docs-pr.sh
 
   fast-feedback:
