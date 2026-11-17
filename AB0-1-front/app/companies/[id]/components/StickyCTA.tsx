@@ -89,8 +89,7 @@ export default function StickyCTA({
               ) : (
                 <ReviewCompanyButton
                   company={company}
-                  className="h-11 flex-1 bg-primary px-6 text-white hover:bg-primary/90 md:h-10 md:flex-none"
-                  iconClassName="fill-white text-white"
+                  className="h-11 flex-1 px-3 md:flex-none"
                 />
               )}
 

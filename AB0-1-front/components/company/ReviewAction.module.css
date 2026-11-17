@@ -1,0 +1,69 @@
+/* Variante 07 da folha de ideias Avalia Solar: neutra, compacta, IBM-inspired. */
+.action {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #e1e5eb;
+  border-radius: 999px;
+  background: #f2f4f6;
+  padding: 8px 14px;
+  color: #101f3f;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.action:hover {
+  border-color: #c4ceda;
+  background: #e8edf2;
+  color: #101f3f;
+}
+
+.action:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
+}
+
+.action:active {
+  background: #dee6ee;
+}
+
+.icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke-width: 1.9px;
+  color: #101f3f;
+}
+
+.label {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconOnly {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action {
+    transition: none;
+  }
+}

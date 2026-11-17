@@ -47,7 +47,7 @@ describe('SearchCompanyListCard desktop layout', () => {
     expect(actions).toHaveClass('lg:col-span-2', 'lg:flex');
     expect(screen.getByText(company.description!)).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Comparar empresa' })).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: 'Avaliar' })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: 'Deixe sua avaliação de GreenFlux' })).toHaveLength(2);
     expect(screen.getAllByRole('link', { name: 'Ver perfil' })).toHaveLength(2);
     expect(screen.queryByText('Não informado')).not.toBeInTheDocument();
   });

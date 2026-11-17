@@ -388,6 +388,18 @@ jobs:
         run: npm run typecheck
       - name: Run Navbar and registration ticker tests
         run: npm test -- CompanyRegistrationTicker Navbar.test --runInBand
+      - name: Run Review CTA v7 PWA and Web regression
+        run: >-
+          npm test -- --runInBand
+          components/company/ReviewAction.spec.tsx
+          __tests__/components/ReviewsPreviewRatings.spec.tsx
+          components/search/SearchCompanyListCard.spec.tsx
+          components/company/CompanyReviewsSummarySheet.spec.tsx
+          __tests__/app/companies/CompanyHero.test.tsx
+          __tests__/components/CompanyProfileHeader.spec.tsx
+          components/CompanyCard.spec.tsx
+          __tests__/components/CompanyIdentityCard.test.tsx
+          components/company/ReviewWhatsAppButton.spec.tsx
       - name: Run Buyer Proposals Carbon UI regression
         run: >-
           npm test -- --runInBand

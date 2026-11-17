@@ -7,6 +7,7 @@ import { reviewsApi, type Review } from '@/lib/api';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { ReviewCompanyAvatar } from '@/components/review-dashboard/ReviewCompanyAvatar';
 import { ReviewMetricStrip, type ReviewMetricKey } from '@/components/review-dashboard/ReviewMetricStrip';
+import { ReviewAction } from '@/components/company/ReviewAction';
 
 const reviewStatusLabel = (status?: string) => {
   if (status === 'approved') return 'Publicada';
@@ -197,9 +198,7 @@ export default function AvaliacoesPage() {
           <h1 className="mt-1 text-xl font-semibold text-[#0F2F64] sm:text-2xl">Minhas avaliações</h1>
           <p className="mt-1 text-xs text-[#525252]">Gerencie suas experiências e acompanhe a moderação.</p>
         </div>
-        <Link href="/companies" className="inline-flex min-h-11 items-center rounded bg-[#0F62FE] px-3 text-xs font-semibold text-white hover:bg-[#0043CE]">
-          + Nova avaliação
-        </Link>
+        <ReviewAction href="/companies" compactLabel="Avaliar" />
       </header>
 
       <ReviewMetricStrip

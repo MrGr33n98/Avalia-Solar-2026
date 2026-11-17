@@ -10,6 +10,7 @@ import { RatingStars } from '@/components/RatingStars';
 import { getFullImageUrl } from '@/utils/image';
 
 import { buildCompanySubPath } from '@/lib/slug';
+import { ReviewAction } from '@/components/company/ReviewAction';
 import ReviewWhatsAppButton from '@/components/company/ReviewWhatsAppButton';
 
 interface ReviewsPreviewProps {
@@ -96,14 +97,13 @@ export default function ReviewsPreview({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link
+            <ReviewAction
               href={reviewPath}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-400/80 bg-amber-500/[0.06] px-3 text-xs font-bold text-slate-900 transition-colors hover:bg-amber-500/[0.12]"
-            >
-              <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="hidden sm:inline">Avaliar empresa</span>
-              <span className="sm:hidden">Avaliar</span>
-            </Link>
+              compactLabel="Avaliar"
+              ariaLabel={`Deixe sua avaliação de ${company.name}`}
+              testId="reviews-preview-review-cta"
+              className="shrink-0"
+            />
             {ratingCount > 0 && (
               <Button
                 variant="ghost"
@@ -279,14 +279,12 @@ export default function ReviewsPreview({
               instalação de energia solar.
             </p>
             <div className="flex w-full flex-col items-stretch justify-center gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <Button
-                size="sm"
+              <ReviewAction
                 onClick={() => onTabChange('reviews')}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#0B1F4B] px-4 text-xs font-bold text-white shadow-none hover:bg-[#102b66] focus-visible:ring-2 focus-visible:ring-[#0B1F4B] focus-visible:ring-offset-2"
-              >
-                Fazer uma avaliação
-                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </Button>
+                ariaLabel={`Deixe sua avaliação de ${company.name}`}
+                testId="reviews-empty-review-cta"
+                className="w-full sm:w-auto"
+              />
               <ReviewWhatsAppButton
                 companyId={company.id}
                 companyName={company.name}

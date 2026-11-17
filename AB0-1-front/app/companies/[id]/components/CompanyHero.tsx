@@ -362,9 +362,8 @@ export default function CompanyHero({
               {/* Avaliar empresa */}
               <ReviewCompanyButton
                 company={company}
-                label="Avaliar empresa"
-                compactLabel="Avaliar empresa"
-                className="h-12 shrink-0 whitespace-nowrap rounded-xl border border-blue-300 bg-white px-4 text-sm font-semibold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50"
+                compactLabel="Avaliar"
+                className="h-11 shrink-0 sm:h-11"
               />
 
               {/* Chat — botão verde simples */}

@@ -195,9 +195,9 @@ export default function RelatedCompanyCard({ company, className }: RelatedCompan
               name: name,
               slug: slug,
             }}
-            label="Avaliar"
-            className="flex-1 min-h-[38px] sm:min-h-[40px] h-[44px] sm:h-[40px] rounded-xl px-2 text-[13px] bg-white text-blue-700 border border-blue-200 hover:border-blue-300 hover:bg-blue-50/50 shadow-sm"
-            iconClassName="h-3.5 w-3.5"
+            label="Deixe sua avaliação"
+            compactLabel="Avaliar"
+            className="h-11 min-w-0 flex-1 px-2"
             stopPropagation
           />
         </div>
