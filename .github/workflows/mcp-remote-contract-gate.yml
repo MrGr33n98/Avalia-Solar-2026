@@ -4,9 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - feat/mcp-02b-recovery-main-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
+      - 'AB0-1-back/app/services/mcp/oauth/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_resource_spec.rb'
       - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
@@ -62,6 +65,7 @@ jobs:
         run: |
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
           ruby -c app/services/mcp/modern_preview_protocol.rb
+          ruby -c app/services/mcp/oauth/resource_authorization.rb
           ruby -c app/services/mcp/public_tool_registry.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
@@ -70,4 +74,5 @@ jobs:
           bundle exec rspec \
             spec/requests/api/v1/mcp/remote_transport_spec.rb \
             spec/requests/api/v1/mcp/modern_transport_spec.rb \
+            spec/requests/api/v1/mcp/oauth_resource_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb

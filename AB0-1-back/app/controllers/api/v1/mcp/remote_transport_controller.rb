@@ -16,7 +16,8 @@ module Api
         before_action :deny_unconfigured_preview!
         before_action :validate_host!
         before_action :validate_origin!
-        before_action :require_preview_key!
+        before_action :authorize_remote_request!
+        skip_before_action :authorize_remote_request!, only: :resource_metadata
 
         def create
           response.headers['Cache-Control'] = 'no-store'
@@ -95,6 +96,20 @@ module Api
           rpc_error(nil, -32603, 'Internal error.', :internal_server_error)
         end
 
+        # Public OAuth resource metadata is discovery-only, not a token issuer.
+        # It is only exposed when the real resource-server configuration is valid.
+        def resource_metadata
+          return head :not_found unless oauth_mode?
+
+          response.headers['Cache-Control'] = 'no-store'
+          render json: {
+            resource: ::Mcp::Oauth::ResourceAuthorization.resource,
+            authorization_servers: [::Mcp::Oauth::ResourceAuthorization.issuer],
+            scopes_supported: [::Mcp::Oauth::ResourceAuthorization::REQUIRED_SCOPE],
+            bearer_methods_supported: ['header']
+          }, status: :ok
+        end
+
         # Stateless JSON-only implementation: GET SSE/DELETE sessions are not
         # supported; 405 is explicitly allowed in the 2025-11-25 transport.
         def unsupported
@@ -105,10 +120,20 @@ module Api
         private
 
         def deny_unconfigured_preview!
-          return if ENV['MCP_REMOTE_TRANSPORT_ENABLED'] == 'true' &&
-                    ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s.bytesize >= 32
+          return head :not_found unless ENV['MCP_REMOTE_TRANSPORT_ENABLED'] == 'true'
+
+          case ENV.fetch('MCP_REMOTE_AUTH_MODE', 'preview')
+          when 'preview'
+            return if ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s.bytesize >= 32
+          when 'oauth'
+            return if ::Mcp::Oauth::ResourceAuthorization.configured?
+          end
 
           head :not_found
+        end
+
+        def oauth_mode?
+          ENV['MCP_REMOTE_AUTH_MODE'] == 'oauth'
         end
 
         def validate_host!
@@ -126,12 +151,33 @@ module Api
           head :forbidden unless allowed.include?(origin)
         end
 
-        def require_preview_key!
+        def authorize_remote_request!
+          return authorize_oauth! if oauth_mode?
+
           expected = ENV['MCP_REMOTE_PREVIEW_TOKEN'].to_s
           provided = request.headers['X-MCP-Preview-Key'].to_s
           return if provided.present? && ActiveSupport::SecurityUtils.secure_compare(provided, expected)
 
           head :not_found
+        end
+
+        def authorize_oauth!
+          @mcp_auth_context = ::Mcp::Oauth::ResourceAuthorization.new(
+            authorization_header: request.headers['Authorization']
+          ).verify!
+        rescue ::Mcp::Oauth::ResourceAuthorization::Failure => e
+          # The resource server never redirects, issues access tokens or
+          # infers trust from the User-Agent, cookie, tenant headers or MCP args.
+          return head :not_found if e.type == :unavailable
+
+          challenge = %(Bearer resource_metadata="#{::Mcp::Oauth::ResourceAuthorization.metadata_url}")
+          if e.type == :insufficient_scope
+            response.headers['WWW-Authenticate'] = %(#{challenge}, error="insufficient_scope", scope="mcp:public:read")
+            return head :forbidden
+          end
+
+          response.headers['WWW-Authenticate'] = %(#{challenge}, error="invalid_token")
+          head :unauthorized
         end
 
         def modern_request?(params)
