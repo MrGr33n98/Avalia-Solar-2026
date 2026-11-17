@@ -31,6 +31,7 @@ import { normalizeReviewList } from '@/lib/reviews/normalizeReviewList';
 import { useProductTracking } from './useProductTracking';
 import VerificationBadge from '@/components/company/VerificationBadge';
 import { ProductReviewModal } from './components/ProductReviewModal';
+import { ReviewAction } from '@/components/company/ReviewAction';
 import ProjectsGallery from '@/app/companies/[id]/components/ProjectsGallery';
 import {
   useCopyIntent,
@@ -771,13 +772,11 @@ export default function ProductDetailClient({
                           <div className="space-y-3">
                           <div className="flex justify-between items-start">
                               <p className="text-[15px] font-medium text-[var(--color-text-primary)]">Resumo das avaliações</p>
-                              <button
-                                type="button"
+                              <ReviewAction
                                 onClick={() => setIsReviewModalOpen(true)}
-                                className="text-[13px] font-medium text-blue-600 hover:text-blue-700 hover:underline"
-                              >
-                                Avaliar produto
-                              </button>
+                                compactLabel="Avaliar"
+                                ariaLabel="Deixe sua avaliação deste produto"
+                              />
                             </div>
                             <div className="flex items-end gap-3">
                               <span className="text-[28px] font-medium leading-none text-[#f5a623]">
@@ -836,13 +835,10 @@ export default function ProductDetailClient({
                             >
                               Ver perfil da empresa
                             </Link>
-                            <button
-                              type="button"
+                            <ReviewAction
                               onClick={() => setIsReviewModalOpen(true)}
-                              className="inline-flex items-center gap-2 rounded-[var(--border-radius-md)] bg-blue-600 px-4 py-[11px] text-[13px] font-medium text-white transition-colors hover:bg-blue-700"
-                            >
-                              Avaliar este produto
-                            </button>
+                              ariaLabel="Deixe sua avaliação deste produto"
+                            />
                           </div>
                         </div>
                       )}
