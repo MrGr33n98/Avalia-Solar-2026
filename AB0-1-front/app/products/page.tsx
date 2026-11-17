@@ -6,8 +6,9 @@ import ProductCard from '@/components/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductsHeader } from '@/components/products/ProductsHeader';
 import { ProductsFilters } from '@/components/products/ProductsFilters';
+import { ProductCategoryRail } from '@/components/products/ProductCategoryRail';
 import { Button } from '@/components/ui/button';
-import { Filter, Building2, ChevronRight, RefreshCw, Star, Grid, List } from 'lucide-react';
+import { Filter, Building2, ChevronRight, RefreshCw, Grid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -227,143 +228,31 @@ function ProductsPageContent() {
     );
   }
 
-  // Mapeamento dinâmico das categorias rápidas a partir do metadados da API
-  const quickCategories = useMemo(() => {
-    const findCat = (keywords: string[], exclude?: string[]) => {
-      return categoriesMeta.find(c => {
-        const slug = (c.slug || c.seo_url || '').toLowerCase();
-        const matchesKeyword = keywords.some(k => slug.includes(k));
-        const matchesExclude = exclude ? exclude.some(ex => slug.includes(ex)) : false;
-        return matchesKeyword && !matchesExclude;
-      });
-    };
-
-    const cats = [
-      {
-        key: 'inversores',
-        name: 'Inversores',
-        dbCat: findCat(['inversor'], ['micro']),
-        defaultCount: 132,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        )
-      },
-      {
-        key: 'microinversores',
-        name: 'Microinversores',
-        dbCat: findCat(['microinversor']),
-        defaultCount: 86,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        )
-      },
-      {
-        key: 'baterias',
-        name: 'Baterias',
-        dbCat: findCat(['bateria']),
-        defaultCount: 54,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        )
-      },
-      {
-        key: 'carregadores',
-        name: 'Carregadores VE',
-        dbCat: findCat(['carregador']),
-        defaultCount: 28,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        )
-      },
-      {
-        key: 'estruturas',
-        name: 'Estruturas',
-        dbCat: findCat(['estrutura', 'fixacao']),
-        defaultCount: 64,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-          </svg>
-        )
-      },
-      {
-        key: 'cabos',
-        name: 'Cabos e Acessórios',
-        dbCat: findCat(['cabo', 'acessorio']),
-        defaultCount: 102,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-          </svg>
-        )
-      }
-    ];
-
-    return cats;
-  }, [categoriesMeta]);
-
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20">
       <ProductsHeader />
-      {/* Barra de Categorias Rápidas */}
-      <div className="w-full bg-white border-y border-slate-200/60 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-1">
-          <div className="grid grid-cols-2 gap-y-2 gap-x-0 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-slate-100">
-            {quickCategories.map((cat) => {
-              const isSelected = cat.dbCat ? String(cat.dbCat.id) === filters.category : false;
-              const count = cat.dbCat ? cat.dbCat.products_count : 0;
-              
-              return (
-                <button
-                  key={cat.key}
-                  onClick={() => {
-                    if (cat.dbCat) {
-                      handleFilterChange('category', isSelected ? 'all' : String(cat.dbCat.id));
-                    }
-                  }}
-                  className={cn(
-                    "flex flex-row items-center gap-3 py-3 px-4 transition-all text-left w-full hover:bg-slate-50/80 group focus:outline-none min-h-[4.5rem]",
-                    isSelected && "bg-blue-50/40"
-                  )}
-                >
-                  <div className={cn(
-                    "w-12 h-12 rounded-full border bg-slate-50 flex items-center justify-center transition-colors shrink-0",
-                    isSelected 
-                      ? "border-blue-600 bg-blue-100/50 text-blue-600" 
-                      : "border-slate-100 text-blue-500 group-hover:bg-blue-50"
-                  )}>
-                    <div className="w-5 h-5 flex items-center justify-center">
-                      {cat.icon}
-                    </div>
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <strong className={cn(
-                      "text-xs font-black leading-tight truncate",
-                      isSelected ? "text-blue-600 font-extrabold" : "text-slate-800"
-                    )}>
-                      {cat.name}
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
-                      {count} {count === 1 ? 'produto' : 'produtos'}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      {/* Categorias compactas em carrossel horizontal: mobile, PWA e desktop. */}
+      <ProductCategoryRail
+        categories={categoriesMeta}
+        selectedCategoryId={filters.category}
+        isLoading={loading && categoriesMeta.length === 0}
+        onCategoryChange={(category) => {
+          if (category.categoryId === null) return;
+          const nextId =
+            String(category.categoryId) === filters.category
+              ? 'all'
+              : String(category.categoryId);
+          handleFilterChange('category', nextId);
+          track('product_category_selected', {
+            category_id: category.categoryId,
+            category_key: category.key,
+            selected: nextId !== 'all',
+            page: '/products',
+          });
+        }}
+      />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7">
         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/50 pb-5">
           <div className="text-left">
             <span className="text-sm font-bold text-slate-500">

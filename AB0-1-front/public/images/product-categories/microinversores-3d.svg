@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title">
+  <title id="title">Ilustração tridimensional de um microinversor</title>
+  <defs>
+    <linearGradient id="body" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#535965"/><stop offset=".4" stop-color="#252b34"/><stop offset="1" stop-color="#090d13"/></linearGradient>
+    <linearGradient id="side" x1="0" x2="1"><stop stop-color="#111820"/><stop offset="1" stop-color="#555b63"/></linearGradient>
+    <linearGradient id="metal" y1="0" y2="1"><stop stop-color="#d2d6db"/><stop offset="1" stop-color="#666f7b"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <ellipse cx="80" cy="137" rx="58" ry="7" fill="#233043" opacity=".17" filter="url(#shadow)"/>
+  <g stroke-linejoin="round">
+    <path d="M41 27 52 18 124 26 114 34Z" fill="#7e838c" stroke="#535965"/>
+    <path d="M114 34 124 26 124 112 114 121Z" fill="url(#side)" stroke="#141d27"/>
+    <rect x="35" y="30" width="79" height="92" rx="9" fill="url(#body)" stroke="#161b22" stroke-width="2"/>
+    <rect x="39" y="34" width="71" height="83" rx="6" fill="none" stroke="#87909d" opacity=".4"/>
+    <g stroke="#8c929c" stroke-width="2" opacity=".66">
+      <path d="M46 40v71M53 39v73M60 39v74M67 39v74M74 39v75M81 39v75M88 39v75M95 39v74M102 40v72"/>
+    </g>
+    <rect x="58" y="61" width="34" height="28" rx="4" fill="#151b24" stroke="#989fa7"/>
+    <path d="M63 74h24" stroke="#5fce91" stroke-width="2" opacity=".85"/>
+    <circle cx="45" cy="40" r="2.4" fill="url(#metal)"/><circle cx="104" cy="40" r="2.4" fill="url(#metal)"/>
+    <circle cx="45" cy="111" r="2.4" fill="url(#metal)"/><circle cx="104" cy="111" r="2.4" fill="url(#metal)"/>
+    <path d="M46 121v7c0 5 5 8 10 8h14" stroke="#1d242b" stroke-width="6" fill="none"/>
+    <path d="M95 121v8c0 4 4 6 9 6h12" stroke="#1d242b" stroke-width="6" fill="none"/>
+    <rect x="60" y="131" width="14" height="8" rx="2" fill="#1c2731"/>
+    <rect x="112" y="131" width="13" height="8" rx="2" fill="#1c2731"/>
+  </g>
+</svg>
