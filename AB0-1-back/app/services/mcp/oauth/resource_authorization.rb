@@ -5,7 +5,7 @@ require 'openssl'
 require 'uri'
 
 module Mcp
-  module OAuth
+  module Oauth
     # Token verification for an external OAuth Authorization Server.
     # This class is a resource-server validator, NOT a token issuer or an AS.
     # No tokens, secrets or raw user data are logged.
