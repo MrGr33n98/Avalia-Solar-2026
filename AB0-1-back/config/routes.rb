@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # A interface administrativa de aplicações não é pública; clientes OAuth
+  # serão provisionados por fluxo controlado na Fase C2.
+  use_doorkeeper do |routes|
+    routes.skip_controllers :applications, :authorized_applications, :token_info
+  end
   mount Rswag::Ui::Engine => '/api-docs' if defined?(Rswag::Ui::Engine)
 
   mount Rswag::Api::Engine => '/api-docs' if defined?(Rswag::Api::Engine)
