@@ -5,6 +5,13 @@ require 'rails_helper'
 RSpec.describe CompanyHeroSlide, type: :model do
   let(:company) { create(:company) }
 
+  it 'autoriza os filtros do ActiveAdmin no Ransack' do
+    expect(described_class.ransackable_attributes).to include(
+      'id', 'company_id', 'slot', 'display_position', 'revision', 'status', 'created_at', 'updated_at'
+    )
+    expect(described_class.ransackable_associations).to include('company')
+  end
+
   it 'limits slots to 1..3 and accepts an unpublished draft without deleting the legacy banner' do
     record = described_class.new(company: company, slot: 4, display_position: 4,
                                  revision: 1, status: 'draft')

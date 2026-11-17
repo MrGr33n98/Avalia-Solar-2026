@@ -8,6 +8,14 @@ class CompanyHeroSlide < ApplicationRecord
   belongs_to :company
   has_one_attached :image
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[id company_id slot display_position revision status created_at updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[company]
+  end
+
   scope :published, -> { where(status: 'published').order(:display_position, :id) }
   scope :editable, -> { where(status: %w[draft rejected]) }
 
