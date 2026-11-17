@@ -65,7 +65,7 @@ export function UserAvatarDropdown({
   const memberSince = user.created_at ? formatMonthYear(user.created_at) : null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isReviewerContext ? open : undefined} onOpenChange={isReviewerContext ? setOpen : undefined}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -112,7 +112,12 @@ export function UserAvatarDropdown({
 
       <PopoverContent
         align="end"
-        className="w-[min(20rem,calc(100vw-1rem))] max-h-[min(80dvh,680px)] overflow-y-auto overscroll-contain rounded-2xl border-slate-200/80 p-0 shadow-2xl bg-white z-[2000]"
+        className={cn(
+          'rounded-2xl border-slate-200/80 p-0 shadow-2xl bg-white z-[2000]',
+          isReviewerContext
+            ? 'w-[min(20rem,calc(100vw-1rem))] max-h-[min(80dvh,680px)] overflow-y-auto overscroll-contain'
+            : 'w-80 overflow-hidden'
+        )}
       >
         {/* Card de Perfil */}
         <div className="flex flex-col items-center p-6 text-center bg-slate-50/50">
