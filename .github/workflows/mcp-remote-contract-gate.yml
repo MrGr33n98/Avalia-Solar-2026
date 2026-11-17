@@ -5,11 +5,15 @@ on:
     branches:
       - main
       - feat/mcp-02b-recovery-main-20261117
+      - feat/mcp-04-oauth-resource-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
       - 'AB0-1-back/app/services/mcp/oauth/**'
       - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_resource_spec.rb'
+      - 'AB0-1-back/app/services/mcp/remote_quota_policy.rb'
+      - 'AB0-1-back/spec/services/mcp/remote_quota_policy_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/remote_quota_spec.rb'
       - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
@@ -66,6 +70,7 @@ jobs:
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
           ruby -c app/services/mcp/modern_preview_protocol.rb
           ruby -c app/services/mcp/oauth/resource_authorization.rb
+          ruby -c app/services/mcp/remote_quota_policy.rb
           ruby -c app/services/mcp/public_tool_registry.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
@@ -75,4 +80,6 @@ jobs:
             spec/requests/api/v1/mcp/remote_transport_spec.rb \
             spec/requests/api/v1/mcp/modern_transport_spec.rb \
             spec/requests/api/v1/mcp/oauth_resource_spec.rb \
+            spec/requests/api/v1/mcp/remote_quota_spec.rb \
+            spec/services/mcp/remote_quota_policy_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb
