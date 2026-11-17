@@ -97,6 +97,7 @@ describe('Empresas relacionadas — grid compacto PWA e Web', () => {
     expect(within(rows[0]).getByText('Florianópolis, SC')).toBeInTheDocument();
     expect(within(rows[0]).getByText('Sem avaliações')).toBeInTheDocument();
     expect(within(rows[0]).getByTestId('related-verified')).toBeInTheDocument();
+    expect(within(grid).queryByText(/^#\d+$/)).not.toBeInTheDocument();
     expect(within(rows[0]).getByRole('checkbox', { name: /Adicionar GoodWe Brasil/ })).toBeInTheDocument();
 
     expect(screen.getByRole('heading', { name: /Empresas relacionadas/i })).toBeInTheDocument();
