@@ -29,7 +29,7 @@ describe('ReviewAction — opção 07 (PWA e web)', () => {
     const parentClick = jest.fn();
     render(
       <div onClick={parentClick}>
-        <ReviewAction href="/review" iconOnly stopPropagation ariaLabel="Avaliar empresa: WEG" />
+        <ReviewAction href="/review" iconOnly stopPropagation onClick={(event) => event.preventDefault()} ariaLabel="Avaliar empresa: WEG" />
       </div>
     );
 
