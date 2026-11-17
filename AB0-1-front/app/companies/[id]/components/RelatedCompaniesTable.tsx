@@ -213,14 +213,22 @@ function RelatedCompanyRow({ company }: { company: Company }) {
       </Link>
 
       <div className="min-w-0">
-        <div className="flex min-w-0 items-start gap-1.5">
+        {/* Nome + selo formam uma unidade visual: o texto pode truncar, o selo nunca quebra.
+            w-fit impede que nomes curtos afastem o selo; max-w-full protege o grid mobile. */}
+        <div
+          data-testid="related-company-identity"
+          className="inline-flex w-fit max-w-full min-w-0 items-center gap-1 align-middle"
+        >
           <Link
             href={href}
-            className="min-w-0 text-[13px] font-semibold leading-[18px] text-blue-700 [overflow-wrap:anywhere] hover:underline sm:text-sm sm:leading-5"
+            title={company.name}
+            className="min-w-0 truncate text-[13px] font-semibold leading-[18px] text-blue-700 hover:underline sm:text-sm sm:leading-5"
           >
             {company.name}
           </Link>
-          {verified && <CompanyVerifiedBadge size="sm" className="shrink-0" />}
+          {verified && (
+            <CompanyVerifiedBadge size="sm" triggerClassName="shrink-0" />
+          )}
         </div>
 
         <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0 text-[11px] leading-4 text-slate-600 sm:text-xs">
