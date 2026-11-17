@@ -13,6 +13,8 @@ module Api
         PROTOCOL_VERSION = '2025-11-25'
         MAX_BODY_BYTES = 32_768
 
+        before_action :start_remote_timer!, only: :create
+        after_action :record_remote_telemetry!, only: :create
         before_action :deny_unconfigured_preview!
         before_action :validate_host!
         before_action :validate_origin!
@@ -121,6 +123,25 @@ module Api
         end
 
         private
+
+        def start_remote_timer!
+          @mcp_started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        end
+
+        def record_remote_telemetry!
+          return unless @mcp_started_at
+
+          elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @mcp_started_at) * 1000).round
+          ::Mcp::RemoteTelemetry.record(
+            operation: request.headers['Mcp-Method'].to_s.presence || 'unknown',
+            tool_name: request.headers['Mcp-Name'].to_s,
+            status: response.status, duration_ms: elapsed,
+            request_id: request.request_id
+          )
+        rescue StandardError => e
+          # Telemetry must never take down a completed request.
+          Rails.logger.warn("[MCP Telemetry] failed class=#{e.class}")
+        end
 
         def deny_unconfigured_preview!
           return head :not_found unless ENV['MCP_REMOTE_TRANSPORT_ENABLED'] == 'true'
