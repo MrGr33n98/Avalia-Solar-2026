@@ -62,6 +62,7 @@ export function UserAvatarDropdown({
 
   const isCreator = reviewerProfile?.creator_enabled === true;
   const creatorSlug = reviewerProfile?.public_slug;
+  const memberSince = user.created_at ? formatMonthYear(user.created_at) : null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -144,9 +145,11 @@ export function UserAvatarDropdown({
           {isReviewerContext && reviewerProfile?.company_name && (
             <p className="mt-1 text-xs text-slate-600">{reviewerProfile.company_name}</p>
           )}
-          <p className="text-xs text-slate-400 mt-0.5">
-            Membro desde {formatMonthYear(user.created_at)}
-          </p>
+          {(!isReviewerContext || memberSince) && (
+            <p className="text-xs text-slate-400 mt-0.5">
+              {memberSince ? `Membro desde ${memberSince}` : 'Conta Avalia Solar'}
+            </p>
+          )}
         </div>
 
         <Separator />
