@@ -28,6 +28,12 @@ Rails.application.routes.draw do
     omniauth_callbacks: 'users/omniauth_callbacks'
   }
 
+  # PR-MCP-02: feature-gated MCP Streamable HTTP transport PREVIEW.
+  # No OAuth, public tool execution, or production enablement in this PR.
+  post '/mcp', to: 'api/v1/mcp/remote_transport#create'
+  get '/mcp', to: 'api/v1/mcp/remote_transport#unsupported'
+  delete '/mcp', to: 'api/v1/mcp/remote_transport#unsupported'
+
   get '/health', to: 'health#show'
   get '/health/readiness', to: 'health#readiness'
   get '/health/liveness', to: 'health#liveness'
