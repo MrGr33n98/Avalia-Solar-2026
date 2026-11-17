@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { PenSquare, Star, FileText } from 'lucide-react';
+import { PenSquare, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeedStore } from '@/store/feedStore';
 import { UserAvatar } from '@/components/ui/UserAvatar';
