@@ -104,6 +104,41 @@ describe('Empresas relacionadas — grid compacto PWA e Web', () => {
     expect(screen.getByRole('combobox', { name: 'Quantidade de empresas por página' })).toHaveValue('10');
   });
 
+
+  it('mantém o selo imediatamente após o nome, com alinhamento estável no PWA e na web', () => {
+    render(<RelatedCompaniesTable companies={companies.slice(0, 2)} />);
+
+    const verifiedRow = screen.getAllByTestId('related-company-row')[0];
+    const identity = within(verifiedRow).getByTestId('related-company-identity');
+    const name = within(identity).getByRole('link', { name: 'GoodWe Brasil' });
+    const badge = within(identity).getByTestId('related-verified');
+
+    expect(identity).toHaveClass('inline-flex', 'w-fit', 'max-w-full', 'min-w-0', 'items-center', 'gap-1');
+    expect(name).toHaveClass('min-w-0', 'truncate');
+    expect(name).toHaveAttribute('title', 'GoodWe Brasil');
+    expect(name.nextElementSibling).toBe(badge);
+    expect(within(screen.getAllByTestId('related-company-row')[1]).queryByTestId('related-verified')).not.toBeInTheDocument();
+  });
+
+  it('preserva o nome completo acessível e mantém o selo na mesma unidade com nomes extensos', () => {
+    const longName = 'Cooperativa de Soluções Sustentáveis em Energia Fotovoltaica e Mobilidade Elétrica';
+    render(
+      <RelatedCompaniesTable
+        companies={[{ ...companies[0], name: longName, verified: true }]}
+      />
+    );
+
+    const identity = screen.getByTestId('related-company-identity');
+    const name = within(identity).getByRole('link', { name: longName });
+    const badge = within(identity).getByTestId('related-verified');
+
+    expect(name).toHaveTextContent(longName);
+    expect(name).toHaveAttribute('title', longName);
+    expect(name).toHaveClass('truncate', 'min-w-0');
+    expect(identity).toHaveClass('max-w-full', 'items-center');
+    expect(name.nextElementSibling).toBe(badge);
+  });
+
   it('preserva paginação e mudança entre 5, 10 e 20 empresas', () => {
     render(<RelatedCompaniesTable companies={companies} />);
 
