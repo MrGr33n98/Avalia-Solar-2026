@@ -28,6 +28,9 @@ Rails.application.routes.draw do
     omniauth_callbacks: 'users/omniauth_callbacks'
   }
 
+  # MCP OAuth Protected Resource Metadata (RFC 9728): advertised only when configured.
+  get '/.well-known/oauth-protected-resource/mcp', to: 'api/v1/mcp/remote_transport#resource_metadata'
+
   # PR-MCP-02: feature-gated MCP Streamable HTTP transport PREVIEW.
   # No OAuth, public tool execution, or production enablement in this PR.
   post '/mcp', to: 'api/v1/mcp/remote_transport#create'
