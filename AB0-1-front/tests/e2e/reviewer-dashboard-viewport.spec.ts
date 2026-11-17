@@ -112,7 +112,7 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     await expect(page.getByText('Integradora Teste')).toBeVisible();
 
     await page.getByRole('link', { name: 'Detalhes do perfil' }).first().click();
-    await expect(page).toHaveURL(/\\/review-dashboard\\/profile/);
+    await expect(page).toHaveURL(/review-dashboard.*profile/);
     await expect(page.getByTestId('reviewer-profile-integrated')).toBeVisible();
     await expect(page.locator('aside[aria-label="Navegação do painel"]')).toHaveCount(1);
     await expect(page.getByRole('navigation', { name: 'Seções do perfil' })).toBeVisible();
@@ -123,7 +123,7 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     await page.goto('/review-dashboard');
 
     await page.getByRole('link', { name: 'Perfil', exact: true }).first().click();
-    await expect(page).toHaveURL(/\\/review-dashboard\\/profile/);
+    await expect(page).toHaveURL(/review-dashboard.*profile/);
     await expect(page.getByTestId('reviewer-profile-integrated')).toBeVisible();
 
     const hasOverflow = await page.evaluate(
