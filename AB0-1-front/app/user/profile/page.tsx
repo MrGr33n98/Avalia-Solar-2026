@@ -96,6 +96,18 @@ export default function UserProfilePage() {
     }
   };
 
-  return <UserProfileShell initialData={initialData} onUpdateProfile={handleUpdate} />;
+  // useSearchParams() lives inside UserProfileShell. Next.js 14 requires
+  // a Suspense boundary around that client-side navigation subtree.
+  return (
+    <React.Suspense
+      fallback={
+        <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center text-sm text-gray-600">
+          Carregando perfil...
+        </div>
+      }
+    >
+      <UserProfileShell initialData={initialData} onUpdateProfile={handleUpdate} />
+    </React.Suspense>
+  );
 }
 
