@@ -70,6 +70,7 @@ export function CreatorProjectsSection({
             slug: b.brand_slug,
             initials: b.initials,
             logo_url: b.logo_url,
+            logo_alt: b.brand_name,
             status: 'active' as const,
           }));
 
@@ -126,7 +127,7 @@ export function CreatorProjectsSection({
               {brandItems.length > 0 && (
                 <div className="pt-2.5 border-t border-slate-200/60 flex items-center justify-between">
                   <span className="text-[11px] font-medium text-slate-500">Fabricantes:</span>
-                  <BrandAvatarStack brands={brandItems} max={4} size={24} />
+                  <BrandAvatarStack brands={brandItems} maxVisible={4} size={24} />
                 </div>
               )}
             </article>
