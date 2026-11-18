@@ -99,7 +99,7 @@ export default function CompanyProfileTabs({
   const renderMobileTab = (tab: (typeof mobileTabs)[number]) => {
     const isActive = activeTab === tab.id;
     const tabHasMenu = tab.id === 'products' && hasProductMenu;
-    const shortLabel = tab.id === 'products' ? 'Produtos e Serviços' : tab.id === 'faq' ? 'FAQ' : tab.label;
+    const shortLabel = tab.id === 'products' ? 'Produtos' : tab.id === 'faq' ? 'FAQ' : tab.label;
 
     return (
       <CompanyCompactChip
