@@ -6,12 +6,17 @@ module Mcp
   module Oauth
     module Configuration
       REQUIRED_SCOPE = 'mcp:public:read'
+      PRIVATE_REQUIRED_SCOPE = 'mcp:company:read'
       DEFAULT_TOKEN_FORMAT = 'opaque'
 
       module_function
 
       def resource
         ENV['MCP_OAUTH_RESOURCE'].to_s
+      end
+
+      def private_resource
+        ENV['MCP_PRIVATE_OAUTH_RESOURCE'].to_s
       end
 
       def issuer
@@ -32,13 +37,26 @@ module Mcp
         false
       end
 
+      def private_configured?
+        ENV['MCP_PRIVATE_REMOTE_OAUTH_ENABLED'] == 'true' && https_uri?(issuer) &&
+          https_uri?(private_resource, path: '/mcp/private')
+      rescue URI::InvalidURIError
+        false
+      end
+
       def resource_binding_required?
-        ENV['MCP_REMOTE_OAUTH_ENABLED'] == 'true' || resource.present? || issuer.present?
+        ENV['MCP_REMOTE_OAUTH_ENABLED'] == 'true' || ENV['MCP_PRIVATE_REMOTE_OAUTH_ENABLED'] == 'true' ||
+          resource.present? || private_resource.present? || issuer.present?
       end
 
       def valid_resource_request?(raw_resource)
         values = Array(raw_resource).flat_map { |value| value.to_s.split(',') }.reject(&:empty?)
         values.one? && values.first == resource
+      end
+
+      def valid_registered_resource_request?(raw_resource)
+        values = Array(raw_resource).flat_map { |value| value.to_s.split(',') }.reject(&:empty?)
+        registered_resources.include?(values.first) && values.one?
       end
 
       def endpoint(path)
@@ -86,6 +104,11 @@ module Mcp
         path.nil? || uri.path == path
       end
       private_class_method :matching_path?
+
+      def registered_resources
+        [resource, private_resource].reject(&:blank?)
+      end
+      private_class_method :registered_resources
     end
   end
 end

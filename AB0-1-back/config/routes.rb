@@ -36,6 +36,7 @@ Rails.application.routes.draw do
 
   # MCP OAuth Protected Resource Metadata (RFC 9728): advertised only when configured.
   get '/.well-known/oauth-protected-resource/mcp', to: 'api/v1/mcp/remote_transport#resource_metadata'
+  get '/.well-known/oauth-protected-resource/mcp/private', to: 'api/v1/mcp/private_transport#resource_metadata'
   get '/.well-known/oauth-authorization-server', to: 'api/v1/mcp/oauth_metadata#show'
 
   # PR-MCP-02: feature-gated MCP Streamable HTTP transport PREVIEW.
@@ -43,6 +44,9 @@ Rails.application.routes.draw do
   post '/mcp', to: 'api/v1/mcp/remote_transport#create'
   get '/mcp', to: 'api/v1/mcp/remote_transport#unsupported'
   delete '/mcp', to: 'api/v1/mcp/remote_transport#unsupported'
+  post '/mcp/private', to: 'api/v1/mcp/private_transport#create'
+  get '/mcp/private', to: 'api/v1/mcp/private_transport#unsupported'
+  delete '/mcp/private', to: 'api/v1/mcp/private_transport#unsupported'
 
   get '/health', to: 'health#show'
   get '/health/readiness', to: 'health#readiness'

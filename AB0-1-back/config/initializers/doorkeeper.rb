@@ -275,6 +275,7 @@ Doorkeeper.configure do
   # https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes
   #
   default_scopes 'mcp:public:read'
+  optional_scopes 'mcp:company:read', 'mcp:company:analytics:read', 'mcp:company:reputation:read', 'mcp:crm:read'
   enforce_configured_scopes
 
   # Allows to restrict only certain scopes for grant_type.

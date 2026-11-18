@@ -10,11 +10,11 @@ module Api
       def validate_mcp_resource!
         configuration = ::Mcp::Oauth::Configuration
         return unless configuration.resource_binding_required?
-        return if configuration.configured? && configuration.valid_resource_request?(params[:resource])
+        return if configuration.valid_registered_resource_request?(params[:resource])
 
         render json: {
           error: 'invalid_target',
-          error_description: 'O recurso OAuth solicitado não é o MCP público registrado.'
+          error_description: 'O recurso OAuth solicitado não é um recurso MCP registrado.'
         }, status: :bad_request
       end
     end
