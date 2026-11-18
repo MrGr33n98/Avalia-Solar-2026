@@ -9,10 +9,22 @@ RSpec.describe UserAchievement, type: :model do
     it { is_expected.to validate_presence_of(:user_id) }
     it { is_expected.to validate_presence_of(:achievement_badge_id) }
     it { is_expected.to validate_uniqueness_of(:achievement_badge_id).scoped_to(:user_id) }
-    it { is_expected.to validate_presence_of(:state) }
     it { is_expected.to validate_inclusion_of(:state).in_array(UserAchievement::STATES) }
-    it { is_expected.to validate_presence_of(:unlocked_at) }
     it { is_expected.to validate_uniqueness_of(:share_token) }
+
+    it 'validates presence of state on update' do
+      ua = create(:user_achievement)
+      ua.state = nil
+      expect(ua).not_to be_valid
+      expect(ua.errors[:state]).to be_present
+    end
+
+    it 'validates presence of unlocked_at on update' do
+      ua = create(:user_achievement)
+      ua.unlocked_at = nil
+      expect(ua).not_to be_valid
+      expect(ua.errors[:unlocked_at]).to be_present
+    end
   end
 
   describe 'associations' do

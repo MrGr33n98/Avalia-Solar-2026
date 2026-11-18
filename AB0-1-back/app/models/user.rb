@@ -345,6 +345,10 @@ class User < ApplicationRecord
     "#{parts.first} #{parts.last}"
   end
 
+  def total_achievement_xp
+    achievement_ledgers.sum(:xp_delta)
+  end
+
   protected
 
   def after_confirmation
@@ -379,10 +383,6 @@ class User < ApplicationRecord
     rescue StandardError => e
       Rails.logger.error("[Analytics] Failed to track email confirmation: #{e.message}")
     end
-  end
-
-  def total_achievement_xp
-    achievement_ledgers.sum(:xp_delta)
   end
 
   private
