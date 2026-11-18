@@ -19,6 +19,10 @@ on:
       - 'AB0-1-back/spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb'
       - 'AB0-1-back/spec/services/mcp/private/**'
       - '.github/scripts/mcp_private_staging_smoke.rb'
+      - '.github/workflows/mcp-c4-sdk-interop-staging.yml'
+      - 'scripts/mcp/interop/**'
+      - 'infra/mcp-staging/**'
+      - 'docs/mcp/C4_IMPLEMENTATION_AND_RELEASE_GATES.md'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
       - 'AB0-1-back/app/services/mcp/oauth/**'
       - 'AB0-1-back/app/controllers/api/oauth/**'
@@ -113,6 +117,9 @@ jobs:
           ruby -c app/services/mcp/public/output_validator.rb
           ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c ../.github/scripts/mcp_private_staging_smoke.rb
+          python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
+          node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+          ruby -ryaml -e 'YAML.load_file(ARGV.fetch(0))' ../infra/mcp-staging/compose.yml
           ruby -c app/services/mcp/public_tool_registry.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
