@@ -8,6 +8,8 @@ class Brand < ApplicationRecord
   has_one_attached :logo
   has_many :products, dependent: :nullify
   has_many :analytics_events, dependent: :nullify
+  has_many :reviewer_brand_usages, dependent: :restrict_with_error
+  has_many :reviewer_solutions, dependent: :nullify
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: { case_sensitive: false }

@@ -1,5 +1,7 @@
 class ReviewerSolution < ApplicationRecord
   belongs_to :user
+  belongs_to :brand, optional: true
+  belongs_to :product, optional: true
   has_many :events, class_name: 'ReviewerSolutionEvent', dependent: :restrict_with_exception
 
   STATUSES = %w[active rejected disabled].freeze
@@ -10,17 +12,30 @@ class ReviewerSolution < ApplicationRecord
   validates :solution_type, inclusion: { in: TYPES }
   validates :status, inclusion: { in: STATUSES }
   validates :name, uniqueness: { scope: :user_id }
+  validates :usage_context, inclusion: { in: ReviewerBrandUsage::USAGE_CONTEXTS }, allow_nil: true
 
   def as_json(_options = {})
-    { id: id.to_s, name: name, type: solution_type, category: category, verified: verified, status: status, companyId: company_id, created_at: created_at.iso8601 }
+    {
+      id: id.to_s,
+      name: name,
+      type: solution_type,
+      category: category,
+      verified: verified,
+      status: status,
+      companyId: company_id,
+      brand_id: brand_id,
+      product_id: product_id,
+      usage_context: usage_context,
+      created_at: created_at.iso8601
+    }
   end
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[id user_id name solution_type category verified status company_id created_at updated_at]
+    %w[id user_id brand_id product_id name solution_type category usage_context verified status company_id created_at updated_at]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[user events]
+    %w[user brand product events]
   end
   after_commit :invalidate_creator_cache
 
