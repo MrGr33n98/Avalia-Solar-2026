@@ -97,6 +97,29 @@ test('banner institucional não gera barras, recortes nem sombras em mobile/PWA 
     expect(Math.abs(geometry.frameLeft - geometry.imageLeft)).toBeLessThanOrEqual(1);
     expect(geometry.fit).not.toBe('cover');
 
+    // Contrato único para PWA/mobile/tablet/desktop: topo em 90°,
+    // mantendo o arredondamento apenas na base do card da Brand Page.
+    const corners = await page.locator('#company-profile-compound-hero').evaluate((card) => {
+      const cardStyle = getComputedStyle(card);
+      const hero = card.querySelector('#company-premium-hero');
+      if (!hero) throw new Error('CompanyPremiumHero não encontrado');
+      const heroStyle = getComputedStyle(hero);
+      return {
+        cardTopLeft: cardStyle.borderTopLeftRadius,
+        cardTopRight: cardStyle.borderTopRightRadius,
+        heroTopLeft: heroStyle.borderTopLeftRadius,
+        heroTopRight: heroStyle.borderTopRightRadius,
+        cardBottomLeft: cardStyle.borderBottomLeftRadius,
+        cardBottomRight: cardStyle.borderBottomRightRadius,
+      };
+    });
+    expect(corners.cardTopLeft, `Viewport ${width}px: topo esquerdo do card`).toBe('0px');
+    expect(corners.cardTopRight, `Viewport ${width}px: topo direito do card`).toBe('0px');
+    expect(corners.heroTopLeft, `Viewport ${width}px: topo esquerdo do banner`).toBe('0px');
+    expect(corners.heroTopRight, `Viewport ${width}px: topo direito do banner`).toBe('0px');
+    expect(parseFloat(corners.cardBottomLeft)).toBeGreaterThan(0);
+    expect(parseFloat(corners.cardBottomRight)).toBeGreaterThan(0);
+
     // O frame institucional não pode receber camadas artificiais de sombra/gradiente.
     await expect(frame.locator('[class*="bg-gradient"], [class*="blur-xl"]')).toHaveCount(0);
 
