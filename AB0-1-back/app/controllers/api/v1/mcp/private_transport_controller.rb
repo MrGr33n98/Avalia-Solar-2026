@@ -36,7 +36,8 @@ module Api
           outcome = ::Mcp::Private::Protocol.new(
             message: message, user: @mcp_private_user,
             auth_context: @mcp_private_auth_context,
-            remote_ip: request.remote_ip.to_s
+            remote_ip: request.remote_ip.to_s,
+            headers: request.headers
           ).response
           response.headers['Retry-After'] = outcome[:retry_after].to_s if outcome[:retry_after]
           render json: outcome[:body], status: outcome[:status]
