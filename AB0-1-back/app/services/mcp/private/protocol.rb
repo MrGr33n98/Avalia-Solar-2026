@@ -24,6 +24,8 @@ module Mcp
       end
 
       def response
+        return error(nil, -32_600, 'Invalid JSON-RPC request.') unless @message.is_a?(Hash)
+
         id = @message['id']
         return error(id, -32_600, 'Invalid JSON-RPC request.') unless valid_request?
         return error(id, -32_602, 'Parameters must be an object.') unless @message.fetch('params', {}).is_a?(Hash)
@@ -47,14 +49,20 @@ module Mcp
       private
 
       def valid_request?
-        @message['jsonrpc'] == '2.0' && @message.key?('id')
+        @message['jsonrpc'] == '2.0' &&
+          @message.key?('id') &&
+          (@message['id'].is_a?(String) || @message['id'].is_a?(Integer)) &&
+          @message['method'].is_a?(String)
       end
 
       def dispatch(id)
         case @message['method']
         when 'initialize' then initialize_result(id)
         when 'ping' then success(id, {})
-        when 'tools/list' then success(id, { tools: [TOOL] })
+        when 'tools/list'
+          return error(id, -32_602, 'Unexpected tools/list parameters.') unless @message.fetch('params', {}).empty?
+
+          success(id, { tools: [TOOL] })
         when 'tools/call' then call_tool(id, @message.fetch('params'))
         else error(id, -32_601, 'Method not found.')
         end
