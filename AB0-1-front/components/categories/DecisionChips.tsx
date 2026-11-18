@@ -24,10 +24,11 @@ interface DecisionChipsProps {
   moreFiltersOpen?: boolean;
 }
 
+// Chips keep their intrinsic width: scrolling belongs only to the filters rail.
 const triggerClass =
-  'flex h-11 min-h-11 w-full min-w-0 items-center rounded-lg border px-2 text-[11px] font-bold shadow-sm ' +
-  'md:h-11 md:w-auto md:px-3 md:text-xs';
-const triggerLabelClass = 'flex min-w-0 flex-1 items-center justify-center gap-1 md:mr-1 md:gap-1.5';
+  'inline-flex h-11 min-h-11 w-max shrink-0 items-center whitespace-nowrap rounded-[10px] border px-3 text-[13px] font-semibold shadow-sm ' +
+  'md:text-sm';
+const triggerLabelClass = 'flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap';
 
 export default function DecisionChips({
   filters,
@@ -42,24 +43,27 @@ export default function DecisionChips({
     <section className="bg-white py-1.5 md:py-3">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
         <div className="mb-1.5 flex min-h-11 items-center justify-between gap-2 md:mb-2 md:min-h-0 md:gap-3">
-          <h2 className="text-[11px] font-black uppercase tracking-wide text-slate-600 md:text-xs">
+          <h2 className="whitespace-nowrap text-[15px] font-bold tracking-tight text-slate-900 md:text-base">
             Filtros rápidos
           </h2>
           <button
             type="button"
             onClick={onClearFilters}
             disabled={!hasActiveFilters}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-[11px] font-semibold text-slate-500 transition-colors enabled:hover:text-blue-700 disabled:opacity-60 md:min-h-0 md:text-xs"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-slate-500 transition-colors enabled:hover:text-blue-700 disabled:opacity-60 md:min-h-0 md:text-xs"
           >
             Limpar filtros
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
 
-        {/* 2 + 3 mobile rows, preserving all filter controls and full desktop layout. */}
+        {/* Single horizontal rail at every breakpoint; the page itself never scrolls sideways. */}
         <div
+          role="region"
+          aria-label="Filtros rápidos"
+          tabIndex={0}
           data-testid="category-quick-filters"
-          className="grid grid-cols-6 gap-1.5 md:flex md:flex-wrap md:gap-2"
+          className="flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain px-0.5 pb-2 pt-1 touch-pan-x [scrollbar-width:thin] md:gap-2.5"
         >
           <Select
             value={filters.verified ? 'true' : 'false'}
@@ -67,7 +71,7 @@ export default function DecisionChips({
           >
             <SelectTrigger
               aria-label="Verificadas"
-              className={`${triggerClass} col-span-3 md:col-auto ${
+              className={`${triggerClass} ${
                 filters.verified
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
@@ -75,7 +79,7 @@ export default function DecisionChips({
             >
               <div className={triggerLabelClass}>
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="min-w-0 truncate">Verificadas</span>
+                <span className="whitespace-nowrap">Verificadas</span>
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -90,7 +94,7 @@ export default function DecisionChips({
           >
             <SelectTrigger
               aria-label="Nota mínima"
-              className={`${triggerClass} col-span-3 md:col-auto ${
+              className={`${triggerClass} ${
                 filters.minRating > 0
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
@@ -98,11 +102,8 @@ export default function DecisionChips({
             >
               <div className={triggerLabelClass}>
                 <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="min-w-0 truncate md:hidden">
-                  {filters.minRating > 0 ? `${filters.minRating}+` : 'Nota'}
-                </span>
-                <span className="hidden md:inline">
-                  {filters.minRating > 0 ? `Nota: ${filters.minRating}+` : 'Qualquer Nota'}
+                <span className="whitespace-nowrap">
+                  {filters.minRating > 0 ? `Nota: ${filters.minRating}+` : 'Nota'}
                 </span>
               </div>
             </SelectTrigger>
@@ -121,7 +122,7 @@ export default function DecisionChips({
           >
             <SelectTrigger
               aria-label="Meu Estado"
-              className={`${triggerClass} col-span-2 md:col-auto ${
+              className={`${triggerClass} ${
                 filters.state
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
@@ -129,8 +130,9 @@ export default function DecisionChips({
             >
               <div className={triggerLabelClass}>
                 <MapPin className="h-3.5 w-3.5 shrink-0 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="min-w-0 truncate md:hidden">{filters.state || 'Estado'}</span>
-                <span className="hidden md:inline">{filters.state || 'Meu Estado'}</span>
+                <span className="whitespace-nowrap">
+                  {filters.state ? `Estado: ${filters.state}` : 'Estado'}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -148,7 +150,7 @@ export default function DecisionChips({
             <SelectTrigger
               aria-label="Especialidade"
               title={filters.projectType || 'Especialidade'}
-              className={`${triggerClass} col-span-2 md:col-auto ${
+              className={`${triggerClass} ${
                 filters.projectType
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/60'
@@ -156,8 +158,9 @@ export default function DecisionChips({
             >
               <div className={triggerLabelClass}>
                 <Building2 className="h-3.5 w-3.5 shrink-0 md:h-4 md:w-4" aria-hidden="true" />
-                <span className="min-w-0 truncate md:hidden">{filters.projectType || 'Projeto'}</span>
-                <span className="hidden md:inline">{filters.projectType || 'Especialidade'}</span>
+                <span className="whitespace-nowrap">
+                  {filters.projectType ? `Projeto: ${filters.projectType}` : 'Projeto'}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent>
@@ -177,11 +180,10 @@ export default function DecisionChips({
             aria-expanded={moreFiltersOpen}
             aria-controls="category-filters-panel"
             id="category-more-filters"
-            className="relative col-span-2 flex h-11 min-h-11 w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] font-bold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:col-auto md:w-auto md:gap-1.5 md:px-3 md:text-xs"
+            className="relative inline-flex h-11 min-h-11 w-max shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:text-sm"
           >
             <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-blue-600 md:h-4 md:w-4" aria-hidden="true" />
-            <span className="min-w-0 truncate md:hidden">Filtros</span>
-            <span className="hidden md:inline">Mais filtros</span>
+            <span className="whitespace-nowrap">Filtros</span>
             {activeFiltersCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-300 text-[9px] text-blue-900 md:static md:h-5 md:w-5 md:text-[10px]">
                 {activeFiltersCount}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import DecisionChips from './DecisionChips';
 
@@ -17,22 +17,50 @@ describe('DecisionChips', () => {
     onOpenMoreFilters: jest.fn(),
   };
 
-  it('organiza os cinco filtros em duas linhas compactas e preserva as ações acessíveis', () => {
+  it('mantém os cinco filtros numa única faixa rolável, sem quebra nem truncamento', () => {
     render(<DecisionChips {...defaultProps} activeFiltersCount={2} />);
 
-    const grid = screen.getByTestId('category-quick-filters');
-    expect(grid).toHaveClass('grid', 'grid-cols-6', 'md:flex');
+    const rail = screen.getByRole('region', { name: 'Filtros rápidos' });
+    expect(rail).toHaveClass('flex', 'flex-nowrap', 'overflow-x-auto', 'min-w-0');
+    expect(rail).not.toHaveClass('grid', 'flex-wrap');
+    expect(rail).toHaveAttribute('tabindex', '0');
+
     const verified = screen.getByRole('button', { name: 'Verificadas' });
     const rating = screen.getByRole('button', { name: 'Nota mínima' });
     const state = screen.getByRole('button', { name: 'Meu Estado' });
     const specialty = screen.getByRole('button', { name: 'Especialidade' });
     const more = screen.getByRole('button', { name: /mais filtros.*2/i });
-    expect(verified).toHaveClass('col-span-3', 'h-11', 'min-h-11');
-    expect(rating).toHaveClass('col-span-3', 'h-11', 'min-h-11');
-    for (const action of [state, specialty, more]) {
-      expect(action).toHaveClass('col-span-2', 'h-11', 'min-h-11');
+
+    for (const action of [verified, rating, state, specialty, more]) {
+      expect(action).toHaveClass('h-11', 'min-h-11', 'shrink-0', 'whitespace-nowrap');
+      expect(action).not.toHaveClass('truncate');
     }
+    expect(rail).toHaveTextContent('Verificadas');
+    expect(rail).toHaveTextContent('Nota');
+    expect(rail).toHaveTextContent('Estado');
+    expect(rail).toHaveTextContent('Projeto');
+    expect(rail).toHaveTextContent('Filtros');
     expect(more).toHaveAttribute('aria-controls', 'category-filters-panel');
+  });
+
+  it('não corta rótulos dos filtros ativos ou especialidades longas', () => {
+    render(
+      <DecisionChips
+        {...defaultProps}
+        filters={{ verified: true, minRating: 4.5, state: 'SC', projectType: 'Agronegócio' }}
+      />
+    );
+    const visibleLabels = [
+      ['Verificadas', 'Verificadas'],
+      ['Nota mínima', 'Nota: 4.5+'],
+      ['Meu Estado', 'Estado: SC'],
+      ['Especialidade', 'Projeto: Agronegócio'],
+    ] as const;
+    for (const [accessibleName, label] of visibleLabels) {
+      const text = within(screen.getByRole('button', { name: accessibleName })).getByText(label);
+      expect(text).toHaveClass('whitespace-nowrap');
+      expect(text).not.toHaveClass('truncate');
+    }
   });
 
   it('abre Mais filtros e expõe estado acessível', () => {

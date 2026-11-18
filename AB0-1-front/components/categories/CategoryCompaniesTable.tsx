@@ -174,19 +174,22 @@ export default function CategoryCompaniesTable({
     <section id="more-companies-section" className="space-y-3 pt-1 md:space-y-6 md:pt-4">
       {/* Title & Page Selector bar */}
 
-      <div className="flex flex-col justify-between gap-2 border-b border-slate-100 pb-2 sm:flex-row sm:items-center md:gap-4 md:pb-4">
+      <div className="flex min-w-0 flex-nowrap items-center justify-between gap-2 border-b border-slate-100 pb-2 md:gap-4 md:pb-4">
         <div>
-          <h2 className="text-[17px] font-black tracking-tight text-slate-900 md:text-lg">
+          <h2 className="whitespace-nowrap text-[15px] font-black tracking-tight text-slate-900 min-[380px]:text-[17px] md:text-lg">
             Mais empresas ({totalCompanies})
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <span className="text-xs font-semibold text-slate-500">Exibir:</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden whitespace-nowrap text-xs font-semibold text-slate-500 min-[380px]:inline">Exibir:</span>
 
           <Select value={String(perPage)} onValueChange={handlePerPageChange}>
-            <SelectTrigger className="w-[130px] h-9 rounded-xl border-slate-200 text-xs font-bold text-slate-800">
-              <SelectValue />
+            <SelectTrigger aria-label="Empresas por página" className="h-9 w-[100px] shrink-0 whitespace-nowrap rounded-lg border-slate-200 text-xs font-bold text-slate-800 sm:w-[130px]">
+              <SelectValue>
+                <span className="whitespace-nowrap sm:hidden">{perPage}/pág.</span>
+                <span className="hidden whitespace-nowrap sm:inline">{perPage} por página</span>
+              </SelectValue>
             </SelectTrigger>
 
             <SelectContent className="rounded-xl">

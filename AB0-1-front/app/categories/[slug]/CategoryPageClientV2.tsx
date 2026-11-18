@@ -25,7 +25,6 @@ import {
   GridSkeleton,
 } from '@/components/categories/SkeletonLoaders';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -33,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { trackCategorySelected } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { Banner, Category, Company } from '@/lib/api';
@@ -309,12 +308,12 @@ export default function CategoryPageClient({
 
 
           {/* Main Layout Container */}
-          <div className="mx-auto max-w-[1280px] px-4 py-1 sm:px-6 md:py-8">
+          <div className="mx-auto max-w-[1280px] px-4 py-1 sm:px-6 md:py-4">
             <div className={cn(
-              "grid items-start gap-8",
+              "grid min-w-0 items-start gap-4 md:gap-8",
               hasBanners ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "grid-cols-1"
             )}>
-              <div className="min-w-0 space-y-3 md:space-y-12">
+              <div className="min-w-0 space-y-3 md:space-y-8">
                 {/* 🏆 Section 1: Featured Companies (Empresas em Destaque) — Apenas se houver empresas patrocinadas/destaque autorizadas */}
                 {(() => {
                   const featuredCompanies = initialCompanies
@@ -360,11 +359,11 @@ export default function CategoryPageClient({
                 })()}
 
                 {/* Toolbar & Listing Table */}
-                <div className="space-y-2 md:space-y-6">
+                <div className="space-y-2 md:space-y-4">
                   {/* Search and Sort Toolbar */}
-                  <div className="relative z-10 rounded-xl border border-slate-200 bg-white p-2 shadow-sm md:sticky md:top-24 md:rounded-2xl md:p-4">
-                    <div className="flex min-w-0 flex-col items-stretch gap-2 min-[360px]:flex-row min-[360px]:items-center md:justify-between md:gap-4">
-                      <div className="relative w-full min-w-0 min-[360px]:flex-1 md:max-w-md">
+                  <div className="relative z-10 min-w-0 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm md:sticky md:top-24 md:rounded-2xl md:p-3">
+                    <div className="flex min-w-0 flex-nowrap items-center gap-2 md:gap-3">
+                      <div className="relative min-w-0 flex-1 md:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                           aria-label="Buscar empresas nesta categoria"
@@ -375,27 +374,14 @@ export default function CategoryPageClient({
                         />
                       </div>
 
-                      <div className="flex w-full min-w-0 gap-2 min-[360px]:w-[42%] min-[360px]:shrink-0 md:w-auto">
+                      <div className="flex w-[102px] shrink-0 min-[360px]:w-[124px] md:w-[170px]">
                         <Select value={sortBy} onValueChange={handleSortChange}>
                           <SelectTrigger
                               aria-label="Ordenar empresas"
-                              className="h-11 w-full min-w-0 rounded-lg border-slate-200 text-[13px] md:w-[200px] md:rounded-xl md:text-sm"
+                              className="h-11 w-full min-w-0 whitespace-nowrap rounded-lg border-slate-200 text-[13px] md:rounded-xl md:text-sm"
                           >
                             <SelectValue>
-                              <span className="md:hidden">
-                                {sortBy === 'rating_desc'
-                                  ? 'Melhor nota'
-                                  : sortBy === 'reviews_desc'
-                                    ? 'Avaliações'
-                                    : 'A-Z'}
-                              </span>
-                              <span className="hidden md:inline">
-                                {sortBy === 'rating_desc'
-                                  ? 'Melhor Avaliação'
-                                  : sortBy === 'reviews_desc'
-                                    ? 'Mais Avaliadas'
-                                    : 'A-Z'}
-                              </span>
+                              <span className="whitespace-nowrap">Ordenar</span>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
@@ -405,18 +391,6 @@ export default function CategoryPageClient({
                           </SelectContent>
                         </Select>
 
-                        {hasActiveFilters && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={handleClearFilters}
-                            aria-label="Limpar filtros da categoria"
-                            className="hidden h-11 w-11 shrink-0 rounded-xl border-slate-200 text-slate-500 hover:text-red-600 md:inline-flex"
-                            title="Limpar filtros"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
