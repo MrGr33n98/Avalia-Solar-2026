@@ -270,4 +270,78 @@ RSpec.describe 'MCP Private tenant authorization', type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.dig('error', 'code')).to eq(-32_602)
   end
+
+  def modern_private(method, params: {}, extra_headers: {})
+    data = {
+      jsonrpc: '2.0', id: "c4-#{method.tr('/', '-')}",
+      method: method,
+      params: params.merge(
+        _meta: {
+          'io.modelcontextprotocol/protocolVersion' => '2026-07-28',
+          'io.modelcontextprotocol/clientInfo' => { name: 'c4-private-spec', version: '1' },
+          'io.modelcontextprotocol/clientCapabilities' => {}
+        }
+      )
+    }
+    request_headers = headers.merge(
+      'MCP-Protocol-Version' => '2026-07-28',
+      'Mcp-Method' => method
+    )
+    request_headers['Mcp-Name'] = params[:name] if method == 'tools/call'
+    post '/mcp/private', params: data.to_json, headers: request_headers.merge(extra_headers)
+  end
+
+  it 'negocia MCP 2026-07-28 sem sessao de protocolo' do
+    modern_private('server/discover')
+
+    expect(response).to have_http_status(:ok)
+    result = response.parsed_body.fetch('result')
+    expect(result['resultType']).to eq('complete')
+    expect(result['supportedVersions']).to include('2026-07-28')
+    expect(result['ttlMs']).to eq(0)
+    expect(result['cacheScope']).to eq('private')
+    expect(response.headers['MCP-Session-Id']).to be_nil
+  end
+
+  it 'lista somente a ferramenta privada no protocolo moderno' do
+    modern_private('tools/list')
+    expect(response).to have_http_status(:ok)
+    result = response.parsed_body.fetch('result')
+    expect(result['resultType']).to eq('complete')
+    expect(result['tools'].map { |tool| tool.fetch('name') }).to eq(['get_my_company_overview'])
+    expect(response.body).not_to include('bulk_lead_export', 'send_outbound_campaign')
+  end
+
+  it 'executa a ferramenta moderna somente para a empresa autorizada' do
+    modern_private('tools/call',
+                   params: { name: 'get_my_company_overview', arguments: { company_id: company_a.id } })
+    expect(response).to have_http_status(:ok)
+    result = response.parsed_body.fetch('result')
+    expect(result['resultType']).to eq('complete')
+    expect(result.dig('structuredContent', 'company', 'id')).to eq(company_a.id)
+    expect(result['isError']).to be(false)
+  end
+
+  it 'nega Mcp-Name inconsistente e cabecalho de versao ausente' do
+    modern_private('tools/call',
+                   params: { name: 'get_my_company_overview', arguments: { company_id: company_a.id } },
+                   extra_headers: { 'Mcp-Name' => 'bulk_lead_export' })
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_020)
+
+    modern_private('tools/list', extra_headers: { 'MCP-Protocol-Version' => '' })
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_020)
+  end
+
+  it 'nega metadata moderna sem capacidades do cliente' do
+    payload = {
+      jsonrpc: '2.0', id: 'missing-capabilities', method: 'server/discover',
+      params: { _meta: { 'io.modelcontextprotocol/protocolVersion' => '2026-07-28' } }
+    }
+    post '/mcp/private', params: payload.to_json,
+         headers: headers.merge('MCP-Protocol-Version' => '2026-07-28', 'Mcp-Method' => 'server/discover')
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_602)
+  end
 end
