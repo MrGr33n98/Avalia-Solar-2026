@@ -123,7 +123,10 @@ module Mcp
         case @message['method']
         when 'initialize' then initialize_result(id)
         when 'ping' then success(id, {})
-        when 'tools/list' then success(id, { tools: [TOOL] })
+        when 'tools/list'
+          return error(id, -32_602, 'Unexpected tools/list parameters.') unless @message.fetch('params', {}).empty?
+
+          success(id, { tools: [TOOL] })
         when 'tools/call' then call_tool(id, @message.fetch('params', {}), modern: false)
         else error(id, -32_601, 'Method not found.')
         end
