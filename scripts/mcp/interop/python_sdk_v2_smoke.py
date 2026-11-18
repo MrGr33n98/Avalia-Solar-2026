@@ -21,7 +21,7 @@ PUBLIC = [
     "compare_integrators",
 ]
 PRIVATE = ["get_my_company_overview"]
-APPROVED_HOST = re.compile(r"^[a-z0-9-]*staging[a-z0-9-]*\\.avaliasolar\\.com\\.br$")
+APPROVED_HOST = re.compile(r"^[a-z0-9-]*staging[a-z0-9-]*\.avaliasolar\.com\.br$")
 
 
 def config():
@@ -46,7 +46,7 @@ def config():
         or parsed.fragment
     ):
         raise ValueError("Expected exact approved staging HTTPS resource")
-    if not token or len(token) > 8192 or "\\n" in token or "\\r" in token:
+    if not token or len(token) > 8192 or "\n" in token or "\r" in token:
         raise ValueError("Missing/invalid staging bearer token")
     company = os.environ.get("MCP_STAGING_PRIVATE_COMPANY_ID")
     if target == "private" and (not company or not company.isdigit()):
