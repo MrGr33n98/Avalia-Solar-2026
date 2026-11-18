@@ -2,12 +2,13 @@ require 'uri'
 
 module Creator
   class PublicProfileService
-    CACHE_VERSION = 'v3'
+    CACHE_VERSION = 'v4'
 
     def self.invalidate(profile)
       return unless profile&.public_slug.present?
 
       Rails.cache.delete("creator/public-profile/#{profile.public_slug}/v2")
+      Rails.cache.delete("creator/public-profile/#{profile.public_slug}/v3")
       Rails.cache.delete("creator/public-profile/#{profile.public_slug}/#{CACHE_VERSION}")
     end
 
@@ -22,8 +23,16 @@ module Creator
 
     def call
       Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-        { creator: creator, stats: stats, recent_publications: publications, recent_reviews: reviews,
-          solutions: solutions, achievements: achievements }
+        {
+          creator: creator,
+          stats: stats,
+          recent_publications: publications,
+          recent_reviews: reviews,
+          solutions: solutions,
+          brands: public_brands,
+          portfolio_projects: public_portfolio_projects,
+          achievements: achievements
+        }
       end
     end
 
@@ -135,6 +144,28 @@ module Creator
 
     def solutions
       @user.reviewer_solutions.where(status: 'active').as_json
+    end
+
+    def public_brands
+      return [] unless @user.respond_to?(:reviewer_brand_usages)
+
+      @user.reviewer_brand_usages
+           .active
+           .where(visibility: 'public')
+           .includes(:brand)
+           .map(&:as_public_json)
+    end
+
+    def public_portfolio_projects
+      return [] unless @user.respond_to?(:reviewer_portfolio_projects)
+
+      @user.reviewer_portfolio_projects
+           .active
+           .where(visibility: 'public')
+           .includes(project_brands: { reviewer_brand_usage: :brand })
+           .order(completed_at: :desc, created_at: :desc)
+           .limit(6)
+           .map(&:as_public_json)
     end
 
     def achievements

@@ -9,6 +9,8 @@ import { CreatorContactForm } from '@/components/creator/CreatorContactForm';
 import { CreatorReviewCard, type CreatorReview } from '@/components/creator/CreatorReviewCard';
 import { CreatorFollowList } from '@/components/creator/CreatorFollowList';
 import { getPublicationTypeLabel } from '@/lib/publications/publicationTypes';
+import { CreatorBrandsSection, type PublicCreatorBrand } from '@/components/creator/CreatorBrandsSection';
+import { CreatorProjectsSection, type PublicCreatorProject } from '@/components/creator/CreatorProjectsSection';
 
 type CreatorData = {
   creator: {
@@ -38,6 +40,8 @@ type CreatorData = {
   }>;
   recent_reviews: CreatorReview[];
   solutions: Array<{ id: string; name: string; category?: string }>;
+  brands?: PublicCreatorBrand[];
+  portfolio_projects?: PublicCreatorProject[];
   achievements: Array<{ id: string; title: string }>;
 };
 
@@ -113,6 +117,7 @@ export default async function CreatorPage({ params }: { params: { slug: string }
         'addressRegion': creator.state,
         'addressCountry': 'BR'
       },
+      'knowsAbout': data.brands?.map((b) => b.brand_name) || undefined,
       'url': canonical
     }
   };
@@ -149,6 +154,17 @@ export default async function CreatorPage({ params }: { params: { slug: string }
                 {creator.public_bio || 'Perfil público do avaliador Avalia Solar.'}
               </p>
             </section>
+
+            <CreatorBrandsSection
+              brands={data.brands}
+              creatorName={creator.name}
+            />
+
+            <CreatorProjectsSection
+              projects={data.portfolio_projects}
+              creatorName={creator.name}
+            />
+
             <p className="text-sm text-[#718096]">
               {data.recent_publications.length} publicações · {stats.review_count ?? 0} avaliações
               · {stats.achievement_count ?? 0} conquistas
