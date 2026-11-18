@@ -346,7 +346,7 @@ function ComparePageContent() {
 
       <CampaignTopBanner className="mx-auto max-w-[1280px] px-4 pt-3 sm:px-6 lg:px-8" />
 
-      <main className="mx-auto max-w-[1280px] px-4 pb-12 pt-3 sm:px-6 md:pt-5 lg:px-8" id="main-content">
+      <main className="mx-auto max-w-[1280px] px-4 pb-28 pt-3 sm:px-6 md:pb-12 md:pt-5 lg:px-8" id="main-content">
         {isLoading ? (
           <PageLoadingState />
         ) : loadError ? (
@@ -610,16 +610,21 @@ function SelectedCompaniesPanel({
           </article>
         ))}
         {Array.from({ length: Math.max(0, maxComparison - companies.length) }, (_, index) => (
-          <a
+          <button
+            type="button"
             key={`add-company-${index}`}
-            href="#company-search-title"
+            onClick={() => {
+              const search = document.getElementById('compare-company-search');
+              search?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              search?.focus({ preventScroll: true });
+            }}
             aria-label={`Adicionar empresa ${companies.length + index + 1} à comparação`}
             className={`flex min-h-[102px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-200 bg-blue-50/30 p-2.5 text-xs font-semibold text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 md:min-h-[72px] md:flex-row md:gap-2 md:rounded-xl md:border-2 md:bg-white md:p-3 md:text-sm ${index > 0 ? 'md:hidden' : ''}`}
           >
             <Plus className="h-5 w-5 stroke-[2]" aria-hidden="true" />
             <span className="text-center md:hidden">Empresa {companies.length + index + 1}</span>
             <span className="hidden md:inline">Adicionar empresa ({companies.length}/{maxComparison})</span>
-          </a>
+          </button>
         ))}
       </div>
     </section>
