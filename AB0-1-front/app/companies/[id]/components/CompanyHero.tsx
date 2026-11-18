@@ -192,12 +192,12 @@ export default function CompanyHero({
       {/* Container principal: banner + identidade + tabs */}
       <section
         data-company-layout="standard-hero"
-        className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+        className="overflow-visible rounded-b-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
       >
         {/* 1. HERO BANNER */}
         <div
           data-testid="company-hero-banner-frame"
-          className="relative w-full overflow-hidden rounded-t-2xl bg-white"
+          className="relative w-full overflow-hidden bg-white"
         >
           {/* Institutional / fallback banners determine their own height; no letterboxing. */}
 

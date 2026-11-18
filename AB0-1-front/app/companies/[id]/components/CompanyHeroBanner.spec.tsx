@@ -62,6 +62,8 @@ describe('CompanyHero — enquadramento do banner', () => {
     );
     const frame = container.querySelector('[data-testid="company-hero-banner-frame"]');
     expect(frame).toHaveClass('w-full', 'overflow-hidden', 'bg-white');
+    expect(frame).not.toHaveClass('rounded-t-2xl');
+    expect(container.querySelector('[data-company-layout="standard-hero"]')).toHaveClass('rounded-b-2xl');
     expect(frame).not.toHaveClass('aspect-[3/1]', 'md:h-[200px]', 'lg:h-[220px]', 'xl:h-[230px]');
     expect(frame?.querySelector('[class*="bg-gradient-to-t"]')).not.toBeInTheDocument();
     expect(frame?.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
