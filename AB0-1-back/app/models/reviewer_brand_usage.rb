@@ -63,6 +63,21 @@ class ReviewerBrandUsage < ApplicationRecord
     }
   end
 
+  def as_public_json
+    {
+      id: id.to_s,
+      brand_id: brand_id,
+      brand_name: brand.name,
+      brand_slug: brand.slug,
+      initials: brand.initials,
+      logo_url: brand.logo_url,
+      usage_context: usage_context,
+      usage_context_label: usage_context_label,
+      experience_since: experience_since&.iso8601,
+      verification_status: verification_status
+    }
+  end
+
   def usage_context_label
     case usage_context
     when 'personal_owner' then 'Proprietário / Uso pessoal'
