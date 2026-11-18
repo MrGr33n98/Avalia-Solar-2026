@@ -26,6 +26,9 @@ class User < ApplicationRecord
   has_many :reviewer_solutions, dependent: :destroy
   has_many :reviewer_brand_usages, dependent: :destroy
   has_many :reviewer_portfolio_projects, dependent: :destroy
+  has_many :user_achievements, dependent: :destroy
+  has_many :achievement_badges, through: :user_achievements
+  has_many :achievement_ledgers, dependent: :destroy
   has_many :marketplace_proposals, foreign_key: :buyer_user_id, dependent: :nullify
   has_many :reviewer_publications, dependent: :destroy
   has_many :group_memberships, dependent: :destroy
@@ -340,6 +343,10 @@ class User < ApplicationRecord
     return name if parts.size <= 2
 
     "#{parts.first} #{parts.last}"
+  end
+
+  def total_achievement_xp
+    achievement_ledgers.sum(:xp_delta)
   end
 
   protected

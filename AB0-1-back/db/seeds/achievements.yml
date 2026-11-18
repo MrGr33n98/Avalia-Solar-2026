@@ -1,0 +1,256 @@
+# Canonical Achievements Seed for Avalia Solar 2026
+# Mapped strictly to the SVG assets in public/assets/achievements/avalia_solar_achievements_complete
+- slug: review_approved_1
+  name: "1ª avaliação aprovada"
+  description: "Publicou sua primeira avaliação verificada e aprovada pela moderação no Avalia Solar."
+  category: "review"
+  tier: "bronze"
+  points_xp: 50
+  metric_key: "approved_reviews_count"
+  threshold: 1
+  action_enum: "write_review"
+  earned_asset_path: "cards/01_review_approved_1.svg"
+  locked_asset_path: "cards_locked/01_review_approved_1_locked.svg"
+  position: 1
+  active: true
+  revocable: true
+
+- slug: review_approved_3
+  name: "3ª avaliação aprovada"
+  description: "Conquistou 3 avaliações legítimas publicadas, ajudando outros consumidores solares."
+  category: "review"
+  tier: "silver"
+  points_xp: 100
+  metric_key: "approved_reviews_count"
+  threshold: 3
+  action_enum: "write_review"
+  earned_asset_path: "cards/02_review_approved_3.svg"
+  locked_asset_path: "cards_locked/02_review_approved_3_locked.svg"
+  position: 2
+  active: true
+  revocable: true
+
+- slug: review_approved_5
+  name: "5ª avaliação aprovada"
+  description: "Alcançou a marca de 5 avaliações completas e validadas sobre empresas do ecossistema."
+  category: "review"
+  tier: "gold"
+  points_xp: 200
+  metric_key: "approved_reviews_count"
+  threshold: 5
+  action_enum: "write_review"
+  earned_asset_path: "cards/03_review_approved_5.svg"
+  locked_asset_path: "cards_locked/03_review_approved_5_locked.svg"
+  position: 3
+  active: true
+  revocable: true
+
+- slug: profile_complete
+  name: "Perfil completo"
+  description: "Preencheu 100% das informações essenciais de perfil e preferências."
+  category: "profile"
+  tier: "bronze"
+  points_xp: 30
+  metric_key: "profile_completion"
+  threshold: 100
+  action_enum: "edit_profile"
+  earned_asset_path: "cards/04_profile_complete.svg"
+  locked_asset_path: "cards_locked/04_profile_complete_locked.svg"
+  position: 4
+  active: true
+  revocable: true
+
+- slug: avatar_uploaded
+  name: "Foto do perfil"
+  description: "Adicionou uma foto de identificação real para fortalecer a credibilidade das opiniões."
+  category: "profile"
+  tier: "bronze"
+  points_xp: 20
+  metric_key: "avatar_present"
+  threshold: 1
+  action_enum: "edit_profile"
+  earned_asset_path: "cards/05_avatar_uploaded.svg"
+  locked_asset_path: "cards_locked/05_avatar_uploaded_locked.svg"
+  position: 5
+  active: true
+  revocable: true
+
+- slug: solution_added_1
+  name: "1º equipamento adicionado"
+  description: "Cadastrou o primeiro inversor ou módulo solar utilizado na sua instalação."
+  category: "solution"
+  tier: "bronze"
+  points_xp: 40
+  metric_key: "solutions_count"
+  threshold: 1
+  action_enum: "add_solution"
+  earned_asset_path: "cards/06_solution_added_1.svg"
+  locked_asset_path: "cards_locked/06_solution_added_1_locked.svg"
+  position: 6
+  active: true
+  revocable: true
+
+- slug: solution_added_5
+  name: "5º equipamento adicionado"
+  description: "Mapeou 5 marcas ou equipamentos solares da sua experiência técnica ou residencial."
+  category: "solution"
+  tier: "silver"
+  points_xp: 120
+  metric_key: "solutions_count"
+  threshold: 5
+  action_enum: "add_solution"
+  earned_asset_path: "cards/07_solution_added_5.svg"
+  locked_asset_path: "cards_locked/07_solution_added_5_locked.svg"
+  position: 7
+  active: true
+  revocable: true
+
+- slug: review_useful_1
+  name: "Voto útil"
+  description: "Recebeu o primeiro voto de utilidade de outro membro da comunidade na sua avaliação."
+  category: "community"
+  tier: "bronze"
+  points_xp: 25
+  metric_key: "helpful_votes_count"
+  threshold: 1
+  action_enum: "view"
+  earned_asset_path: "cards/08_review_useful_1.svg"
+  locked_asset_path: "cards_locked/08_review_useful_1_locked.svg"
+  position: 8
+  active: true
+  revocable: false
+
+- slug: category_pioneer_1
+  name: "Pioneiro da empresa"
+  description: "Foi o primeiro avaliador a publicar uma review aprovada sobre uma empresa solar."
+  category: "review"
+  tier: "gold"
+  points_xp: 150
+  metric_key: "pioneer_review"
+  threshold: 1
+  action_enum: "write_review"
+  earned_asset_path: "cards/09_category_pioneer_1.svg"
+  locked_asset_path: "cards_locked/09_category_pioneer_1_locked.svg"
+  position: 9
+  active: true
+  revocable: true
+
+- slug: review_verified_1
+  name: "Cliente verificado"
+  description: "Comprovou a contratação ou fatura de instalação de um integrador solar parceiro."
+  category: "review"
+  tier: "gold"
+  points_xp: 100
+  metric_key: "verified_review"
+  threshold: 1
+  action_enum: "write_review"
+  earned_asset_path: "cards/10_review_verified_1.svg"
+  locked_asset_path: "cards_locked/10_review_verified_1_locked.svg"
+  position: 10
+  active: true
+  revocable: true
+
+- slug: partner_review_1
+  name: "Avaliou um parceiro"
+  description: "Avaliou uma empresa credenciada no ecossistema oficial do Avalia Solar."
+  category: "review"
+  tier: "bronze"
+  points_xp: 40
+  metric_key: "partner_review"
+  threshold: 1
+  action_enum: "write_review"
+  earned_asset_path: "cards/11_partner_review_1.svg"
+  locked_asset_path: "cards_locked/11_partner_review_1_locked.svg"
+  position: 11
+  active: true
+  revocable: true
+
+- slug: first_ten
+  name: "Primeiros dez"
+  description: "Entre os 10 primeiros avaliadores de destaque da comunidade solar brasileira."
+  category: "community"
+  tier: "special"
+  points_xp: 250
+  metric_key: "first_ten_member"
+  threshold: 1
+  action_enum: "view"
+  earned_asset_path: "cards/12_first_ten.svg"
+  locked_asset_path: "cards_locked/12_first_ten_locked.svg"
+  position: 12
+  active: true
+  revocable: false
+
+- slug: answer_published_1
+  name: "1ª dúvida respondida"
+  description: "Respondeu à dúvida de outro consumidor solar no fórum de perguntas da comunidade."
+  category: "community"
+  tier: "bronze"
+  points_xp: 35
+  metric_key: "forum_answers_count"
+  threshold: 1
+  action_enum: "view"
+  earned_asset_path: "cards/13_answer_published_1.svg"
+  locked_asset_path: "cards_locked/13_answer_published_1_locked.svg"
+  position: 13
+  active: true
+  revocable: true
+
+- slug: linkedin_connected
+  name: "LinkedIn conectado"
+  description: "Verificou sua identidade profissional vinculando uma conta do LinkedIn ao perfil."
+  category: "profile"
+  tier: "silver"
+  points_xp: 75
+  metric_key: "linkedin_oauth"
+  threshold: 1
+  action_enum: "edit_profile"
+  earned_asset_path: "cards/14_linkedin_connected.svg"
+  locked_asset_path: "cards_locked/14_linkedin_connected_locked.svg"
+  position: 14
+  active: false
+  revocable: true
+
+- slug: best_answer
+  name: "Melhor resposta"
+  description: "Teve uma resposta marcada como a melhor solução para uma dúvida técnica da comunidade."
+  category: "community"
+  tier: "gold"
+  points_xp: 150
+  metric_key: "best_answer_count"
+  threshold: 1
+  action_enum: "view"
+  earned_asset_path: "cards/15_best_answer.svg"
+  locked_asset_path: "cards_locked/15_best_answer_locked.svg"
+  position: 15
+  active: false
+  revocable: false
+
+- slug: first_login
+  name: "1º login"
+  description: "Criou sua conta e ingressou na comunidade de avaliadores solares."
+  category: "community"
+  tier: "bronze"
+  points_xp: 10
+  metric_key: "first_login"
+  threshold: 1
+  action_enum: "view"
+  earned_asset_path: "cards/16_first_login.svg"
+  locked_asset_path: "cards_locked/16_first_login_locked.svg"
+  position: 16
+  active: false
+  revocable: false
+
+- slug: solar_plant_complete
+  name: "Usina completa"
+  description: "Cadastrou um projeto solar contendo inversor, módulos e homologação completa."
+  category: "solution"
+  tier: "gold"
+  points_xp: 150
+  metric_key: "solar_plant_complete"
+  threshold: 1
+  action_enum: "add_solution"
+  earned_asset_path: "cards/17_solar_plant_complete.svg"
+  locked_asset_path: "cards_locked/17_solar_plant_complete_locked.svg"
+  position: 17
+  active: true
+  revocable: true

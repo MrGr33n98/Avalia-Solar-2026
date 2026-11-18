@@ -493,6 +493,9 @@ Seeds::Sales.run!
 require_relative 'seeds/groups'
 Seeds::Groups.run!
 
+require_relative 'seeds/achievements_seed'
+Seeds::AchievementsSeed.run!
+
 puts "\n=== SEED CONCLUÍDO ==="
 puts "Mobilidade Elétrica em primeiro lugar."
 puts "Novos hubs adicionados para expansão estratégica."
