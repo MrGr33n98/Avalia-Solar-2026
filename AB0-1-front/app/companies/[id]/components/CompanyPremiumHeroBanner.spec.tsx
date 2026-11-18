@@ -35,6 +35,8 @@ describe('CompanyPremiumHero — sem letterbox ou sombreado', () => {
     expect(frame.querySelector('[class*="bg-gradient-to-t"]')).not.toBeInTheDocument();
     expect(frame.querySelector('[class*="blur-xl"]')).not.toBeInTheDocument();
     expect(container.querySelector('#company-premium-hero')).toHaveClass('bg-white');
+    expect(container.querySelector('#company-premium-hero')).not.toHaveClass('rounded-2xl', 'md:rounded-3xl');
+    // O próprio banner não deve arredondar o topo no PWA ou no desktop.
     expect(screen.getByAltText('Banner institucional Avalia Solar')).toHaveClass('h-auto', 'w-full');
   });
 
