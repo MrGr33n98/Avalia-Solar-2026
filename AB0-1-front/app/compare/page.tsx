@@ -12,7 +12,6 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowLeftRight,
   ArrowRight,
   BadgeCheck,
   FileText,
@@ -347,13 +346,13 @@ function ComparePageContent() {
 
       <CampaignTopBanner className="mx-auto max-w-[1280px] px-4 pt-3 sm:px-6 lg:px-8" />
 
-      <main className="mx-auto max-w-[1280px] px-4 pb-12 pt-5 sm:px-6 lg:px-8" id="main-content">
+      <main className="mx-auto max-w-[1280px] px-4 pb-12 pt-3 sm:px-6 md:pt-5 lg:px-8" id="main-content">
         {isLoading ? (
           <PageLoadingState />
         ) : loadError ? (
           <PageErrorState onRetry={() => setRetryVersion((version) => version + 1)} />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3.5 md:space-y-6">
             <SelectedCompaniesPanel
               companies={companies}
               maxComparison={maxComparison}
@@ -361,17 +360,17 @@ function ComparePageContent() {
               onClear={clearComparison}
             />
 
-            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid items-start gap-3 md:gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
               {/* Coluna Principal: Best Match -> Resumo -> Tabela Detalhada -> Banner Inline */}
-              <div className="min-w-0 space-y-5">
+              <div className={`min-w-0 space-y-3 md:space-y-5 ${companies.length < 2 ? 'order-2 md:order-1' : 'order-1'}`}>
                 {companies.length > 1 && (
                   <BestMatchCard companies={companies} city={contextCity} onQuote={handleQuote} />
                 )}
 
-                {companies.length > 0 && <CompareSummary companies={companies} />}
+                {companies.length > 0 && <div className="hidden md:block"><CompareSummary companies={companies} /></div>}
 
                 {companies.length > 0 ? (
-                  <section aria-labelledby="side-by-side-title" className="space-y-3.5">
+                  <section aria-labelledby="side-by-side-title" className={companies.length === 1 ? 'hidden space-y-3.5 md:block' : 'space-y-3.5'}>
                     <div className="flex items-end justify-between gap-3">
                       <div>
                         <h2 id="side-by-side-title" className="text-lg sm:text-xl font-bold tracking-tight text-slate-950">
@@ -398,7 +397,7 @@ function ComparePageContent() {
                     />
                   </section>
                 ) : (
-                  <EmptyComparisonState />
+                  <div className="hidden md:block"><EmptyComparisonState /></div>
                 )}
 
                 <BannerSlot placement="compare_page_inline" limit={3} />
@@ -406,19 +405,9 @@ function ComparePageContent() {
 
               {/* Sidebar Lateral (ativa em xl >= 1280px; tablet/mobile empilha abaixo sem comprimir tabela) */}
               <aside
-                className="space-y-5"
+                className={`space-y-3 md:space-y-5 ${companies.length < 2 ? 'order-1 md:order-2' : 'order-2'}`}
                 aria-label="Descoberta de empresas"
               >
-                <RecommendedCompanies
-                  companies={recommendations}
-                  selectedCompanies={companies}
-                  maxComparison={maxComparison}
-                  loading={candidatesQuery.isLoading}
-                  error={candidatesQuery.isError}
-                  onRetry={() => void candidatesQuery.refetch()}
-                  onAdd={handleAdd}
-                  onReplace={handleReplace}
-                />
                 <CompanySearchPanel
                   query={query}
                   onQueryChange={setQuery}
@@ -432,6 +421,16 @@ function ComparePageContent() {
                   onRemove={removeFromComparison}
                   onClear={clearComparison}
                 />
+                <RecommendedCompanies
+                  companies={recommendations}
+                  selectedCompanies={companies}
+                  maxComparison={maxComparison}
+                  loading={candidatesQuery.isLoading}
+                  error={candidatesQuery.isError}
+                  onRetry={() => void candidatesQuery.refetch()}
+                  onAdd={handleAdd}
+                  onReplace={handleReplace}
+                />
                 <div className="hidden xl:block">
                   <BannerSlot
                     placement="compare_page_sidebar"
@@ -439,7 +438,7 @@ function ComparePageContent() {
                     className="hidden xl:block"
                   />
                 </div>
-                <VerificationTip />
+                <div className="hidden md:block"><VerificationTip /></div>
               </aside>
             </div>
 
@@ -456,7 +455,7 @@ function CompareHero() {
   return (
     <header className="border-b border-slate-200/90 bg-white">
       <div
-        className="mx-auto max-w-[1280px] bg-cover bg-center bg-no-repeat px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-8"
+        className="mx-auto max-w-[1280px] bg-cover bg-center bg-no-repeat px-4 py-3 sm:px-6 md:py-6 lg:px-8 lg:py-8"
         style={{
           backgroundImage:
             "url('/assets/background-comparacao-empresas-2560x512-500kb.png')",
@@ -464,7 +463,7 @@ function CompareHero() {
       >
         <nav
           aria-label="Breadcrumb"
-          className="mb-3 flex items-center gap-1.5 text-xs text-slate-500"
+          className="mb-3 hidden items-center gap-1.5 text-xs text-slate-500 md:flex"
         >
           <Link href="/" className="hover:text-blue-700 transition-colors">
             Início
@@ -472,23 +471,22 @@ function CompareHero() {
           <span aria-hidden="true" className="text-slate-400">›</span>
           <span className="font-medium text-slate-800">Comparar empresas</span>
         </nav>
-        <div className="grid min-h-[100px] items-center gap-5 lg:grid-cols-[1fr_auto]">
+        <div className="grid min-h-0 items-center gap-2 md:min-h-[100px] md:gap-5 lg:grid-cols-[1fr_auto]">
           <div className="max-w-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <span className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs">
+                <span className="hidden items-center gap-2 rounded-md border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 shadow-2xs md:inline-flex">
                   <AnimatedCompareIcon size={14} intensity="subtle" aria-hidden="true" /> Comparador
                 </span>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl lg:text-[2rem]">
+                <h1 className="text-[23px] font-semibold leading-tight tracking-tight text-slate-950 md:mt-2 md:text-3xl md:font-bold lg:text-[2rem]">
                   Comparador de empresas
                 </h1>
-                <p className="mt-1.5 max-w-xl text-xs sm:text-sm leading-relaxed text-slate-600">
-                  Compare reputação, notas, garantias, cobertura e condições comerciais lado a lado para tomar a melhor decisão para o seu projeto solar.
+                <p className="mt-1 max-w-xl text-[13px] leading-5 text-slate-600 md:mt-1.5 md:text-sm md:leading-relaxed">
+                  <span className="md:hidden">Compare avaliações, confiança e serviços de até duas empresas.</span>
+                  <span className="hidden md:inline">Compare reputação, notas, garantias, cobertura e condições comerciais lado a lado para tomar a melhor decisão para o seu projeto solar.</span>
                 </p>
               </div>
-              <div className="flex sm:hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 shadow-sm">
-                <ArrowLeftRight className="h-5 w-5" aria-hidden="true" />
-              </div>
+
             </div>
           </div>
           <div className="hidden lg:flex w-full justify-center lg:justify-end">
@@ -571,9 +569,9 @@ function SelectedCompaniesPanel({
   return (
     <section
       aria-labelledby="selected-companies-title"
-      className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm"
+      className="rounded-lg border border-slate-200/90 bg-white p-3 shadow-none sm:rounded-xl sm:p-5 sm:shadow-sm"
     >
-      <div className="mb-3.5 flex items-center justify-between gap-3">
+      <div className="mb-2.5 flex items-center justify-between gap-3 sm:mb-3.5">
         <h2 id="selected-companies-title" className="text-sm sm:text-base font-bold text-slate-950">
           Empresas selecionadas <span className="text-xs font-normal text-slate-500">({companies.length} de {maxComparison})</span>
         </h2>
@@ -588,16 +586,16 @@ function SelectedCompaniesPanel({
           </Button>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-3">
         {companies.map((company) => (
           <article
             key={company.id}
-            className="relative flex min-h-[68px] sm:min-h-[72px] items-center gap-3 rounded-xl border border-slate-200/90 bg-slate-50/50 p-3 shadow-2xs transition-all hover:bg-white hover:border-slate-300 hover:shadow-xs"
+            className="relative flex min-h-[102px] flex-col items-start gap-1.5 rounded-lg border border-slate-200/90 bg-slate-50/50 p-2.5 transition-colors hover:border-slate-300 md:min-h-[72px] md:flex-row md:items-center md:gap-3 md:rounded-xl md:p-3"
           >
             <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
-            <div className="min-w-0 flex-1 pr-7">
-              <p className="truncate text-xs sm:text-sm font-bold text-slate-950">{company.name}</p>
-              <p className="truncate text-xs text-slate-500">
+            <div className="min-w-0 w-full flex-1 pr-6 md:w-auto md:pr-7">
+              <p className="line-clamp-2 break-words text-xs font-semibold leading-4 text-slate-950 md:truncate md:text-sm md:font-bold">{company.name}</p>
+              <p className="truncate text-[11px] text-slate-500 md:text-xs">
                 {[company.city, company.state].filter(Boolean).join(', ') || 'Local não informado'}
               </p>
             </div>
@@ -605,20 +603,24 @@ function SelectedCompaniesPanel({
               type="button"
               onClick={() => onRemove(company.id)}
               aria-label={`Remover ${company.name} da comparação`}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 md:right-2 md:top-1/2 md:h-8 md:w-8 md:-translate-y-1/2"
             >
               <X className="h-4 w-4" />
             </button>
           </article>
         ))}
-        {companies.length < maxComparison && (
+        {Array.from({ length: Math.max(0, maxComparison - companies.length) }, (_, index) => (
           <a
+            key={`add-company-${index}`}
             href="#company-search-title"
-            className="flex min-h-[68px] sm:min-h-[72px] items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-white p-3 text-xs sm:text-sm font-semibold text-blue-600 hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+            aria-label={`Adicionar empresa ${companies.length + index + 1} à comparação`}
+            className={`flex min-h-[102px] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-200 bg-blue-50/30 p-2.5 text-xs font-semibold text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 md:min-h-[72px] md:flex-row md:gap-2 md:rounded-xl md:border-2 md:bg-white md:p-3 md:text-sm ${index > 0 ? 'md:hidden' : ''}`}
           >
-            <Plus className="h-4 w-4 stroke-[2.5]" /> Adicionar empresa ({companies.length}/{maxComparison})
+            <Plus className="h-5 w-5 stroke-[2]" aria-hidden="true" />
+            <span className="text-center md:hidden">Empresa {companies.length + index + 1}</span>
+            <span className="hidden md:inline">Adicionar empresa ({companies.length}/{maxComparison})</span>
           </a>
-        )}
+        ))}
       </div>
     </section>
   );
@@ -668,7 +670,7 @@ function CompanySearchPanel({
       <label htmlFor="compare-company-search" className="sr-only">
         Buscar empresa ou cidade
       </label>
-      <div className="relative mt-3.5">
+      <div className="relative mt-2.5 md:mt-3.5">
         <Search
           className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
           aria-hidden="true"
@@ -678,7 +680,7 @@ function CompanySearchPanel({
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Buscar empresa ou cidade..."
-          className="pl-9 pr-9 rounded-lg border-slate-200 h-10 text-xs sm:text-sm"
+          className="h-11 rounded-lg border-slate-200 pl-9 pr-9 text-sm md:h-10"
         />
         {isSearching && (
           <Loader2
