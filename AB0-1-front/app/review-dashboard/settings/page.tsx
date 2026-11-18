@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ReviewerPageHeader } from '@/components/review-dashboard/layout/ReviewerPageHeader';
 import { SectionHeader } from '@/components/review-dashboard/SectionHeader';
 import { TipCard } from '@/components/review-dashboard/cards/TipCard';
 import { EmptyStateCard } from '@/components/review-dashboard/cards/EmptyStateCard';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
-import { User, Shield, Bell, Lock, Globe } from 'lucide-react';
+import { User, Shield, Bell, Lock, Globe, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { fetchReviewerBrandUsages, updateReviewerBrandUsage } from '@/lib/api/reviewer-brand-usages';
 
 const tabs = [
   { id: 'profile', label: 'Perfil e conta', icon: User },
@@ -22,6 +23,33 @@ type TabId = (typeof tabs)[number]['id'];
 export default function ConfiguraçõesPage() {
   const { loading } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('profile');
+  const [revoking, setRevoking] = useState(false);
+  const [revokeSuccess, setRevokeSuccess] = useState<string | null>(null);
+
+  const handleRevokeAllPublicBrands = async () => {
+    const confirmed = window.confirm(
+      'Deseja realmente revogar a visibilidade pública de todas as marcas? Elas permanecerão salvas na sua conta como privadas.'
+    );
+    if (!confirmed) return;
+
+    setRevoking(true);
+    setRevokeSuccess(null);
+    try {
+      const resp = await fetchReviewerBrandUsages({ status: 'active', limit: 100 });
+      const publicBrands = resp.data.filter((b) => b.visibility === 'public');
+      for (const brand of publicBrands) {
+        await updateReviewerBrandUsage(brand.id, {
+          visibility: 'private',
+          lock_version: brand.lock_version,
+        });
+      }
+      setRevokeSuccess(`Visibilidade pública revogada com sucesso para ${publicBrands.length} marcas.`);
+    } catch {
+      alert('Falha ao revogar visibilidade pública. Tente novamente.');
+    } finally {
+      setRevoking(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -118,7 +146,76 @@ export default function ConfiguraçõesPage() {
             </div>
           )}
 
-          {activeTab !== 'profile' && (
+          {activeTab === 'privacy' && (
+            <div className="space-y-4" data-testid="settings-privacy-tab">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+                <SectionHeader title="Privacidade e Consentimento de Marcas (LGPD)" />
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Por padrão, todas as marcas e projetos que você cadastra na Central do Avaliador são <strong>privados</strong>. Eles só se tornam visíveis no seu perfil público de Creator mediante sua autorização explícita.
+                </p>
+
+                {revokeSuccess && (
+                  <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>{revokeSuccess}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900">Revogação Global de Visibilidade</h4>
+                    <p className="text-xs text-slate-500">
+                      Torna todas as marcas ativas privadas imediatamente, removendo-as do perfil público do Creator.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRevokeAllPublicBrands}
+                    disabled={revoking}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors whitespace-nowrap"
+                    data-testid="revoke-public-brands-button"
+                  >
+                    <EyeOff className="w-3.5 h-3.5" />
+                    <span>{revoking ? 'Revogando...' : 'Tornar todas as marcas privadas'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+                <SectionHeader title="Seus Direitos como Titular de Dados" />
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-xs text-[#17468D]">
+                  <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <p>
+                    Em conformidade com a LGPD (Lei 13.709/2018), você possui total controle sobre suas autodeclarações de marcas, projetos e dados pessoais. Você pode editar, alternar visibilidade ou excluir qualquer declaração factual a qualquer momento.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-4" data-testid="settings-notifications-tab">
+              <SectionHeader title="Preferências de Notificação" />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Status de Verificação Técnica</p>
+                    <p className="text-xs text-slate-500">Receba notificações quando uma marca ou projeto for homologado com evidência documental.</p>
+                  </div>
+                  <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Atualizações de Fabricantes Parceiros</p>
+                    <p className="text-xs text-slate-500">Avisos quando novas marcas ou equipamentos do catálogo forem associados à sua região.</p>
+                  </div>
+                  <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== 'profile' && activeTab !== 'privacy' && activeTab !== 'notifications' && (
             <EmptyStateCard
               icon={Shield}
               title="Ainda não disponível"

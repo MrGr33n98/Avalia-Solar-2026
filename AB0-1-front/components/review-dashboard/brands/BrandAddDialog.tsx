@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import { BrandCatalogCombobox } from './BrandCatalogCombobox';
 import type { BrandCatalogItem } from '@/lib/api/brands';
@@ -80,6 +80,15 @@ export function BrandAddDialog({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleReset = () => {
     setSelectedBrand(null);
     setContext('integrator_install');
@@ -95,9 +104,12 @@ export function BrandAddDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="brand-add-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150"
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full max-w-lg overflow-hidden border border-slate-200 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>

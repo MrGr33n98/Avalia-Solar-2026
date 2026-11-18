@@ -57,6 +57,15 @@ export function PortfolioProjectAddDialog({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   const resetForm = () => {
     setTitle('');
     setProjectType('residential');
@@ -140,8 +149,16 @@ export function PortfolioProjectAddDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="portfolio-project-add-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+    >
+      <div className="bg-white rounded-t-xl sm:rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
         <div className="flex items-center justify-between p-4 border-b border-slate-200 sticky top-0 bg-white z-10">
           <div>
             <h2 className="text-sm font-bold text-slate-900">Cadastrar Projeto do Portfólio</h2>
