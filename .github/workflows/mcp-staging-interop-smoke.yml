@@ -35,12 +35,16 @@ jobs:
       CONFIRMATION: ${{ inputs.confirmation }}
       MCP_SMOKE_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
       MCP_SMOKE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+      MCP_SMOKE_PUBLIC_COMPANY_A_ID: ${{ vars.MCP_STAGING_PUBLIC_COMPANY_A_ID }}
+      MCP_SMOKE_PUBLIC_COMPANY_B_ID: ${{ vars.MCP_STAGING_PUBLIC_COMPANY_B_ID }}
     steps:
       - name: Verify explicit staging authorization
         run: |
           test "$CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Explicit staging acknowledgement required."; exit 1; }
           test -n "$MCP_SMOKE_RESOURCE_URL" || { echo "::error::MCP_STAGING_RESOURCE_URL missing."; exit 1; }
           test -n "$MCP_SMOKE_ACCESS_TOKEN" || { echo "::error::MCP_STAGING_ACCESS_TOKEN missing."; exit 1; }
+          test -n "$MCP_SMOKE_PUBLIC_COMPANY_A_ID" || { echo "::error::Public staging company A missing."; exit 1; }
+          test -n "$MCP_SMOKE_PUBLIC_COMPANY_B_ID" || { echo "::error::Public staging company B missing."; exit 1; }
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
