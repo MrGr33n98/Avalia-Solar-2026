@@ -15,5 +15,23 @@ class AchievementLedger < ApplicationRecord
   validates :xp_delta, presence: true, numericality: { only_integer: true }
   validates :idempotency_key, presence: true, uniqueness: true
 
+  alias_attribute :points_delta, :xp_delta
+
+  before_validation :ensure_defaults, on: :create
+
   scope :recent, -> { order(created_at: :desc) }
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[achievement_badge_id admin_user_id created_at id idempotency_key kind metadata updated_at user_id xp_delta]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[achievement_badge admin_user user]
+  end
+
+  private
+
+  def ensure_defaults
+    self.idempotency_key ||= "manual_#{kind}_#{user_id}_#{achievement_badge_id}_#{Time.current.to_f}_#{SecureRandom.hex(4)}"
+  end
 end

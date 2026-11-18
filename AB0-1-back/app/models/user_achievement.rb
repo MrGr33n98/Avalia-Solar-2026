@@ -19,6 +19,14 @@ class UserAchievement < ApplicationRecord
   scope :unlocked, -> { where(state: 'unlocked') }
   scope :revoked, -> { where(state: 'revoked') }
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[achievement_badge_id created_at id revoked_at share_token state unlocked_at updated_at user_id]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[achievement_badge user]
+  end
+
   def unlocked?
     state == 'unlocked'
   end

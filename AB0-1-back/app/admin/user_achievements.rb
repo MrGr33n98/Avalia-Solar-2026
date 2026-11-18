@@ -11,9 +11,9 @@ ActiveAdmin.register UserAchievement do
   filter :unlocked_at
   filter :share_token
 
-  scope :todos, default: true
-  scope :desbloqueados, -> { unlocked }
-  scope :revogados, -> { revoked }
+  scope :all, default: true
+  scope('Desbloqueados') { |s| s.unlocked }
+  scope('Revogados') { |s| s.revoked }
 
   member_action :revoke, method: :post do
     user_achievement = resource
