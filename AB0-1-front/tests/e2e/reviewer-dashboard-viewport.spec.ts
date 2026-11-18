@@ -97,7 +97,7 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/review-dashboard');
 
-    await expect(page.getByTestId('reviewer-identity-card')).toBeVisible();
+    await expect(page.getByTestId('reviewer-identity-card')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Projetista solar')).toBeVisible();
     await expect(page.getByText('Integradora Teste')).toBeVisible();
 

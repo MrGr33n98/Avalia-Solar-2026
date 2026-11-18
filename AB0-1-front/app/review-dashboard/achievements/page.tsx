@@ -1,220 +1,252 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useDashboardContext } from '../DashboardLayoutClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Trophy,
+  RotateCcw,
+  PlusCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Trophy, Award, Lock, Zap } from 'lucide-react';
 import { track } from '@/lib/analytics/lazy';
+import { getReviewerAchievements, type AchievementItem } from '@/lib/api/achievements';
+import { AchievementCard } from '@/components/review-dashboard/achievements/AchievementCard';
+import { AchievementDetailModal } from '@/components/review-dashboard/achievements/AchievementDetailModal';
+import { AchievementSummaryHeader } from '@/components/review-dashboard/achievements/AchievementSummaryHeader';
+import { AchievementFaqAccordion } from '@/components/review-dashboard/achievements/AchievementFaqAccordion';
 
-const tabs = [
+const TABS = [
   { id: 'all', label: 'Todas' },
   { id: 'unlocked', label: 'Conquistadas' },
   { id: 'locked', label: 'Bloqueadas' },
 ] as const;
 
-type TabId = (typeof tabs)[number]['id'];
+type TabId = (typeof TABS)[number]['id'];
 
-interface AchievementItem {
-  id: string;
-  title: string;
-  description: string;
-  unlocked: boolean;
-}
-
-export default function ConquistasPage() {
-  const { summary } = useDashboardContext();
+export default function AchievementsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('all');
+  const [selectedAchievement, setSelectedAchievement] = useState<AchievementItem | null>(null);
 
-  useEffect(() => {
-    track('achievement_tab_viewed', { surface: 'tab' });
-  }, []);
-
-  const gamification = summary?.gamification;
-  const greenScore =
-    gamification?.green_score !== undefined && gamification?.green_score !== null
-      ? gamification.green_score
-      : ' — ';
-  const earnedPoints =
-    gamification?.earned_points !== undefined && gamification?.earned_points !== null
-      ? gamification.earned_points
-      : ' — ';
-  const levelName = gamification?.level?.name || ' — ';
-
-  // Deriva conquistas a partir da API; sem fallback de dados fictícios
-  const achievements: AchievementItem[] = useMemo(() => {
-    const apiAchievements = gamification?.achievements;
-    if (!apiAchievements || apiAchievements.length === 0) {
-      return [];
-    }
-
-    return apiAchievements.map((item, idx) => ({
-      id: item.id || `ach_${idx}`,
-      title: item.title,
-      description: item.subtitle || item.description || '',
-      unlocked: item.state !== 'bloqueado' && item.unlocked !== false,
-    }));
-  }, [gamification?.achievements]);
-
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-  const totalCount = achievements.length;
-
-  const filteredAchievements = achievements.filter((a) => {
-    if (activeTab === 'unlocked') return a.unlocked;
-    if (activeTab === 'locked') return !a.unlocked;
-    return true;
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ['reviewer-achievements'],
+    queryFn: getReviewerAchievements,
+    staleTime: 30 * 1000,
+    retry: 2,
   });
 
+  useEffect(() => {
+    track('achievement_tab_viewed', {
+      surface: 'tab',
+      unlocked_count: data?.summary?.unlocked_count,
+      total_count: data?.summary?.total_count,
+    });
+  }, [data?.summary]);
+
+  const achievements = useMemo(() => data?.achievements || [], [data?.achievements]);
+
+  const filteredAchievements = useMemo(() => {
+    return achievements.filter((achievement) => {
+      if (activeTab === 'unlocked') return achievement.state === 'unlocked';
+      if (activeTab === 'locked') return achievement.state !== 'unlocked';
+      return true;
+    });
+  }, [achievements, activeTab]);
+
+  const handleSelectAchievement = (achievement: AchievementItem) => {
+    setSelectedAchievement(achievement);
+    track('achievement_detail_opened', {
+      badge_id: achievement.id,
+      state: achievement.state,
+      category: achievement.category,
+    });
+  };
+
+  const handleShareAchievement = (achievement: AchievementItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedAchievement(achievement);
+    track('achievement_share_started', {
+      badge_id: achievement.id,
+      method: 'modal_prompt',
+    });
+  };
+
   return (
-    <div className="mx-auto w-full max-w-4xl px-1 sm:px-2">
-      {/* Breadcrumb */}
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-1.5 text-xs text-slate-500 mb-1"
-      >
-        <Link
-          href="/review-dashboard"
-          className="hover:text-slate-900 transition-colors"
-        >
-          Dashboard
+    <div className="mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-6">
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Navegação estrutural" className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+        <Link href="/review-dashboard" className="hover:text-blue-600 transition-colors">
+          Central do Avaliador
         </Link>
         <span className="text-slate-300">›</span>
-        <span className="text-slate-700 font-medium">Conquistas</span>
+        <span className="text-slate-800 dark:text-slate-200 font-medium">Conquistas & Badges</span>
       </nav>
 
-      {/* Header com título e subtítulo compactos */}
-      <header className="mb-4">
-        <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight text-slate-950 leading-tight">
-          Conquistas
-        </h1>
-        <p className="mt-1 text-xs sm:text-sm text-slate-500">
-          Acompanhe conquistas registradas no seu perfil.
-        </p>
-      </header>
-
-      {/* Grid com 4 KPIs compactos em 1 linha */}
-      <section
-        aria-label="Métricas de gamificação"
-        className="grid grid-cols-4 gap-2 sm:gap-3 mb-5"
-      >
-        {/* Card 1: Conquistas */}
-        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
-          <Trophy className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
-          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
-            Conquistas
-          </span>
-          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
-            {totalCount > 0 ? `${unlockedCount}/${totalCount}` : ' — '}
-          </span>
-        </div>
-
-        {/* Card 2: Green Score */}
-        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
-          <Award className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
-          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
-            Green Score
-          </span>
-          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
-            {greenScore}
-          </span>
-        </div>
-
-        {/* Card 3: XP */}
-        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
-          <Zap className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
-          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
-            XP
-          </span>
-          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
-            {earnedPoints}
-          </span>
-        </div>
-
-        {/* Card 4: Nível */}
-        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 px-1 sm:p-3 text-center shadow-none transition-colors">
-          <Lock className="h-5 w-5 text-slate-950 stroke-[1.8]" aria-hidden="true" />
-          <span className="mt-1.5 text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">
-            Nível
-          </span>
-          <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
-            {levelName}
-          </span>
-        </div>
-      </section>
-
-      {/* Tabs compactas com sublinhado sutil */}
-      <div className="flex items-center gap-6 sm:gap-8 border-b border-slate-200 mb-4 px-1">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'pb-2.5 text-xs sm:text-sm transition-colors whitespace-nowrap',
-                isActive
-                  ? 'font-bold text-slate-950 border-b-2 border-slate-950 -mb-px'
-                  : 'font-medium text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
-              )}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Lista de Conquistas */}
-      <div className="space-y-2.5 sm:space-y-3">
-        {filteredAchievements.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center">
-            <p className="text-xs sm:text-sm text-slate-500">
-              Nenhuma conquista encontrada nesta categoria.
-            </p>
+      {/* Loading State Skeleton */}
+      {isLoading && (
+        <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Carregando conquistas">
+          <div className="h-44 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
+          <div className="h-10 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-60 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            ))}
           </div>
-        ) : (
-          filteredAchievements.map((item) => (
-            <article
-              key={item.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-none transition-colors"
+        </div>
+      )}
+
+      {/* Error State with Retry Button */}
+      {isError && (
+        <div className="my-8 p-8 rounded-3xl border border-red-200 bg-red-50/70 dark:bg-red-950/20 text-center">
+          <h2 className="text-lg font-bold text-red-800 dark:text-red-300">
+            Não foi possível carregar as conquistas
+          </h2>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            Ocorreu um erro temporário na comunicação com o servidor.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Tentar novamente</span>
+          </button>
+        </div>
+      )}
+
+      {/* Loaded Content */}
+      {!isLoading && !isError && data && (
+        <>
+          {/* Summary Banner Header */}
+          <AchievementSummaryHeader summary={data.summary} />
+
+          {/* Filter Tabs */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 mb-6 pb-2">
+            <div className="flex items-center gap-2 sm:gap-4" role="tablist" aria-label="Filtrar por status">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                const count =
+                  tab.id === 'all'
+                    ? achievements.length
+                    : tab.id === 'unlocked'
+                    ? data.summary.unlocked_count
+                    : data.summary.total_count - data.summary.unlocked_count;
+
+                return (
+                  <button
+                    key={tab.id}
+                    role="tab"
+                    id={`tab-${tab.id}`}
+                    aria-selected={isActive}
+                    aria-controls={`tabpanel-${tab.id}`}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all min-h-[44px] flex items-center gap-1.5',
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    )}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'text-[11px] px-1.5 py-0.2 rounded-full',
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {isFetching && (
+              <span className="text-xs text-slate-400 flex items-center gap-1">
+                <RotateCcw className="w-3 h-3 animate-spin" />
+                Atualizando...
+              </span>
+            )}
+          </div>
+
+          {/* Achievements Grid: 2 cols on mobile (<640px), 3 cols on tablet, 4 cols on desktop */}
+          <section
+            id={`tabpanel-${activeTab}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${activeTab}`}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5"
+          >
+            {filteredAchievements.map((achievement) => (
+              <AchievementCard
+                key={achievement.id}
+                achievement={achievement}
+                onSelect={handleSelectAchievement}
+                onShare={handleShareAchievement}
+              />
+            ))}
+          </section>
+
+          {/* Empty State when tab has 0 items */}
+          {filteredAchievements.length === 0 && (
+            <div className="py-12 px-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center my-6">
+              <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Nenhum selo encontrado nesta aba
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {activeTab === 'unlocked'
+                  ? 'Você ainda não possui conquistas desbloqueadas. Comece avaliando uma empresa solar!'
+                  : 'Parabéns! Você já desbloqueou todas as conquistas disponíveis nesta categoria.'}
+              </p>
+            </div>
+          )}
+
+          {/* Contextual Solar Solutions Upsell Banner */}
+          <section
+            aria-label="Equipamentos e Soluções em Uso"
+            className="mt-12 p-6 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm"
+          >
+            <div>
+              <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block mb-1">
+                Equipamentos em Uso
+              </span>
+              <h3 className="text-lg font-bold">
+                Cadastre seus Inversores e Módulos Solares
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Compartilhe as marcas do seu gerador fotovoltaico para desbloquear os selos de Usina Completa e Especialista Solar.
+              </p>
+            </div>
+            <Link
+              href="/review-dashboard/solutions"
+              className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold text-slate-900 bg-white hover:bg-slate-100 transition-colors shadow-sm min-h-[44px]"
             >
-              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                {/* Quadrado do ícone */}
-                <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-100">
-                  <Award
-                    className="h-5 w-5 sm:h-6 sm:w-6 text-slate-950 stroke-[1.8]"
-                    aria-hidden="true"
-                  />
-                </div>
+              <PlusCircle className="w-4 h-4 text-blue-600" />
+              <span>Gerenciar Soluções</span>
+            </Link>
+          </section>
 
-                {/* Conteúdo textual */}
-                <div className="min-w-0">
-                  <h2 className="text-xs sm:text-sm font-bold text-slate-950 leading-tight">
-                    {item.title}
-                  </h2>
-                  <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 leading-snug line-clamp-2">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
+          {/* FAQ Accordion Section */}
+          <AchievementFaqAccordion faq={data.faq} />
+        </>
+      )}
 
-              {/* Badge de status à direita */}
-              <div className="shrink-0">
-                {item.unlocked ? (
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-slate-700">
-                    Desbloqueada
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200/60 px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-slate-400">
-                    <Lock className="h-2.5 w-2.5" aria-hidden="true" />
-                    Bloqueada
-                  </span>
-                )}
-              </div>
-            </article>
-          ))
-        )}
-      </div>
+      {/* Detail Dialog Modal */}
+      <AchievementDetailModal
+        achievement={selectedAchievement}
+        isOpen={Boolean(selectedAchievement)}
+        onClose={() => setSelectedAchievement(null)}
+      />
     </div>
   );
 }
