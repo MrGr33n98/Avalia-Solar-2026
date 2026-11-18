@@ -26,6 +26,7 @@ class Product < ApplicationRecord
   has_many :product_price_histories, dependent: :destroy
   has_many :reviews, as: :reviewable, dependent: :destroy
   has_many :favorites, as: :favoritable, dependent: :destroy
+  has_many :reviewer_solutions, dependent: :nullify
 
   attr_accessor :category_ids_for_metrics_update
 
