@@ -3928,6 +3928,9 @@ export const reviewerSolutionsApi = {
     solution_type: string;
     category: string;
     company_id?: string;
+    brand_id?: number;
+    product_id?: number;
+    usage_context?: string;
   }) => fetchApi('/reviewer_solutions', { method: 'POST', body: JSON.stringify({ solution }) }),
   remove: (id: string) => fetchApi('/reviewer_solutions/' + id, { method: 'DELETE' }),
 };
