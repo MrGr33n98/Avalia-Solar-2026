@@ -15,7 +15,7 @@ class Brand < ApplicationRecord
   validate :validate_logo_attachment, if: -> { logo.attached? }
   validate :validate_aliases_format
 
-  before_validation :generate_slug, if: -> { slug.blank? && name.present? }
+  before_validation :generate_slug, if: -> { slug.nil? && name.present? }
   before_validation :normalize_attributes
 
   scope :active, -> { where(status: 'active') }
@@ -99,7 +99,9 @@ class Brand < ApplicationRecord
     self.name = name.to_s.strip if name.present?
     self.slug = slug.to_s.strip.downcase if slug.present?
     self.status = status.presence || 'active'
-    self.aliases = Array(aliases).map { |a| a.to_s.strip }.reject(&:blank?).uniq if aliases.present?
+    if aliases.is_a?(Array)
+      self.aliases = aliases.map { |a| a.to_s.strip }.reject(&:blank?).uniq
+    end
   end
 
   def generate_slug

@@ -89,7 +89,8 @@ RSpec.describe 'Api::V1::Brands', type: :request do
 
       expect(response).to have_http_status(:not_found)
       json = JSON.parse(response.body)
-      expect(json['error']).to eq('Fabricante não encontrado')
+      expect(json.dig('error', 'message')).to eq('Fabricante não encontrado')
+      expect(json.dig('error', 'code')).to eq('BRAND_NOT_FOUND')
     end
   end
 end
