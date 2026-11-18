@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { SolutionIdentityAvatar } from './SolutionIdentityAvatar';
 import { SolutionMetricStrip } from './SolutionMetricStrip';
 import { BrandsWorkspace } from '@/components/review-dashboard/brands/BrandsWorkspace';
+import { ExperienceWorkspace } from '@/components/review-dashboard/experience/ExperienceWorkspace';
 
 const CATEGORY_TABS = [
   { id: 'all', label: 'Todas' },
@@ -46,7 +47,7 @@ function formatAddedDate(value?: string): string | null {
 }
 
 export interface SolutionsWorkspaceProps {
-  initialHubTab?: 'solutions' | 'brands';
+  initialHubTab?: 'solutions' | 'brands' | 'experience';
 }
 
 export function SolutionsWorkspace({ initialHubTab = 'solutions' }: SolutionsWorkspaceProps) {
@@ -58,19 +59,20 @@ export function SolutionsWorkspace({ initialHubTab = 'solutions' }: SolutionsWor
     urlTab = null;
   }
 
-  const [hubTab, setHubTab] = useState<'solutions' | 'brands'>(() => {
+  const [hubTab, setHubTab] = useState<'solutions' | 'brands' | 'experience'>(() => {
+    if (urlTab === 'experience') return 'experience';
     if (urlTab === 'brands') return 'brands';
     if (urlTab === 'solutions') return 'solutions';
     return initialHubTab;
   });
 
-  const handleHubTabChange = (newTab: 'solutions' | 'brands') => {
+  const handleHubTabChange = (newTab: 'solutions' | 'brands' | 'experience') => {
     setHubTab(newTab);
     if (typeof window !== 'undefined') {
       try {
         const url = new URL(window.location.href);
-        if (newTab === 'brands') {
-          url.searchParams.set('tab', 'brands');
+        if (newTab === 'brands' || newTab === 'experience') {
+          url.searchParams.set('tab', newTab);
         } else {
           url.searchParams.delete('tab');
         }
@@ -129,12 +131,18 @@ export function SolutionsWorkspace({ initialHubTab = 'solutions' }: SolutionsWor
               Central do avaliador
             </p>
             <h1 className="mt-1.5 text-[22px] font-semibold leading-[1.2] tracking-tight text-[#0F2F64] sm:text-2xl">
-              {hubTab === 'brands' ? 'Marcas com que trabalho' : 'Soluções que uso'}
+              {hubTab === 'brands'
+                ? 'Marcas com que trabalho'
+                : hubTab === 'experience'
+                  ? 'Minha experiência e projetos'
+                  : 'Soluções que uso'}
             </h1>
             <p className="mt-1.5 max-w-2xl text-xs leading-5 text-[#525252] sm:text-sm">
               {hubTab === 'brands'
                 ? 'Indique os fabricantes de equipamentos solares com quem você atua em projetos, instalações ou uso pessoal.'
-                : 'Registre equipamentos, marcas e serviços de energia sustentável que você realmente utiliza.'}
+                : hubTab === 'experience'
+                  ? 'Comprove sua atuação prática, instalações realizadas e equipamentos operados no setor solar.'
+                  : 'Registre equipamentos, marcas e serviços de energia sustentável que você realmente utiliza.'}
             </p>
           </div>
 
@@ -191,10 +199,27 @@ export function SolutionsWorkspace({ initialHubTab = 'solutions' }: SolutionsWor
         >
           <span>Marcas com que trabalho</span>
         </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={hubTab === 'experience'}
+          onClick={() => handleHubTabChange('experience')}
+          className={cn(
+            'inline-flex min-h-[44px] items-center gap-2 border-b-2 px-4 text-xs font-semibold transition-colors sm:text-sm',
+            hubTab === 'experience'
+              ? 'border-[#0F62FE] text-[#0F62FE]'
+              : 'border-transparent text-[#525252] hover:text-[#161616]'
+          )}
+        >
+          <span>Minha experiência e projetos</span>
+        </button>
       </div>
 
       {hubTab === 'brands' ? (
         <BrandsWorkspace />
+      ) : hubTab === 'experience' ? (
+        <ExperienceWorkspace />
       ) : (
         <>
           <SolutionMetricStrip

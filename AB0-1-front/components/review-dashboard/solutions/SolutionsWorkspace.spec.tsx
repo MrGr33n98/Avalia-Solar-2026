@@ -20,6 +20,14 @@ jest.mock('@/components/profile/AddUserSolutionModal', () => ({
     ) : null,
 }));
 
+jest.mock('@/components/review-dashboard/brands/BrandsWorkspace', () => ({
+  BrandsWorkspace: () => <div data-testid="brands-workspace">Brands Workspace Mock</div>,
+}));
+
+jest.mock('@/components/review-dashboard/experience/ExperienceWorkspace', () => ({
+  ExperienceWorkspace: () => <div data-testid="experience-workspace">Experience Workspace Mock</div>,
+}));
+
 const mockUseDashboardContext = jest.fn();
 
 jest.mock('@/app/review-dashboard/DashboardLayoutClient', () => ({
@@ -159,6 +167,13 @@ describe('SolutionsWorkspace — PR0 Baseline Truthful UI & IBM Carbon Compact',
     );
 
     expect(screen.getByLabelText('Solução: Fronius Brasil')).toHaveTextContent('FB');
+  });
+
+  it('permite alternar entre as abas do Hub incluindo Minha experiência e projetos', () => {
+    render(<SolutionsWorkspace initialHubTab="experience" />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Minha experiência e projetos');
+    expect(screen.getByTestId('experience-workspace')).toBeInTheDocument();
   });
 });
 
