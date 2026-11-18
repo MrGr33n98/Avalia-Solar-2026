@@ -41,6 +41,39 @@ class ReviewerBrandUsage < ApplicationRecord
   scope :publicly_visible, -> { active.where(visibility: 'public') }
   scope :verified, -> { active.where(verification_status: 'evidence_verified') }
 
+  after_commit :invalidate_creator_cache
+
+  def as_owner_json
+    {
+      id: id.to_s,
+      brand: brand.as_catalog_json,
+      usage_context: usage_context,
+      usage_context_label: usage_context_label,
+      experience_since: experience_since&.iso8601,
+      source: source,
+      verification_status: verification_status,
+      visibility: visibility,
+      status: status,
+      description: description,
+      consent_version: consent_version,
+      opted_in_at: opted_in_at&.iso8601,
+      lock_version: lock_version,
+      created_at: created_at.iso8601,
+      updated_at: updated_at.iso8601
+    }
+  end
+
+  def usage_context_label
+    case usage_context
+    when 'personal_owner' then 'Proprietário / Uso pessoal'
+    when 'integrator_install' then 'Instalo em projetos'
+    when 'designer_specification' then 'Especifico em projetos'
+    when 'maintenance' then 'Realizo manutenção'
+    when 'reseller' then 'Revendo equipamentos'
+    else usage_context.humanize
+    end
+  end
+
   def opt_in_public!(version:)
     update!(
       visibility: 'public',
@@ -77,5 +110,11 @@ class ReviewerBrandUsage < ApplicationRecord
     if experience_since > Date.current
       errors.add(:experience_since, 'não pode ser uma data futura')
     end
+  end
+
+  def invalidate_creator_cache
+    return unless defined?(Creator::PublicProfileService) && Creator::PublicProfileService.respond_to?(:invalidate_for_user)
+
+    Creator::PublicProfileService.invalidate_for_user(user)
   end
 end
