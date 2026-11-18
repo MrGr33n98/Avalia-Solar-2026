@@ -16,8 +16,14 @@ class McpStagingSmoke
   def initialize
     @resource = URI.parse(ENV.fetch('MCP_SMOKE_RESOURCE_URL'))
     @token = ENV.fetch('MCP_SMOKE_ACCESS_TOKEN')
+    @company_a = Integer(ENV.fetch('MCP_SMOKE_PUBLIC_COMPANY_A_ID'), 10)
+    @company_b = Integer(ENV.fetch('MCP_SMOKE_PUBLIC_COMPANY_B_ID'), 10)
+    raise ArgumentError, 'Two distinct approved companies required' unless
+      @company_a.positive? && @company_b.positive? && @company_a != @company_b
+
     unless @resource.is_a?(URI::HTTPS) && @resource.path == '/mcp' &&
            @resource.query.nil? && @resource.fragment.nil? &&
+           @resource.userinfo.nil? &&
            @resource.host.match?(/\A[a-z0-9-]*staging[a-z0-9-]*\.avaliasolar\.com\.br\z/)
       raise ArgumentError, 'Smoke requires an approved HTTPS MCP staging host only.'
     end
@@ -33,18 +39,51 @@ class McpStagingSmoke
     found = list.fetch('result').fetch('tools').map { |tool| tool.fetch('name') }
     raise 'Public allowlist mismatch' unless found == PUBLIC_NAMES
 
-    categories = post('tools/call', { 'name' => 'list_solar_categories', 'arguments' => {} })
-    require_success!(categories, 'category query')
-    structured = categories.fetch('result').fetch('structuredContent')
-    raise 'Invalid category output' unless structured.fetch('data').fetch('categories').is_a?(Array)
+    categories = public_tool('list_solar_categories', {})
+    require_array(categories, 'categories')
+
+    directory = public_tool('list_integrators', { 'state' => 'SC', 'limit' => 5 })
+    require_array(directory, 'integrators')
+
+    profile = public_tool('show_integrator_profile', { 'company_id' => @company_a })
+    profile_id = profile.fetch('data').fetch('integrator').fetch('id')
+    raise 'Wrong profile company' unless profile_id == @company_a
+
+    reputation = public_tool('get_integrator_reputation', { 'company_id' => @company_a })
+    aggregate = reputation.fetch('data')
+    raise 'Invalid reputation total' unless aggregate.fetch('total_approved').is_a?(Integer) &&
+                                           aggregate.fetch('total_approved') >= 0
+
+    comparison = public_tool('compare_integrators', { 'company_ids' => [@company_a, @company_b] })
+    companies = comparison.fetch('data').fetch('companies')
+    raise 'Invalid comparison output' unless companies.is_a?(Array) && companies.length == 2
+    raise 'Comparison references wrong companies' unless
+      companies.map { |row| row.fetch('id') }.sort == [@company_a, @company_b].sort
 
     forbidden = post('tools/call', { 'name' => 'bulk_lead_export', 'arguments' => {} })
     raise 'Private tool unexpectedly callable' unless forbidden.dig('error', 'code') == -32_602
 
-    puts 'PASS: private staging MCP discovery/catalog/category query/private-tool denial'
+    puts 'PASS: staging public MCP metadata-independent discovery, 5 tools, and forbidden internal tools'
   end
 
   private
+
+  def public_tool(name, arguments)
+    response = post('tools/call', { 'name' => name, 'arguments' => arguments })
+    require_success!(response, name)
+    result = response.fetch('result')
+    raise 'Missing tool response content' unless result.fetch('isError') == false
+
+    structured = result.fetch('structuredContent')
+    raise 'Malformed public envelope' unless structured.fetch('schema_version') == '1.0.0' &&
+                                              structured.fetch('data').is_a?(Hash) &&
+                                              structured.fetch('limitations').is_a?(Array)
+    structured
+  end
+
+  def require_array(envelope, name)
+    raise "Missing #{name}" unless envelope.fetch('data').fetch(name).is_a?(Array)
+  end
 
   def post(method, params)
     body = {
