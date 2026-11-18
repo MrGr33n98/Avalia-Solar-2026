@@ -23,63 +23,62 @@ const defaultProps = {
   showFaq: true,
 };
 
-describe('Brand Page mobile/PWA — single-line profile tabs', () => {
+describe('Brand Page mobile/PWA — compact one-line chips V2', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('prioritizes Overview, Products, Reviews and FAQ, keeping optional tabs accessible in the same rail', () => {
+  it('keeps every available destination in the single rail, with projects before FAQ', () => {
     render(<CompanyProfileTabs {...defaultProps} />);
-
     const rail = screen.getByTestId('company-mobile-tablist');
     expect(rail).toHaveClass('flex', 'flex-nowrap', 'w-max', 'min-w-full');
-    const tabButtons = within(rail).getAllByRole('tab');
-    expect(tabButtons.map((tab) => tab.getAttribute('aria-label'))).toEqual([
+
+    const tabs = within(rail).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.getAttribute('aria-label'))).toEqual([
       'Visão Geral',
       'Produtos e Serviços',
       'Avaliações',
+      'Projetos',
       'Perguntas Frequentes (FAQ)',
       'Financiamento',
-      'Projetos',
     ]);
 
-    const visibleLabels = ['Visão Geral', 'Produtos e Serviços', 'Avaliações', 'FAQ', 'Financiamento', 'Projetos'];
-    for (const [index, tab] of tabButtons.entries()) {
-      expect(tab).toHaveClass('grid', 'grid-rows-[24px_20px_12px]', 'h-[92px]', 'min-w-max', 'snap-start');
-      expect(tab).not.toHaveClass('truncate');
-      const label = within(tab).getByText(visibleLabels[index]);
+    const labels = ['Visão Geral', 'Produtos', 'Avaliações', 'Projetos', 'FAQ', 'Financiamento'];
+    for (const [index, tab] of tabs.entries()) {
+      expect(tab).toHaveClass('h-11', 'min-h-11', 'shrink-0', 'snap-start');
+      const surface = within(tab).getByTestId('company-mobile-tab-surface');
+      expect(surface).toHaveClass('h-9', 'whitespace-nowrap', 'rounded-full');
+      const label = within(tab).getByTestId('company-mobile-tab-label');
+      expect(label).toHaveTextContent(labels[index]);
       expect(label).toHaveClass('whitespace-nowrap', '[overflow-wrap:normal]', '[hyphens:none]');
       expect(label).not.toHaveClass('truncate');
-      expect(label).not.toHaveClass('[overflow-wrap:anywhere]');
     }
 
-    const scrollContainer = rail.parentElement;
-    expect(scrollContainer).toHaveClass('overflow-x-auto', 'overscroll-x-contain');
-    expect(scrollContainer).toHaveAttribute('tabindex', '0');
+    const scroller = rail.parentElement;
+    expect(scroller).toHaveClass('overflow-x-auto', 'overscroll-x-contain');
+    expect(scroller).toHaveAttribute('tabindex', '0');
     expect(within(rail).getByRole('tab', { name: 'Visão Geral' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(rail).getByRole('tab', { name: 'Visão Geral' })).toHaveTextContent('Visão Geral');
   });
 
-  it('keeps icon, text and arrow tracks aligned even when only Products has a dropdown', () => {
+  it('aligns one icon with the label; only Products has a dropdown chevron', () => {
     render(<CompanyProfileTabs {...defaultProps} categories={[{ id: 1, name: 'Energia Solar', seo_url: 'solar' }]} />);
-
     const rail = screen.getByTestId('company-mobile-tablist');
-    const buttons = within(rail).getAllByRole('tab');
-
-    for (const button of buttons) {
-      const slots = Array.from(button.children).filter((child) => child.tagName === 'SPAN');
-      expect(slots.length).toBeGreaterThanOrEqual(3);
-      expect(slots[0]).toHaveClass('h-6');
-      expect(slots[1]).toHaveClass('whitespace-nowrap');
-      expect(slots[2]).toHaveClass('h-3');
+    for (const tab of within(rail).getAllByRole('tab')) {
+      const surface = within(tab).getByTestId('company-mobile-tab-surface');
+      expect(surface).toHaveClass('inline-flex', 'items-center');
+      expect(surface.querySelectorAll('svg').length).toBeGreaterThanOrEqual(1);
     }
 
     const products = within(rail).getByRole('tab', { name: 'Produtos e Serviços' });
+    const reviews = within(rail).getByRole('tab', { name: 'Avaliações' });
     expect(products).toHaveAttribute('aria-haspopup', 'dialog');
-    expect(products.children[2].querySelector('svg')).toBeInTheDocument();
-    expect(within(rail).getByRole('tab', { name: 'Avaliações' }).children[2].querySelector('svg')).toBeNull();
+    expect(products).toHaveAttribute('aria-expanded', 'false');
+    expect(within(products).getByTestId('company-mobile-tab-surface').querySelectorAll('svg')).toHaveLength(2);
+    expect(within(reviews).getByTestId('company-mobile-tab-surface').querySelectorAll('svg')).toHaveLength(1);
   });
 
-  it('preserves tab selection callbacks and feature-gated availability', () => {
+  it('preserves onTabChange and conditional feature access', () => {
     const onTabChange = jest.fn();
     render(
       <CompanyProfileTabs
@@ -95,9 +94,8 @@ describe('Brand Page mobile/PWA — single-line profile tabs', () => {
     const rail = screen.getByTestId('company-mobile-tablist');
     expect(within(rail).getAllByRole('tab')).toHaveLength(3);
     expect(within(rail).queryByRole('tab', { name: 'Perguntas Frequentes (FAQ)' })).not.toBeInTheDocument();
-    expect(within(rail).queryByRole('tab', { name: 'Financiamento' })).not.toBeInTheDocument();
+    expect(within(rail).queryByRole('tab', { name: 'Projetos' })).not.toBeInTheDocument();
     expect(within(rail).getByRole('tab', { name: 'Avaliações' })).toHaveAttribute('aria-selected', 'true');
-
     fireEvent.click(within(rail).getByRole('tab', { name: 'Visão Geral' }));
     expect(onTabChange).toHaveBeenCalledWith('overview');
   });

@@ -13,7 +13,8 @@ import {
 import { faqApi, type FaqItem } from '@/lib/api-faq';
 import { trackFaqEngagement } from '@/lib/analytics/consolidated';
 import { useFaqExpand, useSearchIntent } from '@/lib/analytics/hooks/useIntentTracking';
-import { Search, HelpCircle, ThumbsUp, ThumbsDown, Eye, Layers } from 'lucide-react';
+import { Search, HelpCircle, ThumbsUp, ThumbsDown, Eye } from 'lucide-react';
+import { CompanyCompactChip } from './CompanyCompactChip';
 
 import type { Company } from '@/lib/api';
 
@@ -25,6 +26,8 @@ interface FaqSectionProps {
 
 export default function FaqSection({ companyId, companyName, company }: FaqSectionProps) {
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [initialCategories, setInitialCategories] = useState<string[]>([]);
+  const [hasRemoteFaqs, setHasRemoteFaqs] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -74,10 +77,10 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     // 2. FAQs buscadas via API
     if (faqs.length > 0) return faqs;
 
-    // 3. Filtro ativo sem correspondência
-    if (query) return [];
+    // 3. Preserve the no-results state for companies whose API really has FAQs.
+    if (hasRemoteFaqs) return [];
 
-    // 4. Fallback padrão apenas quando a empresa não possui FAQs cadastradas
+    // 4. Local default FAQs remain searchable and filterable when none exist remotely.
     const name = companyName || company?.name || 'esta empresa';
     const locationLabel = [company?.city, company?.state].filter(Boolean).join(' - ');
     const reviewsCount = Number(company?.rating_count ?? company?.reviews_count ?? company?.total_reviews ?? 0);
@@ -85,7 +88,7 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
     const hasReviews = reviewsCount > 0 && rawRating > 0;
     const ratingAvg = hasReviews ? rawRating.toFixed(1) : null;
 
-    return [
+    const fallbackFaqs = [
       {
         id: 9001,
         question: `Como solicitar um orçamento de energia solar com a ${name}?`,
@@ -127,28 +130,55 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
         helpful_no: 0,
       },
     ] as FaqItem[];
-  }, [hasCompanyFaqs, companyFaqItems, faqs, query, category, companyName, company]);
+    return fallbackFaqs.filter((faq) => {
+      const matchesCategory = !category || faq.category === category;
+      const matchesQuery =
+        !query ||
+        faq.question.toLowerCase().includes(query.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(query.toLowerCase());
+      return matchesCategory && matchesQuery;
+    });
+  }, [hasCompanyFaqs, companyFaqItems, faqs, query, category, companyName, company, hasRemoteFaqs]);
 
+  // Category options must not disappear as the current result set gets filtered.
   const categories = useMemo(() => {
-    const unique = new Set(displayFaqs.map((f) => f.category).filter(Boolean));
-    return Array.from(unique);
-  }, [displayFaqs]);
+    if (hasCompanyFaqs) {
+      return Array.from(new Set(companyFaqItems.map((faq) => faq.category).filter(Boolean)));
+    }
+    return initialCategories.length > 0
+      ? initialCategories
+      : ['Orçamentos', 'Reputação', 'Serviços', 'Garantia'];
+  }, [hasCompanyFaqs, companyFaqItems, initialCategories]);
 
   useEffect(() => {
     if (hasCompanyFaqs) return;
+    let active = true;
 
     const load = async () => {
       setLoading(true);
       try {
-        const resp = await faqApi.list({ q: query, category, company_id: companyId });
-        setFaqs(resp.faqs || []);
+        const isInitialList = !query && !category;
+        const resp = await faqApi.list({
+          q: query,
+          category,
+          company_id: companyId,
+          per_page: isInitialList ? 100 : undefined,
+        });
+        if (!active) return;
+        const items = resp.faqs || [];
+        setFaqs(items);
+        if (isInitialList) {
+          setHasRemoteFaqs(items.length > 0);
+          setInitialCategories(Array.from(new Set(items.map((faq) => faq.category).filter(Boolean))));
+        }
       } catch (err) {
         console.error('[FaqSection] load error', err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
-    load();
+    void load();
+    return () => { active = false; };
   }, [hasCompanyFaqs, query, category, companyId]);
 
   useEffect(() => {
@@ -226,19 +256,19 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
 
   return (
     <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
-      <CardHeader className="pb-4 border-b border-slate-100 bg-slate-50/50">
-        <CardTitle className="text-xl font-bold text-slate-900 flex items-center gap-2.5">
+      <CardHeader className="!px-4 !pt-4 !pb-3 space-y-1 border-b border-slate-100 bg-slate-50/50">
+        <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 sm:text-xl">
           <HelpCircle className="h-5 w-5 text-blue-600" />
           Perguntas Frequentes (FAQ)
         </CardTitle>
-        <p className="text-sm text-slate-500">
+        <p className="text-[13px] leading-5 text-slate-500">
           Encontre respostas rápidas ou avalie se o conteúdo tirou suas dúvidas.
         </p>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="!p-4 space-y-3">
         {/* Barra de Busca e Filtros de Categoria */}
-        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+        <div className="grid min-w-0 gap-2 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
@@ -250,37 +280,38 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
             />
           </div>
           {categories.length > 1 && (
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              <Button
-                size="sm"
-                variant={category === '' ? 'default' : 'outline'}
-                className={`rounded-xl text-xs px-3.5 ${
-                  category === '' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-slate-200 text-slate-600'
-                }`}
+            <div
+              role="group"
+              aria-label="Filtrar perguntas por categoria"
+              data-testid="company-faq-filter-rail"
+              tabIndex={0}
+              className="flex w-full min-w-0 max-w-full items-center gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none]"
+            >
+              <CompanyCompactChip
+                density="filter"
+                selected={category === ''}
+                aria-pressed={category === ''}
                 onClick={() => setCategory('')}
               >
                 Todas
-              </Button>
+              </CompanyCompactChip>
               {categories.map((cat) => (
-                <Button
+                <CompanyCompactChip
                   key={cat}
-                  size="sm"
-                  variant={category === cat ? 'default' : 'outline'}
-                  className={`rounded-xl text-xs px-3.5 whitespace-nowrap ${
-                    category === cat ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'border-slate-200 text-slate-600'
-                  }`}
+                  density="filter"
+                  selected={category === cat}
+                  aria-pressed={category === cat}
                   onClick={() => setCategory(cat)}
                 >
-                  <Layers className="h-3.5 w-3.5 mr-1.5" />
                   {cat}
-                </Button>
+                </CompanyCompactChip>
               ))}
             </div>
           )}
         </div>
 
         {/* Lista no formato Accordion Interativo com Rastreamento Real */}
-        <div className="pt-2">
+        <div className="pt-1">
           {loading && (
             <div className="py-8 text-center text-sm text-slate-400">
               Carregando perguntas frequentes...
@@ -312,10 +343,10 @@ export default function FaqSection({ companyId, companyName, company }: FaqSecti
                     value={`item-${faq.id}`}
                     className="border-b border-slate-100 last:border-b-0 py-1"
                   >
-                    <AccordionTrigger className="py-4 text-left font-semibold text-slate-900 hover:no-underline text-base md:text-[17px] leading-snug tracking-tight group [&[data-state=open]]:text-blue-600">
+                    <AccordionTrigger className="py-3 text-left font-semibold text-slate-900 hover:no-underline text-sm md:text-base leading-snug tracking-tight group [&[data-state=open]]:text-blue-600">
                       <span>{faq.question}</span>
                     </AccordionTrigger>
-                    <AccordionContent className="pb-5 pt-1 text-slate-600 text-sm leading-relaxed space-y-4">
+                    <AccordionContent className="pb-4 pt-1 text-slate-600 text-sm leading-relaxed space-y-3">
                       <p className="text-slate-700 text-sm md:text-[15px] leading-relaxed">
                         {faq.answer}
                       </p>
