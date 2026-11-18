@@ -16,9 +16,11 @@ module Mcp
         'annotations' => { 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true }
       }.freeze
 
-      def initialize(message:, user:)
+      def initialize(message:, user:, auth_context:, remote_ip:)
         @message = message
         @user = user
+        @auth_context = auth_context
+        @remote_ip = remote_ip
       end
 
       def response
@@ -27,6 +29,12 @@ module Mcp
         return error(id, -32_602, 'Parameters must be an object.') unless @message.fetch('params', {}).is_a?(Hash)
 
         dispatch(id)
+      rescue ::Mcp::RemoteQuotaPolicy::Failure => e
+        if e.type == :rate_limited
+          error(id, -32_029, 'Private MCP rate limit exceeded.', :too_many_requests, retry_after: e.retry_after)
+        else
+          error(id, -32_003, 'Private MCP quota service unavailable.', :service_unavailable)
+        end
       rescue Mcp::Error => e
         error(id, -32_003, e.message)
       rescue Executor::InputError
@@ -67,7 +75,10 @@ module Mcp
         arguments = params.fetch('arguments', {})
         return error(id, -32_602, 'Tool arguments must be an object.') unless arguments.is_a?(Hash)
 
-        data = Executor.call(name: name, user: @user, arguments: arguments)
+        data = Executor.call(
+          name: name, user: @user, arguments: arguments,
+          auth_context: @auth_context, remote_ip: @remote_ip
+        )
         success(id, { content: [{ type: 'text', text: JSON.generate(data) }], structuredContent: data, isError: false })
       end
 
@@ -75,8 +86,10 @@ module Mcp
         { status: :ok, body: { jsonrpc: '2.0', id: id, result: result } }
       end
 
-      def error(id, code, message)
-        { status: :ok, body: { jsonrpc: '2.0', id: id, error: { code: code, message: message } } }
+      def error(id, code, message, status = :ok, retry_after: nil)
+        response = { status: status, body: { jsonrpc: '2.0', id: id, error: { code: code, message: message } } }
+        response[:retry_after] = retry_after if retry_after
+        response
       end
     end
   end
