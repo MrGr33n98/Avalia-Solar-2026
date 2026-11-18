@@ -219,4 +219,42 @@ RSpec.describe 'Reviews API', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'POST /api/v1/reviews with brand_usage_opt_in (PR8)' do
+    let(:brand) { create(:brand, name: 'Solis Inverters', slug: 'solis') }
+
+    it 'cria ReviewerBrandUsage com source: review_form e visibility: private quando opt-in é enviado' do
+      auth = auth_headers(review_user)
+      payload = review_payload
+      payload[:review][:brand_usage_opt_in] = true
+      payload[:review][:brand_id] = brand.id
+      payload[:review][:brand_usage_context] = 'integrator_install'
+
+      expect {
+        post '/api/v1/reviews', params: payload.to_json, headers: auth
+      }.to change(ReviewerBrandUsage, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      usage = ReviewerBrandUsage.last
+      expect(usage.user_id).to eq(review_user.id)
+      expect(usage.brand_id).to eq(brand.id)
+      expect(usage.source).to eq('review_form')
+      expect(usage.visibility).to eq('private')
+      expect(usage.verification_status).to eq('self_declared')
+      expect(usage.source_review_id).to eq(Review.last.id)
+    end
+
+    it 'não bloqueia a criação da avaliação principal se brand_id for inexistente' do
+      auth = auth_headers(review_user)
+      payload = review_payload
+      payload[:review][:brand_usage_opt_in] = true
+      payload[:review][:brand_id] = 999999
+
+      expect {
+        post '/api/v1/reviews', params: payload.to_json, headers: auth
+      }.to change(Review, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+    end
+  end
 end
