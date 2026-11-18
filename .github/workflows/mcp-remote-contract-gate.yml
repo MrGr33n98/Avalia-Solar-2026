@@ -46,6 +46,7 @@ on:
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
       - 'AB0-1-back/spec/services/mcp/public_tool_registry_spec.rb'
+      - '.github/scripts/test_mcp_c4_sdk_workflow.rb'
       - '.github/workflows/mcp-remote-contract-gate.yml'
   workflow_dispatch:
 
@@ -87,8 +88,8 @@ jobs:
       SECRET_KEY_BASE: ci-only-mcp-transport-no-production-key
       REDIS_URL: redis://localhost:6379/0
     steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ruby/setup-ruby@4a9ddd6f338a97768b8006bf671dfbad383215f4 # v1.207.0
         with:
           ruby-version: '3.2.2'
           bundler-cache: true
@@ -125,6 +126,8 @@ jobs:
         run: |
           node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
           python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
+      - name: Enforce MCP workflow secret isolation
+        run: ruby ../.github/scripts/test_mcp_c4_sdk_workflow.rb
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
       - name: Run legacy, modern and public tool contract specs
