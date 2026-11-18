@@ -169,13 +169,21 @@ test.describe('JWT Revocation and Logout', () => {
       .poll(async () => (await context.cookies()).some((cookie) => cookie.name === 'jwt_token'))
       .toBe(true);
 
-    // Should be able to access protected resources
-    const meResponse = await page.evaluate(async () => {
-      const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
-      return { status: res.status, ok: res.ok };
-    });
+    // Wait for post-login navigation to settle
+    await page.waitForLoadState('domcontentloaded');
 
-    expect(meResponse.status).toBe(200);
-    expect(meResponse.ok).toBe(true);
+    // Should be able to access protected resources
+    await expect
+      .poll(async () => {
+        try {
+          return await page.evaluate(async () => {
+            const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+            return res.status;
+          });
+        } catch {
+          return 0;
+        }
+      })
+      .toBe(200);
   });
 });

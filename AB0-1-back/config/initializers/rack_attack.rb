@@ -100,6 +100,19 @@ class Rack::Attack
     req.ip if req.path.match?(%r{\A/api/v1/groups/[^/]+/join\z}) && req.delete?
   end
 
+  # Reviewer Brands & Portfolio Protection (PR10)
+  throttle('reviewer/brand_usages/write/ip', limit: 30, period: 1.minute) do |req|
+    req.ip if req.path.start_with?('/api/v1/reviewer/brand_usages') && (req.post? || req.patch? || req.delete?)
+  end
+
+  throttle('reviewer/portfolio_projects/write/ip', limit: 20, period: 1.minute) do |req|
+    req.ip if req.path.start_with?('/api/v1/reviewer/portfolio_projects') && (req.post? || req.patch? || req.delete?)
+  end
+
+  throttle('brands_catalog/ip', limit: 120, period: 1.minute) do |req|
+    req.ip if req.path == '/api/v1/brands' && req.get?
+  end
+
 
   # === Existing Rules ===
 
