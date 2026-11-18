@@ -14,6 +14,10 @@ module Gamification
           [false, nil]
         end
       end
+
+      def progress(user)
+        [user.reviewer_solutions.count, badge.threshold].min
+      end
     end
   end
 end

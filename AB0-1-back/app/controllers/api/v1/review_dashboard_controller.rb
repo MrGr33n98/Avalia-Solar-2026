@@ -29,12 +29,35 @@ module Api
         }, status: :service_unavailable, headers: { 'X-Request-ID' => request.request_id }
       end
 
+      # GET /api/v1/review_dashboard/achievements
+      def achievements
+        render json: Gamification::ReadModelService.new(
+          user: current_user,
+          base_url: request.base_url,
+          request_id: request.request_id
+        ).call, headers: { 'X-Request-ID' => request.request_id }
+      rescue StandardError => e
+        Rails.logger.error({
+          event: 'review_dashboard_achievements_failed',
+          user_id: current_user&.id,
+          request_id: request.request_id,
+          error_class: e.class.name,
+          message: e.message
+        }.to_json)
+        render json: {
+          error: {
+            code: 'REVIEW_DASHBOARD_ACHIEVEMENTS_UNAVAILABLE',
+            message: 'Não foi possível carregar as conquistas.',
+            request_id: request.request_id
+          }
+        }, status: :service_unavailable, headers: { 'X-Request-ID' => request.request_id }
+      end
+
       private
 
       def require_review_role
         require_role('review', 'admin')
       end
-
     end
   end
 end

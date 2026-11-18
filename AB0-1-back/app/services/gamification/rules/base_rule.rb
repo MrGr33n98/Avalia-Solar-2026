@@ -13,6 +13,14 @@ module Gamification
       def evaluate(user)
         raise NotImplementedError, "#{self.class} must implement #evaluate"
       end
+
+      # Returns Integer representing current progress count towards threshold
+      def progress(user)
+        eligible, = evaluate(user)
+        eligible ? badge.threshold : 0
+      rescue StandardError
+        0
+      end
     end
   end
 end

@@ -1,0 +1,86 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1 Docs
+  version: v1
+paths:
+  "/api/v1/trust/profile":
+    get:
+      summary: Retrieves company trust profile
+      tags:
+      - Trust
+      parameters:
+      - name: X-Api-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: profile found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  company:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      verified:
+                        type: boolean
+                      trust_score:
+                        type: number
+                      rating_avg:
+                        type: number
+                        nullable: true
+                      reviews_count:
+                        type: integer
+                      badges:
+                        type: array
+                        items:
+                          type: string
+                  metrics:
+                    type: object
+                    properties:
+                      response_time_sla:
+                        type: string
+                      roi_accuracy_index:
+                        type: number
+        '401':
+          description: unauthorized
+  "/api/v1/trust/widgets/config":
+    get:
+      summary: Retrieves widget rendering configuration
+      tags:
+      - Trust
+      parameters:
+      - name: api_key
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: config found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  widget_type:
+                    type: string
+                  theme:
+                    type: string
+                  position:
+                    type: string
+                  api_key:
+                    type: string
+                  installer_id:
+                    type: integer
+servers:
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: www.example.com

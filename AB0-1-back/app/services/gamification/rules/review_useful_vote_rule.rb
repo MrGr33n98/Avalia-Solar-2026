@@ -11,6 +11,10 @@ module Gamification
           [false, nil]
         end
       end
+
+      def progress(user)
+        [user.reviews.sum(:helpful_count), badge.threshold].min
+      end
     end
   end
 end

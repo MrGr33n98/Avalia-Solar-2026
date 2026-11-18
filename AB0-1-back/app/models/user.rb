@@ -248,7 +248,7 @@ class User < ApplicationRecord
   end
 
   def achievements
-    Reviewer::AchievementService.new(user: self).call
+    Gamification::ReadModelService.new(user: self).call[:achievements]
   end
 
   # Envia notificações do Devise de forma assíncrona (TASK-014)
