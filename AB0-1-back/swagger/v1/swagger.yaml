@@ -1,0 +1,201 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1 Docs
+  version: v1
+paths:
+  "/health":
+    get:
+      summary: Check API health status
+      tags:
+      - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date_time
+                required:
+                - status
+  "/api/v1/review_dashboard/achievements":
+    get:
+      summary: Lista conquistas e progresso do avaliador
+      tags:
+      - Gamificação
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer JWT token
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Conquistas carregadas com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - schema_version
+                - summary
+                - achievements
+                - faq
+                properties:
+                  schema_version:
+                    type: string
+                    example: 2026-11-v1
+                  summary:
+                    type: object
+                    required:
+                    - unlocked_count
+                    - total_count
+                    - xp_total
+                    - completion_percentage
+                    properties:
+                      unlocked_count:
+                        type: integer
+                      total_count:
+                        type: integer
+                      xp_total:
+                        type: integer
+                      completion_percentage:
+                        type: integer
+                      next_suggested:
+                        type: object
+                        nullable: true
+                  achievements:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - name
+                      - category
+                      - state
+                      - progress
+                      - threshold
+                      - asset
+                      - action
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        title:
+                          type: string
+                        description:
+                          type: string
+                        category:
+                          type: string
+                        tier:
+                          type: string
+                        state:
+                          type: string
+                          enum:
+                          - locked
+                          - in_progress
+                          - unlocked
+                          - revoked
+                        unlocked:
+                          type: boolean
+                        progress:
+                          type: integer
+                        threshold:
+                          type: integer
+                        points:
+                          type: integer
+                        xp:
+                          type: integer
+                        unlocked_at:
+                          type: string
+                          nullable: true
+                        asset:
+                          type: object
+                          properties:
+                            earned:
+                              type: string
+                            locked:
+                              type: string
+                        action:
+                          type: string
+                        share:
+                          type: object
+                          nullable: true
+                          properties:
+                            verify_url:
+                              type: string
+                            token:
+                              type: string
+                  faq:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question:
+                          type: string
+                        answer:
+                          type: string
+        '401':
+          description: Não autenticado
+        '403':
+          description: Acesso negado para papel diferente de review
+  "/api/v1/companies/{id}/widget_data":
+    get:
+      summary: Busca dados do Trust Widget
+      tags:
+      - Trust
+      parameters:
+      - name: id
+        in: path
+        description: ID ou Slug da Empresa
+        required: true
+        schema:
+          type: string
+      - name: api_key
+        in: query
+        description: API Key do Instalador/Empresa
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Dados encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  company_id:
+                    type: integer
+                  name:
+                    type: string
+                  verified:
+                    type: boolean
+                  trust_score:
+                    type: number
+                  rating_avg:
+                    type: number
+                    nullable: true
+                  reviews_count:
+                    type: integer
+                  verified_badge_image_url:
+                    type: string
+                    nullable: true
+                  public_profile_url:
+                    type: string
+        '401':
+          description: Nao autorizado
+        '404':
+          description: Empresa nao encontrada
+servers:
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: www.example.com

@@ -10,18 +10,21 @@ module Api
       def summary
         green_score = current_user.calculate_green_score
         regional_ranking = current_user.regional_ranking(score: green_score)
-        achievements = current_user.achievements
+        read_model = Gamification::ReadModelService.new(user: current_user).call
 
         render json: {
           green_score: green_score,
           regional_ranking: regional_ranking,
-          achievements: achievements,
-          earned_points: achievements.sum { |achievement| achievement[:xp].to_i },
+          achievements: read_model[:achievements],
+          earned_points: read_model.dig(:summary, :xp_total) || 0,
           level: current_user.gamification_level
         }
       rescue StandardError => e
         Rails.logger.error("[Gamification] summary failed user=#{current_user&.id}: #{e.class} #{e.message}")
-        render json: { error: 'Não foi possível carregar o resumo da gamificação.', code: 'gamification_summary_unavailable' }, status: :service_unavailable
+        render json: {
+          error: 'Não foi possível carregar o resumo da gamificação.',
+          code: 'gamification_summary_unavailable'
+        }, status: :service_unavailable
       end
 
       private

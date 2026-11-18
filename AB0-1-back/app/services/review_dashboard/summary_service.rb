@@ -97,12 +97,12 @@ module ReviewDashboard
 
     def gamification
       score = @user.calculate_green_score
-      achievements = @user.achievements
+      read_model = Gamification::ReadModelService.new(user: @user).call
       {
         green_score: score,
         regional_ranking: @user.regional_ranking(score: score),
-        achievements: achievements,
-        earned_points: achievements.sum { |achievement| achievement[:xp].to_i },
+        achievements: read_model[:achievements],
+        earned_points: read_model.dig(:summary, :xp_total) || 0,
         level: score.nil? ? nil : @user.gamification_level
       }
     end

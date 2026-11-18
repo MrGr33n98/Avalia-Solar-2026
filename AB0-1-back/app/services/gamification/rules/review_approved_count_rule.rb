@@ -16,6 +16,10 @@ module Gamification
           [false, nil]
         end
       end
+
+      def progress(user)
+        [user.reviews.where(status: :approved).count, badge.threshold].min
+      end
     end
   end
 end

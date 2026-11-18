@@ -652,6 +652,7 @@ Rails.application.routes.draw do
       resources :banner_addons, only: %i[index]
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
+      get 'review_dashboard/achievements', to: 'review_dashboard#achievements'
       get 'gamification/summary', to: 'gamification#summary'
       resources :brands, only: %i[index show]
       resources :reviewer_solutions, only: %i[index create destroy]
