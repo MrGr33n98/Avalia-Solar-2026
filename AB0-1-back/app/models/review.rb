@@ -59,6 +59,7 @@ class Review < ApplicationRecord
   before_validation :set_default_reviewable, prepend: true
   before_validation :capture_initial_manual_rating, prepend: true
   before_save :persist_granular_scores_snapshot
+  before_save :sync_approved_at_timestamp
   after_commit :track_analytics_event, on: :create
   after_commit :notify_slack, on: :create
   after_commit :invalidate_social_proof_cache
@@ -67,6 +68,7 @@ class Review < ApplicationRecord
   after_update_commit :notify_user_of_reply, if: :should_notify_reply_change?
   after_commit :create_notification_for_company, on: :create
   after_commit :broadcast_review_published, on: %i[create update], if: :approved_and_status_changed?
+  after_commit :enqueue_gamification_reevaluation, on: %i[create update destroy], if: :affects_gamification?
 
   # Validations
   validates :rating, presence: true, inclusion: { in: 1..5 }
@@ -415,5 +417,17 @@ class Review < ApplicationRecord
 
   def broadcast_review_published
     ActiveSupport::Notifications.instrument('review.published', review_id: id)
+  end
+
+  def sync_approved_at_timestamp
+    self.approved_at ||= Time.current if approved? && (status_changed? || approved_at.nil?)
+  end
+
+  def affects_gamification?
+    user_id.present? && (saved_change_to_status? || destroyed?)
+  end
+
+  def enqueue_gamification_reevaluation
+    Gamification::ReevaluateUserJob.perform_later(user_id, 'review_status_changed')
   end
 end

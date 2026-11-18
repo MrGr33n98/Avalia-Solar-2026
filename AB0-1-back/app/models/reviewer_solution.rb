@@ -17,6 +17,7 @@ class ReviewerSolution < ApplicationRecord
   validate :product_belongs_to_brand, if: -> { product_id.present? && brand_id.present? }
 
   after_commit :invalidate_creator_cache
+  after_commit :enqueue_gamification_reevaluation, on: %i[create update destroy], if: -> { user_id.present? }
 
   def as_json(_options = {})
     json = {
@@ -79,5 +80,9 @@ class ReviewerSolution < ApplicationRecord
 
   def invalidate_creator_cache
     Creator::PublicProfileService.invalidate_for_user(user)
+  end
+
+  def enqueue_gamification_reevaluation
+    Gamification::ReevaluateUserJob.perform_later(user_id, 'solution_changed')
   end
 end

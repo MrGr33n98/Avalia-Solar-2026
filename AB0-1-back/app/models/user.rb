@@ -145,6 +145,7 @@ class User < ApplicationRecord
   after_initialize :set_default_role, if: :new_record?
   before_validation :normalize_role
   before_validation :mark_terms_accepted_at
+  after_commit :enqueue_gamification_reevaluation, on: %i[create update], if: :affects_gamification_profile?
 
   def admin?
     role == 'admin'
@@ -438,5 +439,18 @@ class User < ApplicationRecord
     return unless avatar.blob.byte_size > MAX_AVATAR_SIZE_BYTES
 
     errors.add(:avatar, 'tamanho máximo é 5MB')
+  end
+
+  def affects_gamification_profile?
+    previously_new_record? ||
+      saved_change_to_name? ||
+      saved_change_to_city? ||
+      saved_change_to_state? ||
+      saved_change_to_phone? ||
+      saved_change_to_terms_accepted?
+  end
+
+  def enqueue_gamification_reevaluation
+    Gamification::ReevaluateUserJob.perform_later(id, 'profile_updated')
   end
 end
