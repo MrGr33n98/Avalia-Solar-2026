@@ -138,3 +138,59 @@ jobs:
           python -m pip check
       - name: Verify OAuth bearer and tenant isolation with official MCP SDK
         run: python scripts/mcp/interop/python_sdk_v2_smoke.py
+
+  ts-sdk-v2-public:
+    if: ${{ inputs.target == 'public' || inputs.target == 'both' }}
+    needs: staging-smoke
+    name: Official TypeScript MCP SDK v2 — Public
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: public
+      MCP_STAGING_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
+      MCP_STAGING_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+    steps:
+      - name: Verify staging-only authorization and required fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging-only confirmation required"; exit 1; }
+          test -n "$MCP_STAGING_RESOURCE_URL" || { echo "::error::Staging resource URL missing"; exit 1; }
+          test -n "$MCP_STAGING_ACCESS_TOKEN" || { echo "::error::Staging OAuth bearer missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official TypeScript MCP SDK
+        run: npm --prefix scripts/mcp/interop install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify public resource with independent TypeScript MCP SDK
+        run: node scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+
+  ts-sdk-v2-private:
+    if: ${{ inputs.target == 'private' || inputs.target == 'both' }}
+    needs: staging-private-smoke
+    name: Official TypeScript MCP SDK v2 — Private
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: private
+      MCP_STAGING_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_STAGING_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_STAGING_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+    steps:
+      - name: Verify staging-only authorization and required fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging-only confirmation required"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_RESOURCE_URL" || { echo "::error::Private resource URL missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_ACCESS_TOKEN" || { echo "::error::Private OAuth bearer missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_COMPANY_ID" || { echo "::error::Tenant fixture missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official TypeScript MCP SDK
+        run: npm --prefix scripts/mcp/interop install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify private resource with independent TypeScript MCP SDK
+        run: node scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
