@@ -25,8 +25,8 @@ RSpec.describe 'Api::V1::Reviewer::BrandUsages', type: :request do
     end
 
     it 'retorna 403 quando o usuário não possui a role necessária' do
-      basic_user = create(:user, role: 'buyer')
-      token = JWT.encode({ user_id: basic_user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')
+      company_user = create(:user, role: 'company')
+      token = JWT.encode({ user_id: company_user.id, typ: 'access' }, Rails.application.secret_key_base, 'HS256')
       get '/api/v1/reviewer/brand_usages', headers: { 'Authorization' => "Bearer #{token}", 'ACCEPT' => 'application/json' }
       expect(response).to have_http_status(:forbidden)
     end
