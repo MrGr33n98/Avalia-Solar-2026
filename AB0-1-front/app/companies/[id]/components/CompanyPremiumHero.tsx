@@ -32,7 +32,7 @@ export default function CompanyPremiumHero({
   return (
     <div
       id="company-premium-hero"
-      className="relative w-full overflow-hidden bg-white rounded-2xl md:rounded-3xl"
+      className="relative w-full overflow-hidden bg-white"
     >
       <div
         data-testid="company-premium-banner-frame"

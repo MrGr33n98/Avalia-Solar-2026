@@ -104,7 +104,6 @@ module Mcp
         path.nil? || uri.path == path
       end
       private_class_method :matching_path?
-
       def registered_resources
         [resource, private_resource].reject(&:blank?)
       end

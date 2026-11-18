@@ -101,7 +101,7 @@ export default function CompanyProfileShell({
           {/* Compound Hero Container estilo WEG */}
           <div
             id="company-profile-compound-hero"
-            className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl border border-slate-200/90 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
+            className="relative w-full overflow-hidden rounded-b-2xl md:rounded-b-3xl border border-slate-200/90 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
           >
             {/* Hero Banner */}
             <CompanyPremiumHero
