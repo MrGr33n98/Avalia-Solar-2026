@@ -15,7 +15,7 @@ class Brand < ApplicationRecord
   validate :validate_logo_attachment, if: -> { logo.attached? }
   validate :validate_aliases_format
 
-  before_validation :generate_slug, if: -> { slug.nil? && name.present? }
+  before_validation :generate_slug, if: -> { slug.blank? && name.present? }
   before_validation :normalize_attributes
 
   scope :active, -> { where(status: 'active') }

@@ -7,8 +7,13 @@ RSpec.describe Brand, type: :model do
     subject { build(:brand) }
 
     it { is_expected.to validate_presence_of(:name) }
-    it { is_expected.to validate_presence_of(:slug) }
     it { is_expected.to validate_uniqueness_of(:slug).case_insensitive }
+
+    it 'valida presença de slug quando nome não permite geração automática' do
+      brand = build(:brand, name: nil, slug: nil)
+      expect(brand).not_to be_valid
+      expect(brand.errors[:slug]).to be_present
+    end
 
     it 'permite status válidos' do
       Brand::STATUSES.each do |valid_status|
