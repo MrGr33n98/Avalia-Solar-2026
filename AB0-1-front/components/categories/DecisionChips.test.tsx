@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import DecisionChips from './DecisionChips';
 
@@ -50,9 +50,16 @@ describe('DecisionChips', () => {
         filters={{ verified: true, minRating: 4.5, state: 'SC', projectType: 'Agronegócio' }}
       />
     );
-    for (const label of ['Verificadas', 'Nota: 4.5+', 'Estado: SC', 'Projeto: Agronegócio']) {
-      expect(screen.getByText(label)).toHaveClass('whitespace-nowrap');
-      expect(screen.getByText(label)).not.toHaveClass('truncate');
+    const visibleLabels = [
+      ['Verificadas', 'Verificadas'],
+      ['Nota mínima', 'Nota: 4.5+'],
+      ['Meu Estado', 'Estado: SC'],
+      ['Especialidade', 'Projeto: Agronegócio'],
+    ] as const;
+    for (const [accessibleName, label] of visibleLabels) {
+      const text = within(screen.getByRole('button', { name: accessibleName })).getByText(label);
+      expect(text).toHaveClass('whitespace-nowrap');
+      expect(text).not.toHaveClass('truncate');
     }
   });
 
