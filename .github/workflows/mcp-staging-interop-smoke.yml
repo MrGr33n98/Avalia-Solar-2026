@@ -7,6 +7,15 @@ on:
         description: 'Type STAGING_ONLY to run against the approved staging host'
         required: true
         type: string
+      target:
+        description: 'Select the OAuth resource(s) to validate on staging'
+        required: true
+        default: public
+        type: choice
+        options:
+          - public
+          - private
+          - both
 
 permissions:
   contents: read
@@ -17,6 +26,7 @@ concurrency:
 
 jobs:
   staging-smoke:
+    if: ${{ inputs.target == 'public' || inputs.target == 'both' }}
     name: Staging HTTPS MCP Smoke (read-only)
     runs-on: ubuntu-24.04
     timeout-minutes: 8
@@ -37,3 +47,30 @@ jobs:
           ruby-version: '3.2.2'
       - name: Run staging-only external bearer and protocol smoke
         run: ruby .github/scripts/mcp_staging_smoke.rb
+
+  staging-private-smoke:
+    if: ${{ inputs.target == 'private' || inputs.target == 'both' }}
+    name: Staging HTTPS Private MCP Tenant Smoke (read-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SMOKE_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_SMOKE_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_SMOKE_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+      MCP_SMOKE_PRIVATE_FORBIDDEN_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_FORBIDDEN_COMPANY_ID }}
+    steps:
+      - name: Verify staging-only acknowledgement and nonempty fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging approval required."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_RESOURCE_URL" || { echo "::error::Private staging resource missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_ACCESS_TOKEN" || { echo "::error::Private staging token missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_COMPANY_ID" || { echo "::error::Authorized staging company missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_FORBIDDEN_COMPANY_ID" || { echo "::error::Forbidden staging company missing."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+      - name: Validate private authorized and cross-tenant behavior
+        run: ruby .github/scripts/mcp_private_staging_smoke.rb
