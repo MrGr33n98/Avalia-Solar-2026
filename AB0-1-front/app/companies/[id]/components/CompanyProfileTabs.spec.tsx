@@ -43,7 +43,7 @@ describe('Brand Page mobile/PWA — compact one-line chips V2', () => {
       'Financiamento',
     ]);
 
-    const labels = ['Visão Geral', 'Produtos e Serviços', 'Avaliações', 'Projetos', 'FAQ', 'Financiamento'];
+    const labels = ['Visão Geral', 'Produtos', 'Avaliações', 'Projetos', 'FAQ', 'Financiamento'];
     for (const [index, tab] of tabs.entries()) {
       expect(tab).toHaveClass('h-11', 'min-h-11', 'shrink-0', 'snap-start');
       const surface = within(tab).getByTestId('company-mobile-tab-surface');
