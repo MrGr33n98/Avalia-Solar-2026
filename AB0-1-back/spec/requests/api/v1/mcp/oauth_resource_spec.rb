@@ -28,6 +28,7 @@ RSpec.describe 'MCP OAuth protected resource', type: :request do
     allow(ENV).to receive(:[]).with('MCP_REMOTE_TRANSPORT_ENABLED').and_return('true')
     allow(ENV).to receive(:[]).with('MCP_REMOTE_AUTH_MODE').and_return('oauth')
     allow(ENV).to receive(:[]).with('MCP_REMOTE_OAUTH_ENABLED').and_return('true')
+    allow(ENV).to receive(:[]).with('MCP_OAUTH_TOKEN_FORMAT').and_return('jwt')
     allow(ENV).to receive(:[]).with('MCP_OAUTH_RESOURCE').and_return(resource)
     allow(ENV).to receive(:[]).with('MCP_OAUTH_ISSUER').and_return(issuer)
     allow(ENV).to receive(:[]).with('MCP_OAUTH_JWT_PUBLIC_KEY').and_return(rsa.public_key.to_pem)

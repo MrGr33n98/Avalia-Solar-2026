@@ -15,7 +15,7 @@ armazenam apenas o estado OAuth e referenciam `users.id` por chave estrangeira.
 - PKCE obrigatório para clientes públicos; somente `S256` é aceito.
 - Refresh token habilitado com rotação pelo campo `previous_refresh_token`.
 - Access tokens e secrets persistidos com hash SHA-256.
-- Scope inicial: `mcp_public_read`.
+- Scope inicial: `mcp:public:read`.
 - Painel de cadastro de aplicações e rotas administrativas não são expostos.
 - Contas Devise precisam estar ativas e confirmadas para autorizar um cliente.
 - A execução das ferramentas MCP continua sob as flags existentes e não é

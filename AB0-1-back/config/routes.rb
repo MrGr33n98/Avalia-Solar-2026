@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   # A interface administrativa de aplicações não é pública; clientes OAuth
   # serão provisionados por fluxo controlado na Fase C2.
   use_doorkeeper do |routes|
+    routes.controllers authorizations: 'api/oauth/authorizations', tokens: 'api/oauth/tokens'
     routes.skip_controllers :applications, :authorized_applications, :token_info
   end
   mount Rswag::Ui::Engine => '/api-docs' if defined?(Rswag::Ui::Engine)
@@ -35,6 +36,7 @@ Rails.application.routes.draw do
 
   # MCP OAuth Protected Resource Metadata (RFC 9728): advertised only when configured.
   get '/.well-known/oauth-protected-resource/mcp', to: 'api/v1/mcp/remote_transport#resource_metadata'
+  get '/.well-known/oauth-authorization-server', to: 'api/v1/mcp/oauth_metadata#show'
 
   # PR-MCP-02: feature-gated MCP Streamable HTTP transport PREVIEW.
   # No OAuth, public tool execution, or production enablement in this PR.

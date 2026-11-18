@@ -28,8 +28,8 @@ All Pull Requests are subject to existing `CI — Web & Backend` and any mandato
 ## Staging setup checklist
 
 - [ ] Provision **separate** staging hostname (suggested `mcp-staging.avaliasolar.com.br`) with DNS, valid TLS and HTTP POST route to Rails `/mcp`. The hostname is a proposal and has NOT been configured.
-- [ ] Provision a trusted external OAuth Authorization Server; register exact resource `https://<staging-host>/mcp`, read scope `mcp:public:read`, client IDs and PKCE S256 redirect allowlists.
-- [ ] Confirm `typ=at+jwt`, RS256 signature, audience, issuer, expirations and client identity in staged access tokens; pin public verification key and test rotation and revocation.
+- [ ] Provision the self-hosted Rails/Devise/Doorkeeper Authorization Server in the isolated staging stack; register exact resource `https://<staging-host>/mcp`, read scope `mcp:public:read`, client IDs and PKCE S256 redirect allowlists.
+- [ ] Confirm opaque Doorkeeper token lookup, resource, scope, expiration, refresh rotation and revocation. JWT/JWKS checks are required only if a separately approved JWT mode is selected.
 - [ ] Configure `MCP_REMOTE_ALLOWED_HOSTS` and `MCP_REMOTE_ALLOWED_ORIGINS` as exact allowlists; no wildcards.
 - [ ] Configure `MCP_REMOTE_TRANSPORT_ENABLED=true`, `MCP_REMOTE_AUTH_MODE=oauth`, `MCP_REMOTE_OAUTH_ENABLED=true`, `MCP_REMOTE_POLICY_ENABLED=true`, and only then `MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=true` on staging.
 - [ ] Verify dedicated Redis availability and configured network/proxy IP trust; rate and concurrency protections fail closed.
@@ -42,7 +42,7 @@ All Pull Requests are subject to existing `CI — Web & Backend` and any mandato
 - [ ] Collect green results for every merged SHA on main, including the targeted remote MCP gate.
 - [ ] Run `MCP Staging — External OAuth Interoperability Smoke` manually with `STAGING_ONLY`; the workflow must not run without staging credentials and approvals.
 - [ ] Test all five public tools with **two independently implemented, actual MCP SDK clients**. Plain `curl`/Ruby JSON-RPC is not enough.
-- [ ] Verify OAuth full authorization-code + PKCE S256 flow (including invalid redirects, issuer/audience mismatches, scope downgrade, rotation/revocation) with configured provider.
+- [ ] Verify OAuth full authorization-code + PKCE S256 flow (including invalid redirects, resource mismatch, scope downgrade, rotation/revocation) with the configured self-hosted Authorization Server.
 - [ ] Test rate limit 429/Retry-After, Redis outage 503, oversized payloads, unauthorized tools, replayed cursors, unapproved reviews, prompt injection and wrong-tenant attempts.
 - [ ] Capture p50/p95/p99 latency and errors under staged realistic concurrency; proposed objectives p95 <800ms for simple calls, 5xx <0.5%, successful valid calls >99%.
 - [ ] Prove telemetry reaches the agreed provider without PII/token/subject/IP and that alerts work.
@@ -54,7 +54,7 @@ All Pull Requests are subject to existing `CI — Web & Backend` and any mandato
 1. Merge approved PRs **in dependency order**, one at a time; rebase/retarget each successive stacked PR to `main` and verify that only its incremental diff remains. Do not squash a child PR into a stale feature branch.
 2. Verify production CI/release SHA and deploy only via existing protected CD workflow, with all gating flags **off**.
 3. Confirm public site and internal Rails health are stable, without assuming a green Action implies external MCP readiness.
-4. After the external auth provider, staging interoperability and security review pass, use a change ticket with explicit owner to configure production OAuth public verification key, Host/Origin allowlists and Redis. Keep `MCP_REMOTE_PRODUCTION_ENABLED=false`.
+4. After self-hosted OAuth, staging interoperability and security review pass, use a change ticket with explicit owner to configure production OAuth resource/issuer, Host/Origin allowlists and Redis. Keep `MCP_REMOTE_PRODUCTION_ENABLED=false`.
 5. Enable production switches with an approved staged rollout: `MCP_REMOTE_PRODUCTION_ENABLED=true`, `MCP_REMOTE_TRANSPORT_ENABLED=true`, `MCP_REMOTE_AUTH_MODE=oauth`, `MCP_REMOTE_OAUTH_ENABLED=true`, `MCP_REMOTE_POLICY_ENABLED=true`. Keep `MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=false` until authorized.
 6. Confirm OAuth resource metadata and discovery; test 401/403, invalid Host and private tool denial. Only then separately enable `MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=true`.
 7. Pilot with approved clients, observe quotas/latency/errors, maintain explicit rollback readiness. No automatic marketplace submission or registration.

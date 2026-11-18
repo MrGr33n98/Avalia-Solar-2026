@@ -26,6 +26,7 @@ RSpec.describe 'MCP public directory tools/call', type: :request do
     allow(ENV).to receive(:[]).with('MCP_REMOTE_OAUTH_ENABLED').and_return('true')
     allow(ENV).to receive(:[]).with('MCP_OAUTH_RESOURCE').and_return(resource)
     allow(ENV).to receive(:[]).with('MCP_OAUTH_ISSUER').and_return(issuer)
+    allow(ENV).to receive(:[]).with('MCP_OAUTH_TOKEN_FORMAT').and_return('jwt')
     allow(ENV).to receive(:[]).with('MCP_OAUTH_JWT_PUBLIC_KEY').and_return(rsa.public_key.to_pem)
     allow(ENV).to receive(:fetch).with('MCP_OAUTH_JWT_PUBLIC_KEY').and_return(rsa.public_key.to_pem)
     allow(ENV).to receive(:[]).with('MCP_REMOTE_ALLOWED_HOSTS').and_return('www.example.com')

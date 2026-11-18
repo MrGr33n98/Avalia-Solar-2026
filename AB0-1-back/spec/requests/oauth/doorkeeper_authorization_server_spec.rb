@@ -30,6 +30,7 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
       scopes: 'mcp:public:read',
       code_challenge: code_challenge(verifier),
       code_challenge_method: 'S256',
+      resource: 'https://mcp.example.test/mcp',
       created_at: created_at
     )
   end
@@ -40,7 +41,8 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
       client_id: application.uid,
       code: grant.plaintext_token,
       redirect_uri: redirect_uri,
-      code_verifier: verifier
+      code_verifier: verifier,
+      resource: ENV['MCP_OAUTH_RESOURCE'].presence || 'https://mcp.example.test/mcp'
     }
   end
 
@@ -48,7 +50,8 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     post '/oauth/token', params: {
       grant_type: 'refresh_token',
       client_id: application.uid,
-      refresh_token: refresh_token
+      refresh_token: refresh_token,
+      resource: ENV['MCP_OAUTH_RESOURCE'].presence || 'https://mcp.example.test/mcp'
     }
   end
 
@@ -69,6 +72,7 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     expect(body['refresh_token']).to be_present
     expect(body['scope']).to eq('mcp:public:read')
     expect(Doorkeeper::AccessToken.last.resource_owner_id).to eq(user.id)
+    expect(Doorkeeper::AccessToken.last.resource).to eq('https://mcp.example.test/mcp')
   end
 
   it 'rejeita code_verifier inválido e preserva a autorização não utilizada' do
@@ -92,6 +96,7 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     expect(second_response['refresh_token']).to be_present
     expect(second_response['refresh_token']).not_to eq(first_response['refresh_token'])
     expect(Doorkeeper::AccessToken.last.previous_refresh_token).to be_present
+    expect(Doorkeeper::AccessToken.last.resource).to eq('https://mcp.example.test/mcp')
   end
 
   it 'rejeita authorization code expirado' do

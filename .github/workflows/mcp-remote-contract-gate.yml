@@ -15,7 +15,14 @@ on:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
       - 'AB0-1-back/app/services/mcp/oauth/**'
+      - 'AB0-1-back/app/controllers/api/oauth/**'
+      - 'AB0-1-back/app/controllers/api/v1/mcp/oauth_metadata_controller.rb'
+      - 'AB0-1-back/config/initializers/doorkeeper.rb'
+      - 'AB0-1-back/config/routes.rb'
+      - 'AB0-1-back/db/migrate/*doorkeeper*'
       - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_resource_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/oauth_doorkeeper_resource_spec.rb'
+      - 'AB0-1-back/spec/requests/oauth/doorkeeper_authorization_server_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/production_activation_spec.rb'
       - 'AB0-1-back/app/services/mcp/remote_quota_policy.rb'
       - 'AB0-1-back/spec/services/mcp/remote_quota_policy_spec.rb'
@@ -81,6 +88,10 @@ jobs:
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
           ruby -c app/services/mcp/modern_preview_protocol.rb
           ruby -c app/services/mcp/oauth/resource_authorization.rb
+          ruby -c app/services/mcp/oauth/configuration.rb
+          ruby -c app/controllers/api/oauth/authorizations_controller.rb
+          ruby -c app/controllers/api/oauth/tokens_controller.rb
+          ruby -c app/controllers/api/v1/mcp/oauth_metadata_controller.rb
           ruby -c app/services/mcp/remote_quota_policy.rb
           ruby -c app/services/mcp/public/directory_service.rb
           ruby -c app/services/mcp/public/executor.rb
@@ -100,6 +111,8 @@ jobs:
             spec/requests/api/v1/mcp/remote_transport_spec.rb \
             spec/requests/api/v1/mcp/modern_transport_spec.rb \
             spec/requests/api/v1/mcp/oauth_resource_spec.rb \
+            spec/requests/api/v1/mcp/oauth_doorkeeper_resource_spec.rb \
+            spec/requests/oauth/doorkeeper_authorization_server_spec.rb \
             spec/requests/api/v1/mcp/production_activation_spec.rb \
             spec/requests/api/v1/mcp/remote_quota_spec.rb \
             spec/services/mcp/remote_quota_policy_spec.rb \
