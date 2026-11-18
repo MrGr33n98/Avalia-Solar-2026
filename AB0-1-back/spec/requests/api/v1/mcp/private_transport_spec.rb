@@ -239,4 +239,35 @@ RSpec.describe 'MCP Private tenant authorization', type: :request do
 
     expect(response).to have_http_status(:service_unavailable)
   end
+
+  it 'mantem o catalogo privado limitado a uma ferramenta read-only' do
+    post '/mcp/private', params: {
+      jsonrpc: '2.0', id: 15, method: 'tools/list', params: {}
+    }.to_json, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    tools = response.parsed_body.dig('result', 'tools')
+    expect(tools.map { |entry| entry.fetch('name') }).to eq(['get_my_company_overview'])
+    expect(response.body).not_to include('bulk_lead_export', 'send_outbound_campaign')
+  end
+
+  it 'rejeita request JSON-RPC em array e identificador booleano' do
+    post '/mcp/private', params: [].to_json, headers: headers
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_600)
+
+    post '/mcp/private', params: {
+      jsonrpc: '2.0', id: true, method: 'tools/list', params: {}
+    }.to_json, headers: headers
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_600)
+  end
+
+  it 'rejeita parametros inesperados no catalogo privado' do
+    post '/mcp/private', params: {
+      jsonrpc: '2.0', id: 'extra-params', method: 'tools/list',
+      params: { company_id: company_b.id }
+    }.to_json, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_602)
+  end
 end
