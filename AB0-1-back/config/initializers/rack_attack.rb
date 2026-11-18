@@ -58,6 +58,10 @@ class Rack::Attack
   end
 
   # Reviewer solution mutations: impede spam de cadastros por IP.
+  throttle('brands_autocomplete/ip', limit: 60, period: 1.minute) do |req|
+    req.ip if req.path == '/api/v1/brands' && req.get?
+  end
+
   throttle('reviewer_solutions/create/ip', limit: 20, period: 1.minute) do |req|
     req.ip if req.path == '/api/v1/reviewer_solutions' && req.post?
   end
