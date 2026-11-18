@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'MCP Private tenant authorization', type: :request do
   let(:issuer) { 'https://mcp.example.test' }
+  let(:redis) { double('Redis', call: 1) }
   let(:resource) { 'https://mcp.example.test/mcp/private' }
   let(:plan_features) { { advanced_analytics: true, dashboard_access: true } }
   let(:plan) { create(:plan, features: plan_features) }
@@ -42,6 +43,8 @@ RSpec.describe 'MCP Private tenant authorization', type: :request do
     allow(ENV).to receive(:[]).with('MCP_OAUTH_ISSUER').and_return(issuer)
     allow(ENV).to receive(:[]).with('MCP_PRIVATE_ALLOWED_HOSTS').and_return('mcp.example.test')
     allow(ENV).to receive(:[]).with('MCP_PRIVATE_ALLOWED_ORIGINS').and_return('')
+    allow(ENV).to receive(:[]).with('MCP_PRIVATE_REMOTE_POLICY_ENABLED').and_return('true')
+    allow(Sidekiq).to receive(:redis).and_yield(redis)
   end
 
   def call_tool(arguments: {})
@@ -169,5 +172,71 @@ RSpec.describe 'MCP Private tenant authorization', type: :request do
 
     expect(response).to have_http_status(:bad_request)
     expect(response.parsed_body['error']).not_to eq('invalid_target')
+  end
+
+  it 'aplica quotas privadas por usuario, OAuth client e IP sem expor valores das identidades' do
+    keys = []
+    allow(redis).to receive(:call) do |*args|
+      keys << args[3]
+      1
+    end
+    call_tool
+
+    expect(response).to have_http_status(:ok)
+    expect(keys.count).to eq(5) # identity, client, ip, day and authorized tenant
+    expect(keys.join).to include('mcp:quota:v1:private:tenant:')
+    expect(keys.join).not_to include(user_a.email, application.uid, company_a.id.to_s + ':')
+  end
+
+  it 'retorna HTTP 429 com Retry-After quando a cota global se esgota' do
+    allow(redis).to receive(:call).and_return(21)
+
+    call_tool
+    expect(response).to have_http_status(:too_many_requests)
+    expect(response.headers['Retry-After']).to eq('60')
+  end
+
+  it 'retorna HTTP 429 quando a cota do tenant autorizado se esgota' do
+    allow(redis).to receive(:call) do |*args|
+      args[3].include?(':private:tenant:') ? 101 : 1
+    end
+    call_tool
+
+    expect(response).to have_http_status(:too_many_requests)
+    expect(response.headers['Retry-After']).to eq('60')
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_029)
+    expect(response.body).not_to include(company_a.name)
+  end
+
+  it 'retorna HTTP 503 sem executar a ferramenta quando Redis falha' do
+    allow(redis).to receive(:call).and_raise(IOError)
+    call_tool
+
+    expect(response).to have_http_status(:service_unavailable)
+  end
+
+  it 'nao consulta quotas privadas para token invalido' do
+    expect(Sidekiq).not_to receive(:redis)
+    post '/mcp/private', params: {
+      jsonrpc: '2.0', id: 12, method: 'tools/list', params: {}
+    }.to_json, headers: headers.merge('Authorization' => 'Bearer invalid-bearer')
+
+    expect(response).to have_http_status(:unauthorized)
+  end
+
+  it 'nao contabiliza tenant de outra empresa quando o selector nao e autorizado' do
+    keys = []
+    allow(redis).to receive(:call) { |*args| keys << args[3]; 1 }
+
+    call_tool(arguments: { company_id: company_b.id })
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_003)
+    expect(keys.count { |key| key.include?(':private:tenant:') }).to eq(0)
+  end
+
+  it 'mantem o recurso privado oculto se a politica de quota estiver desligada' do
+    allow(ENV).to receive(:[]).with('MCP_PRIVATE_REMOTE_POLICY_ENABLED').and_return('false')
+    call_tool
+
+    expect(response).to have_http_status(:service_unavailable)
   end
 end
