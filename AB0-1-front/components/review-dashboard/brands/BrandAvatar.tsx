@@ -25,7 +25,8 @@ const sizeConfig: Record<
   48: { container: 'w-12 h-12', text: 'text-base', imageSize: 44 },
 };
 
-function fallbackInitials(name: string): string {
+function fallbackInitials(name?: string): string {
+  if (!name) return 'BR';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return 'BR';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -43,7 +44,7 @@ export function BrandAvatar({
   const [imageFailed, setImageFailed] = useState(false);
   const cfg = sizeConfig[size] || sizeConfig[32];
   const monogram = initials || fallbackInitials(name);
-  const altText = alt || `Logo da marca ${name}`;
+  const altText = alt || (name ? `Logo da marca ${name}` : 'Logo da marca');
 
   if (logoUrl && !imageFailed) {
     return (

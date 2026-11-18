@@ -661,6 +661,11 @@ Rails.application.routes.draw do
             get :summary
           end
         end
+        resources :portfolio_projects, only: %i[index show create update destroy] do
+          collection do
+            get :summary
+          end
+        end
         get 'brand_experience_summary', to: 'brand_usages#summary'
         resources :tree_blocks, path: 'tree/blocks', controller: 'tree_blocks', only: %i[index create update destroy] do
           collection { patch :reorder, path: 'reorder' }
