@@ -344,4 +344,18 @@ RSpec.describe 'MCP Private tenant authorization', type: :request do
     expect(response).to have_http_status(:bad_request)
     expect(response.parsed_body.dig('error', 'code')).to eq(-32_602)
   end
+
+  it 'faz fallback de inicializacao no protocolo legado sem criar sessao privada' do
+    post '/mcp/private', params: {
+      jsonrpc: '2.0', id: 'legacy-initialize', method: 'initialize',
+      params: {
+        protocolVersion: '2025-11-25', capabilities: {},
+        clientInfo: { name: 'legacy-test', version: '1' }
+      }
+    }.to_json, headers: headers.merge('MCP-Protocol-Version' => '2025-11-25')
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('result', 'protocolVersion')).to eq('2025-11-25')
+    expect(response.headers['MCP-Session-Id']).to be_nil
+  end
 end
