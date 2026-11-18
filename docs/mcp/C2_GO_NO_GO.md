@@ -1,16 +1,27 @@
 # C2 — Go/No-Go
 
-## Decisão atual: NO-GO para ativação pública
+## Estado do código (18/11/2026)
 
-O código C2 e os testes locais focados estão prontos para revisão, mas não há prova de staging isolado, DNS/TLS, clientes externos, observabilidade operacional ou aprovação de segurança.
+A PR **#175** foi integrada à `main`. O Authorization Server
+Doorkeeper e a integração de resource server público estão implementados
+e possuem testes de CI. Tokens opacos, PKCE S256, resource e scope são
+contratos efetivos no código, mas **integração não equivale a aprovação de
+ativação pública**.
 
-## GO somente quando
+## Decisão operacional: NO-GO
 
-- PR e CI obrigatório estiverem verdes.
-- Staging separado estiver comprovado.
-- PKCE, resource, scope, refresh e revogação forem demonstrados ponta a ponta.
-- Dois clientes independentes forem aprovados.
-- Ausência de PII/PII em logs, quotas, alertas e rollback forem verificados.
-- AppSec, Privacidade, Produto e Operações assinarem.
+Permanece pendente:
 
-As flags MCP e execução de tools permanecem desligadas por padrão.
+- Staging Rails/Devise/Doorkeeper com HTTPS real, DNS e origem aprovada.
+- Login de usuário, consentimento e authorization code + PKCE ponta a ponta.
+- Resource, scope, refresh, revogação e isolamento verificados externamente.
+- Dois clientes MCP independentes e homologação do protocolo atual.
+- Instrumentação/quotas, alertas e rollback testados em staging.
+- Revisões AppSec, Privacidade/DPO, Produto e SRE.
+
+Ver `docs/mcp/C4_IMPLEMENTATION_AND_RELEASE_GATES.md` e
+`docs/mcp/ADR-002-C2-DOORKEEPER-OPAQUE-TOKENS.md`.
+
+Até GO explícito: `MCP_REMOTE_TRANSPORT_ENABLED=false`,
+`MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=false` em produção. Não executar
+testes live com segredos de produção.
