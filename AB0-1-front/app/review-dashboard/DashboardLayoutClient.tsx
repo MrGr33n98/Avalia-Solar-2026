@@ -439,7 +439,7 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
                 href: '/review-dashboard#company-replies',
                 icon: MessageCircle,
               },
-              { label: 'Abrir conquistas', href: '/review-dashboard#achievements', icon: Trophy },
+              { label: 'Abrir conquistas', href: '/review-dashboard/achievements', icon: Trophy },
               { label: 'Completar perfil', href: '/review-dashboard/profile', icon: UserRound },
             ].map((item) => {
               const Icon = item.icon;
