@@ -2,16 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Building2,
-  Cpu,
-  Wrench,
-  Zap,
-  CheckCircle,
-  X,
-  Plus,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SolutionIdentityAvatar } from '@/components/review-dashboard/solutions/SolutionIdentityAvatar';
 
 export interface UserSolution {
   id: string;
@@ -29,67 +22,45 @@ interface UserSolutionChipProps {
   onRemove: (id: string) => void;
 }
 
-export function UserSolutionChip({ solution, onRemove }: UserSolutionChipProps) {
-  // Escolher o ícone apropriado baseado no tipo
-  const getIcon = () => {
-    switch (solution.type) {
-      case 'company':
-        return <Building2 className="h-4 w-4 text-emerald-600 shrink-0" />;
-      case 'product':
-        return <Cpu className="h-4 w-4 text-sky-500 shrink-0" />;
-      case 'service':
-        return <Wrench className="h-4 w-4 text-amber-500 shrink-0" />;
-      case 'technology':
-        return <Zap className="h-4 w-4 text-purple-500 shrink-0" />;
-      default:
-        return <Cpu className="h-4 w-4 text-slate-500 shrink-0" />;
-    }
-  };
+const TYPE_LABELS: Record<UserSolution['type'], string> = {
+  company: 'Empresa',
+  product: 'Produto',
+  service: 'Serviço',
+  technology: 'Tecnologia',
+};
 
-  // Mapear o rótulo do tipo de solução
-  const getTypeLabel = () => {
-    switch (solution.type) {
-      case 'company':
-        return 'Empresa';
-      case 'product':
-        return 'Produto';
-      case 'service':
-        return 'Serviço';
-      case 'technology':
-        return 'Tecnologia';
-      default:
-        return 'Solução';
-    }
-  };
+export function UserSolutionChip({ solution, onRemove }: UserSolutionChipProps) {
+  const typeLabel = TYPE_LABELS[solution.type] || 'Solução';
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white p-2.5 shadow-sm hover:border-gray-300 transition-colors">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50">
-        {getIcon()}
-      </div>
+    <div className="inline-flex items-center gap-2.5 rounded-lg border border-[#DDE5EF] bg-white px-2.5 py-2 transition-colors hover:border-[#A6C8FF]">
+      <SolutionIdentityAvatar
+        name={solution.name}
+        logoUrl={solution.logo_url}
+        size="sm"
+      />
 
-      <div className="flex flex-col min-w-0">
-        <span className="text-xs font-bold text-gray-900 truncate pr-1">
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate pr-1 text-xs font-semibold text-[#161616]">
           {solution.name}
         </span>
-        <span className="text-[10px] text-gray-400 font-medium">
-          {getTypeLabel()} • {solution.category}
+        <span className="text-[11px] font-medium text-[#525252]">
+          {typeLabel} · {solution.category}
         </span>
       </div>
 
       {solution.verified && (
-        <span className="flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 shrink-0">
-          <CheckCircle className="h-2.5 w-2.5 fill-emerald-100" />
-          Verificado
+        <span className="shrink-0 rounded border border-[#A7F0BA] bg-[#DEFBE6] px-1.5 py-0.5 text-[10px] font-semibold text-[#0E6027]">
+          Verificada
         </span>
       )}
 
-      <div className="flex items-center gap-1.5 ml-2 border-l border-gray-100 pl-2">
+      <div className="ml-1 flex items-center gap-1 border-l border-[#E0E0E0] pl-2">
         {solution.type === 'company' && solution.companyId && (
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 rounded-lg bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 transition-colors"
+            className="h-7 rounded border border-[#D0E2FF] bg-[#EDF5FF] px-2 text-[11px] font-semibold text-[#0043CE] transition-colors hover:bg-[#D0E2FF]"
             asChild
           >
             <Link href={`/companies/${solution.companyId}#review-form`}>
@@ -101,10 +72,11 @@ export function UserSolutionChip({ solution, onRemove }: UserSolutionChipProps) 
         <button
           type="button"
           onClick={() => onRemove(solution.id)}
-          className="flex h-6 w-6 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+          aria-label={`Remover ${solution.name}`}
+          className="flex h-7 w-7 items-center justify-center rounded text-[#525252] transition-colors hover:bg-[#FFF1F1] hover:text-[#DA1E28]"
           title="Remover solução"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
     </div>
