@@ -207,6 +207,21 @@ describe('CategoryPageClientV2 Filtros', () => {
     expect(screen.queryAllByText(name).length).toBe(0);
   };
 
+  it('mantém a ordenação acessível sem repetir a nota na toolbar', () => {
+    render(
+      <CategoryPageClient
+        initialCategory={mockCategory}
+        initialCompanies={mockCompanies}
+        initialBanners={[]}
+        paginationMeta={{}}
+      />
+    );
+
+    const sort = screen.getByRole('combobox', { name: 'Ordenar empresas' });
+    expect(sort).toHaveTextContent('Ordenar');
+    expect(screen.queryByText('Melhor nota')).not.toBeInTheDocument();
+  });
+
   it('deve renderizar todas as empresas inicialmente', () => {
     render(
       <CategoryPageClient
