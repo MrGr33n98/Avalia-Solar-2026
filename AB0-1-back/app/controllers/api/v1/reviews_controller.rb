@@ -120,6 +120,17 @@ class Api::V1::ReviewsController < Api::V1::BaseController
 
     if @review.persisted?
       begin
+        link_brand_usage_if_opted_in!(
+          @review,
+          params[:brand_usage_opt_in] || params.dig(:review, :brand_usage_opt_in),
+          params[:brand_id] || params.dig(:review, :brand_id),
+          params[:brand_usage_context] || params.dig(:review, :brand_usage_context)
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[ReviewsController] Falha não-bloqueante ao registrar brand_usage a partir do review #{@review.id}: #{e.message}")
+      end
+
+      begin
         Reviews::ModerationService.new.evaluate(@review)
       rescue StandardError => e
         Rails.logger.error("Failed to run moderation service for review #{@review.id}: #{e.message}")
@@ -345,10 +356,38 @@ class Api::V1::ReviewsController < Api::V1::BaseController
     params.require(:review).permit(
       :rating, :comment, :company_id, :category_id, :headline, :buyer_tip,
       :project_type, :installation_status, :estimated_power, :capture_flow_source,
+      :brand_usage_opt_in, :brand_id, :brand_usage_context,
       { pros: [] }, { cons: [] }, { content_metadata: {} }, { project_context: {} }, { metadata: {} },
       review_criterion_scores_attributes: %i[id rating_criterion_id score not_applicable _destroy],
       review_media_ids: []
     )
+  end
+
+  def link_brand_usage_if_opted_in!(review, opt_in, brand_id, usage_context)
+    return unless opt_in.present? && ActiveModel::Type::Boolean.new.cast(opt_in)
+    return unless brand_id.present?
+    return unless current_user
+
+    brand = Brand.active.find_by(id: brand_id)
+    return unless brand
+
+    context = usage_context.presence || (review.project_type.to_s == 'residential' ? 'personal_owner' : 'integrator_install')
+    return unless ReviewerBrandUsage::USAGE_CONTEXTS.include?(context)
+
+    existing = current_user.reviewer_brand_usages.find_by(brand_id: brand.id, usage_context: context)
+    if existing
+      existing.update!(source_review_id: review.id) if existing.source_review_id.nil?
+    else
+      current_user.reviewer_brand_usages.create!(
+        brand: brand,
+        usage_context: context,
+        source: 'review_form',
+        source_review: review,
+        visibility: 'private',
+        verification_status: 'self_declared',
+        status: 'active'
+      )
+    end
   end
 
   def reply_params
