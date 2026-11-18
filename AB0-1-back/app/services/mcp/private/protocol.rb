@@ -134,7 +134,7 @@ module Mcp
 
       def initialize_result(id)
         success(id, {
-          protocolVersion: VERSION, capabilities: { tools: {} },
+          protocolVersion: LEGACY_VERSION, capabilities: { tools: {} },
           serverInfo: { name: 'avalia-solar-mcp-private', version: '0.1.0' }
         })
       end
