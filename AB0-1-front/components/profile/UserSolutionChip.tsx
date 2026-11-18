@@ -14,6 +14,21 @@ export interface UserSolution {
   verified: boolean;
   logo_url?: string;
   companyId?: string; // para redirecionar para a avaliação se for empresa
+  brand_id?: number;
+  product_id?: number;
+  usage_context?: string;
+  brand?: {
+    id: number;
+    name: string;
+    slug: string;
+    initials?: string;
+    logo_url?: string | null;
+  };
+  product?: {
+    id: number;
+    name: string;
+    sku?: string;
+  };
   created_at?: string;
 }
 

@@ -332,6 +332,9 @@ export function DashboardLayoutClient({ children }: { children: React.ReactNode 
           solution_type: newSolution.type,
           category: newSolution.category,
           company_id: newSolution.companyId,
+          brand_id: newSolution.brand_id,
+          product_id: newSolution.product_id,
+          usage_context: newSolution.usage_context,
         });
         const created = response as UserSolution;
         setSolutions((previous) =>
