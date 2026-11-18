@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useDashboardContext } from '../DashboardLayoutClient';
 import { cn } from '@/lib/utils';
 import { Trophy, Award, Lock, Zap } from 'lucide-react';
+import { track } from '@/lib/analytics/lazy';
 
 const tabs = [
   { id: 'all', label: 'Todas' },
@@ -22,44 +23,38 @@ interface AchievementItem {
 }
 
 export default function ConquistasPage() {
-  const { summary, reviews } = useDashboardContext();
+  const { summary } = useDashboardContext();
   const [activeTab, setActiveTab] = useState<TabId>('all');
 
-  const gamification = summary?.gamification;
-  const greenScore = gamification?.green_score ?? 130;
-  const earnedPoints = gamification?.earned_points ?? 50;
-  const levelName = gamification?.level?.name || 'Prata';
-  const reviewsCount = reviews?.length ?? 0;
-  const profileCompletion = summary?.profile?.completion_percent ?? 0;
+  useEffect(() => {
+    track('achievement_tab_viewed', { surface: 'tab' });
+  }, []);
 
-  // Deriva conquistas a partir da API ou fornece o conjunto canônico padrão
+  const gamification = summary?.gamification;
+  const greenScore =
+    gamification?.green_score !== undefined && gamification?.green_score !== null
+      ? gamification.green_score
+      : ' — ';
+  const earnedPoints =
+    gamification?.earned_points !== undefined && gamification?.earned_points !== null
+      ? gamification.earned_points
+      : ' — ';
+  const levelName = gamification?.level?.name || ' — ';
+
+  // Deriva conquistas a partir da API; sem fallback de dados fictícios
   const achievements: AchievementItem[] = useMemo(() => {
     const apiAchievements = gamification?.achievements;
-    if (apiAchievements && apiAchievements.length > 0) {
-      return apiAchievements.map((item, idx) => ({
-        id: item.id || `ach_${idx}`,
-        title: item.title,
-        description: item.subtitle || item.description || '',
-        unlocked: item.state !== 'bloqueado' && item.unlocked !== false,
-      }));
+    if (!apiAchievements || apiAchievements.length === 0) {
+      return [];
     }
 
-    // Conjunto canônico alinhado com o estado de referência (1/2 desbloqueada)
-    return [
-      {
-        id: 'primeira_avaliacao',
-        title: 'Primeira avaliação',
-        description: 'Publique sua primeira avaliação.',
-        unlocked: reviewsCount > 0 || true, // Conquista inicial desbloqueada na referência
-      },
-      {
-        id: 'perfil_completo',
-        title: 'Perfil completo',
-        description: 'Complete as informações essenciais do seu perfil.',
-        unlocked: profileCompletion >= 100,
-      },
-    ];
-  }, [gamification?.achievements, reviewsCount, profileCompletion]);
+    return apiAchievements.map((item, idx) => ({
+      id: item.id || `ach_${idx}`,
+      title: item.title,
+      description: item.subtitle || item.description || '',
+      unlocked: item.state !== 'bloqueado' && item.unlocked !== false,
+    }));
+  }, [gamification?.achievements]);
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
   const totalCount = achievements.length;
@@ -109,7 +104,7 @@ export default function ConquistasPage() {
             Conquistas
           </span>
           <span className="mt-0.5 text-sm sm:text-base font-extrabold text-slate-950 leading-tight">
-            {unlockedCount}/{totalCount}
+            {totalCount > 0 ? `${unlockedCount}/${totalCount}` : ' — '}
           </span>
         </div>
 

@@ -121,7 +121,7 @@ const fullSidebarSections: Array<{ title: string; items: DashboardNavItem[] }> =
     title: 'Perfil',
     items: [
       { label: 'Meu Perfil', href: '/review-dashboard/profile', icon: UserRound },
-      { label: 'Conquistas', href: '/review-dashboard#achievements', icon: Trophy },
+      { label: 'Conquistas', href: '/review-dashboard/achievements', icon: Trophy },
       { label: 'Reputação', href: '/review-dashboard#reputation', icon: Medal },
       {
         label: 'Notificações',
