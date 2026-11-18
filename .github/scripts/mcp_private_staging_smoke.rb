@@ -9,6 +9,7 @@ require 'openssl'
 require 'uri'
 
 class McpPrivateStagingSmoke
+  VERSION = '2026-07-28'
   MAX_RESPONSE_BYTES = 100_000
   TOOL = 'get_my_company_overview'
 
@@ -39,6 +40,7 @@ class McpPrivateStagingSmoke
     catalog = post('tools/list', {}, @token)
     assert(catalog.fetch('result').fetch('tools').map { |t| t.fetch('name') } == [TOOL],
            'Private tool allowlist mismatch')
+    assert(catalog.dig('result', 'resultType') == 'complete', 'Modern protocol result required')
 
     overview = post('tools/call', {
       'name' => TOOL, 'arguments' => { 'company_id' => @company }
@@ -87,11 +89,21 @@ class McpPrivateStagingSmoke
   def post(method, params, token, expected_http: 200)
     payload = {
       jsonrpc: '2.0', id: "c4-#{method.tr('/', '-')}",
-      method: method, params: params
+      method: method,
+      params: params.merge(
+        '_meta' => {
+          'io.modelcontextprotocol/protocolVersion' => VERSION,
+          'io.modelcontextprotocol/clientInfo' => { 'name' => 'avalia-solar-private-smoke', 'version' => '1' },
+          'io.modelcontextprotocol/clientCapabilities' => {}
+        }
+      )
     }
     req = Net::HTTP::Post.new(@url.request_uri)
     req['Content-Type'] = 'application/json'
-    req['Accept'] = 'application/json'
+    req['Accept'] = 'application/json, text/event-stream'
+    req['MCP-Protocol-Version'] = VERSION
+    req['Mcp-Method'] = method
+    req['Mcp-Name'] = params.fetch('name') if method == 'tools/call'
     req['Authorization'] = "Bearer #{token}" if token
     req.body = JSON.generate(payload)
     request(req, expected_http: expected_http)
