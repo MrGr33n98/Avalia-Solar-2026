@@ -40,10 +40,9 @@ const groups: Group[] = [
     id: 'rating',
     label: 'Avaliação geral',
     criteria: [
-      { label: 'Nota geral', value: (company) => company.rating || null },
-      { label: 'Total de avaliações', value: (company) => company.reviewsCount || null },
+      { label: 'Nota geral', value: (company) => company.rating > 0 ? company.rating : null },
+      { label: 'Total de avaliações', value: (company) => company.reviewsCount },
       { label: 'Recomendação', value: (company) => company.recommendationRate, suffix: '%' },
-      { label: 'Votos úteis', value: () => null },
     ],
   },
   {
@@ -236,7 +235,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
           Arraste para o lado para ver mais empresas <span aria-hidden="true">→</span>
         </p>
       )}
-      <div className="relative min-w-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm">
+      <div className="relative min-w-0 overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-none md:rounded-xl md:shadow-sm">
         <div
           className={
             isFluid
@@ -247,8 +246,8 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
           <table
             className={
               isFluid
-                ? 'w-full table-fixed border-collapse text-left'
-                : 'w-max min-w-full table-fixed border-collapse text-left'
+                ? 'w-full table-fixed border-collapse text-left max-md:block max-md:table-auto'
+                : 'w-max min-w-full table-fixed border-collapse text-left max-md:block max-md:w-full max-md:table-auto'
             }
             style={
               isFluid
@@ -259,7 +258,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
             <caption className="sr-only">
               Critérios das empresas selecionadas para comparação
             </caption>
-            <colgroup>
+            <colgroup className="max-md:hidden">
               <col
                 className={
                   isFluid
@@ -282,11 +281,11 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                 />
               ))}
             </colgroup>
-            <thead>
-              <tr className="border-b border-slate-200 align-top">
+            <thead className="max-md:block">
+              <tr className={`border-b border-slate-200 align-top max-md:grid ${companies.length > 1 ? 'max-md:grid-cols-2' : 'max-md:grid-cols-1'}`}>
                 <th
                   scope="col"
-                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 align-top ${
+                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 align-top max-md:hidden ${
                     isFluid
                       ? 'w-[28%] sm:w-[28%] md:w-44'
                       : 'sticky left-0 z-30 w-32 md:w-44'
@@ -298,7 +297,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   <th
                     key={company.id}
                     scope="col"
-                    className={`border-r border-slate-200 bg-white p-3 align-top ${
+                    className={`min-w-0 border-r border-slate-200 bg-white p-3 align-top max-md:w-full max-md:border-r-0 max-md:p-2.5 ${
                       isFluid ? 'min-w-0' : 'min-w-[180px]'
                     }`}
                   >
@@ -367,11 +366,11 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                 isFluid={isFluid}
               />
             ))}
-            <tbody>
-              <tr className="border-t border-slate-200 bg-slate-50/50 align-top">
+            <tbody className="max-md:block">
+              <tr className={`border-t border-slate-200 bg-slate-50/50 align-top max-md:grid ${companies.length > 1 ? 'max-md:grid-cols-2' : 'max-md:grid-cols-1'}`}>
                 <th
                   scope="row"
-                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-xs font-bold text-slate-800 ${
+                  className={`border-r border-slate-200 bg-slate-50/90 p-3 text-xs font-bold text-slate-800 max-md:border-r-0 ${companies.length > 1 ? 'max-md:col-span-2' : ''} ${
                     isFluid ? '' : 'sticky left-0 z-20'
                   }`}
                 >
@@ -382,7 +381,7 @@ export default function CompareTable({ companies, onRemove, onQuote }: CompareTa
                   return (
                     <td
                       key={company.id}
-                      className={`border-r border-slate-200 p-3 align-top ${
+                      className={`min-w-0 border-r border-slate-200 p-3 align-top max-md:border-r-0 max-md:p-2.5 ${
                         isFluid ? 'min-w-0' : 'min-w-[180px]'
                       }`}
                     >
@@ -432,8 +431,8 @@ function TableGroup({
 
   return (
     <>
-      <tbody>
-        <tr className="border-y border-slate-200/90 bg-slate-100/75">
+      <tbody className="max-md:block">
+        <tr className="border-y border-slate-200/90 bg-slate-100/75 max-md:block">
           <th colSpan={companies.length + 1} className="p-0 text-left">
             <button
               type="button"
@@ -453,12 +452,12 @@ function TableGroup({
           </th>
         </tr>
       </tbody>
-      <tbody id={contentId} hidden={!isOpen}>
+      <tbody id={contentId} hidden={!isOpen} className="max-md:block [&[hidden]]:hidden">
         {group.criteria.map((criterion) => (
-          <tr key={criterion.label} className="border-b border-slate-100 last:border-b-0">
+          <tr key={criterion.label} className={`border-b border-slate-100 last:border-b-0 max-md:grid ${companies.length > 1 ? 'max-md:grid-cols-2' : 'max-md:grid-cols-1'}`}>
             <th
               scope="row"
-              className={`border-r border-slate-200 bg-slate-50/70 p-2.5 sm:px-4 sm:py-3 text-xs sm:text-[13px] font-medium text-slate-700 break-words ${
+              className={`border-r border-slate-200 bg-slate-50/70 p-2.5 sm:px-4 sm:py-3 text-xs sm:text-[13px] font-medium text-slate-700 break-words max-md:border-r-0 max-md:bg-slate-50/90 max-md:px-3 max-md:py-2 ${companies.length > 1 ? 'max-md:col-span-2' : ''} ${
                 isFluid ? '' : 'sticky left-0 z-20'
               }`}
             >
@@ -467,7 +466,7 @@ function TableGroup({
             {companies.map((company) => (
               <td
                 key={company.id}
-                className={`border-r border-slate-100 p-2.5 sm:px-4 sm:py-3 text-left sm:text-center text-xs sm:text-[13px] text-slate-800 break-words ${
+                className={`min-w-0 border-r border-slate-100 p-2.5 sm:px-4 sm:py-3 text-left sm:text-center text-xs sm:text-[13px] text-slate-800 break-words max-md:border-r-0 max-md:px-3 max-md:py-2.5 max-md:text-left ${
                   isFluid ? 'min-w-0' : 'min-w-[180px]'
                 }`}
               >
