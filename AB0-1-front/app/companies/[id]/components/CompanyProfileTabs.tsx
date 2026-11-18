@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { getCompanyProfileTabs } from './companyProfileTabsConfig';
 import { trackCompanyProfileCategoryDropdownOpened, trackCompanyProfileCategorySelected } from '@/lib/analytics/company-category';
 import { CategoryMotionIcon } from '@/components/categories/CategoryMotionIcon';
+import { CompanyCompactChip } from './CompanyCompactChip';
 
 interface CompanyProfileTabsProps {
   activeTab: string;
@@ -67,7 +68,7 @@ export default function CompanyProfileTabs({
 
   // Prioritize the four reference tabs when entitled; other optional tabs remain scroll-accessible.
   const mobileTabs = useMemo(() => {
-    const primaryIds = ['overview', 'products', 'reviews', 'faq'];
+    const primaryIds = ['overview', 'products', 'reviews', 'projects', 'faq'];
     const primary = primaryIds
       .map((id) => tabs.find((tab) => tab.id === id))
       .filter((tab): tab is (typeof tabs)[number] => Boolean(tab));
@@ -77,20 +78,40 @@ export default function CompanyProfileTabs({
     return [...primary, ...extra];
   }, [tabs]);
 
+  const mobileRailRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Keep the selected tab in view without scrolling the document horizontally.
+    const rail = mobileRailRef.current;
+    const scroller = rail?.parentElement;
+    const selected = rail?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]');
+    if (!scroller || !selected) return;
+
+    const left = selected.offsetLeft;
+    const right = left + selected.offsetWidth;
+    if (left < scroller.scrollLeft) {
+      scroller.scrollLeft = left;
+    } else if (right > scroller.scrollLeft + scroller.clientWidth) {
+      scroller.scrollLeft = right - scroller.clientWidth;
+    }
+  }, [activeTab, mobileTabs]);
+
   const renderMobileTab = (tab: (typeof mobileTabs)[number]) => {
     const isActive = activeTab === tab.id;
     const tabHasMenu = tab.id === 'products' && hasProductMenu;
     const shortLabel = tab.id === 'products' ? 'Produtos e Serviços' : tab.id === 'faq' ? 'FAQ' : tab.label;
 
     return (
-      <button
+      <CompanyCompactChip
         key={tab.id}
-        type="button"
+        selected={isActive}
+        density="tab"
         role="tab"
         aria-label={tab.label}
         aria-selected={isActive}
         aria-controls={`company-tab-panel-${tab.id}`}
         aria-haspopup={tabHasMenu ? 'dialog' : undefined}
+        aria-expanded={tabHasMenu ? mobileSheetOpen : undefined}
         onClick={() => {
           handleTabClick(tab.id);
           if (tabHasMenu) {
@@ -98,42 +119,33 @@ export default function CompanyProfileTabs({
             trackCompanyProfileCategoryDropdownOpened({ company_id: companyId, company_name: companyName });
           }
         }}
-        className={cn(
-          // Fixed tracks keep every icon and label on the same baseline; the empty arrow slot
-          // prevents the Products dropdown from shifting the other tabs vertically.
-          'relative grid h-[92px] min-h-[92px] min-w-max flex-1 shrink-0 snap-start grid-rows-[24px_20px_12px] content-center justify-items-center gap-1 rounded-lg px-3 text-center whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
-          isActive ? 'bg-blue-50 font-semibold text-blue-700' : 'bg-slate-50 font-medium text-slate-600 hover:bg-slate-100'
-        )}
       >
-        <span className="flex h-6 items-center justify-center" aria-hidden="true">
-          <tab.icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-        </span>
-        <span className="whitespace-nowrap text-[12px] leading-5 [overflow-wrap:normal] [hyphens:none]">
+        <tab.icon className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <span data-testid="company-mobile-tab-label" className="whitespace-nowrap [overflow-wrap:normal] [hyphens:none]">
           {shortLabel}
         </span>
-        <span className="flex h-3 items-center justify-center" aria-hidden="true">
-          {tabHasMenu && <ChevronDown className="h-3 w-3 shrink-0" />}
-        </span>
-        {isActive && <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-full bg-blue-600" aria-hidden="true" />}
-      </button>
+        {tabHasMenu && <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />}
+      </CompanyCompactChip>
     );
   };
 
   return (
     <>
       {/* Mobile/PWA: one unbroken horizontal rail, preserving every entitled destination. */}
-      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full min-w-0 max-w-full md:hidden">
-        <div className="rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-xs">
+      <div id="company-profile-tabs" className="relative z-30 mt-2 w-full min-w-0 max-w-full md:hidden">
+        <div className="rounded-xl border border-slate-200/90 bg-white px-1.5 py-1 shadow-xs">
           <nav
             aria-label="Seções do perfil da empresa"
             tabIndex={0}
-            className="w-full max-w-full snap-x snap-proximity overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:thin]"
+            className="w-full max-w-full snap-x snap-proximity overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none]"
           >
             <div
+              ref={mobileRailRef}
               role="tablist"
+              aria-orientation="horizontal"
               aria-label="Seções da empresa"
               data-testid="company-mobile-tablist"
-              className="flex w-max min-w-full flex-nowrap items-stretch gap-1.5"
+              className="relative flex w-max min-w-full flex-nowrap items-center gap-1"
             >
               {mobileTabs.map((tab) => renderMobileTab(tab))}
             </div>
