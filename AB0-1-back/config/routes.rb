@@ -654,6 +654,9 @@ Rails.application.routes.draw do
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
       get 'review_dashboard/achievements', to: 'review_dashboard#achievements'
       get 'gamification/summary', to: 'gamification#summary'
+      namespace :achievements do
+        get 'verify/:token', to: 'verifications#show'
+      end
       resources :brands, only: %i[index show]
       resources :reviewer_solutions, only: %i[index create destroy]
       namespace :reviewer do
