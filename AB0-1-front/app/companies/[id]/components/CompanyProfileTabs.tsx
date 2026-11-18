@@ -65,9 +65,9 @@ export default function CompanyProfileTabs({
     [companyId, companyName]
   );
 
-  // Mobile begins with the same four actions shown in the product reference.
+  // Prioritize the four reference tabs when entitled; other optional tabs remain scroll-accessible.
   const mobileTabs = useMemo(() => {
-    const primaryIds = ['overview', 'products', 'reviews', 'projects'];
+    const primaryIds = ['overview', 'products', 'reviews', 'faq'];
     const primary = primaryIds
       .map((id) => tabs.find((tab) => tab.id === id))
       .filter((tab): tab is (typeof tabs)[number] => Boolean(tab));
@@ -77,10 +77,7 @@ export default function CompanyProfileTabs({
     return [...primary, ...extra];
   }, [tabs]);
 
-  const primaryMobileTabs = mobileTabs.slice(0, 4);
-  const secondaryMobileTabs = mobileTabs.slice(4);
-
-  const renderMobileTab = (tab: (typeof mobileTabs)[number], isSecondary = false) => {
+  const renderMobileTab = (tab: (typeof mobileTabs)[number]) => {
     const isActive = activeTab === tab.id;
     const tabHasMenu = tab.id === 'products' && hasProductMenu;
     const shortLabel = tab.id === 'products' ? 'Produtos e Serviços' : tab.id === 'faq' ? 'FAQ' : tab.label;
@@ -102,33 +99,44 @@ export default function CompanyProfileTabs({
           }
         }}
         className={cn(
-          'relative flex min-w-0 min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
-          isSecondary ? 'min-h-[44px] flex-row gap-1.5' : 'min-h-[64px]',
+          // Fixed tracks keep every icon and label on the same baseline; the empty arrow slot
+          // prevents the Products dropdown from shifting the other tabs vertically.
+          'relative grid h-[92px] min-h-[92px] min-w-max flex-1 shrink-0 snap-start grid-rows-[24px_20px_12px] content-center justify-items-center gap-1 rounded-lg px-3 text-center whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600',
           isActive ? 'bg-blue-50 font-semibold text-blue-700' : 'bg-slate-50 font-medium text-slate-600 hover:bg-slate-100'
         )}
       >
-        <tab.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-        <span className="min-w-0 text-[11px] leading-[1.2] [overflow-wrap:anywhere]">{shortLabel}</span>
-        {tabHasMenu && <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />}
-        {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-blue-600" aria-hidden="true" />}
+        <span className="flex h-6 items-center justify-center" aria-hidden="true">
+          <tab.icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+        </span>
+        <span className="whitespace-nowrap text-[12px] leading-5 [overflow-wrap:normal] [hyphens:none]">
+          {shortLabel}
+        </span>
+        <span className="flex h-3 items-center justify-center" aria-hidden="true">
+          {tabHasMenu && <ChevronDown className="h-3 w-3 shrink-0" />}
+        </span>
+        {isActive && <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-full bg-blue-600" aria-hidden="true" />}
       </button>
     );
   };
 
   return (
     <>
-      {/* Mobile tab grid */}
-      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full md:hidden">
+      {/* Mobile/PWA: one unbroken horizontal rail, preserving every entitled destination. */}
+      <div id="company-profile-tabs" className="relative z-30 mt-2.5 w-full min-w-0 max-w-full md:hidden">
         <div className="rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-xs">
-          <nav aria-label="Seções do perfil da empresa">
-            <div role="tablist" aria-label="Seções da empresa" className="grid grid-cols-4 gap-1">
-              {primaryMobileTabs.map((tab) => renderMobileTab(tab))}
+          <nav
+            aria-label="Seções do perfil da empresa"
+            tabIndex={0}
+            className="w-full max-w-full snap-x snap-proximity overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:thin]"
+          >
+            <div
+              role="tablist"
+              aria-label="Seções da empresa"
+              data-testid="company-mobile-tablist"
+              className="flex w-max min-w-full flex-nowrap items-stretch gap-1.5"
+            >
+              {mobileTabs.map((tab) => renderMobileTab(tab))}
             </div>
-            {secondaryMobileTabs.length > 0 && (
-              <div className="mt-1 grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(secondaryMobileTabs.length, 3)}, minmax(0, 1fr))` }}>
-                {secondaryMobileTabs.map((tab) => renderMobileTab(tab, true))}
-              </div>
-            )}
           </nav>
         </div>
 
