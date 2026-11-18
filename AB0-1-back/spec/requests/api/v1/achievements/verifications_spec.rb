@@ -14,7 +14,6 @@ RSpec.describe 'Api::V1::Achievements::Verifications', type: :request do
            points_xp: 50,
            action_enum: 'write_review',
            description: 'Escreva e aprove sua 1ª avaliação na plataforma',
-           criteria_description: '1 avaliação aprovada',
            position: 1,
            active: true)
   end

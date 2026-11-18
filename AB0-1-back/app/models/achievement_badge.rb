@@ -23,6 +23,14 @@ class AchievementBadge < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:position, :id) }
 
+  def points
+    points_xp
+  end
+
+  def criteria_description
+    description
+  end
+
   def to_param
     slug
   end
