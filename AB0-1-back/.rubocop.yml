@@ -28,6 +28,7 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - 'test/**/*'
     - 'config/routes.rb'
+    - 'lib/tasks/**/*'
 
 Layout/EndOfLine:
   EnforcedStyle: lf

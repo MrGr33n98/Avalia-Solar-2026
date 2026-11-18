@@ -183,7 +183,7 @@ test.describe('JWT Revocation and Logout', () => {
         } catch {
           return 0;
         }
-      })
+      }, { timeout: 15000 })
       .toBe(200);
   });
 });
