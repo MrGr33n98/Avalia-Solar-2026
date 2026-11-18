@@ -97,6 +97,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       permitted_review_params[:category_id] = service.category_id
     end
     review_media_ids = permitted_review_params.delete(:review_media_ids).to_a.map(&:to_i).uniq
+    brand_opt_in_param = permitted_review_params.delete(:brand_usage_opt_in)
+    brand_id_param = permitted_review_params.delete(:brand_id)
+    brand_context_param = permitted_review_params.delete(:brand_usage_context)
     metadata_with_email = (permitted_review_params[:metadata] || {}).merge(reviewer_email: current_user.email)
 
     Review.transaction do
@@ -122,9 +125,9 @@ class Api::V1::ReviewsController < Api::V1::BaseController
       begin
         link_brand_usage_if_opted_in!(
           @review,
-          params[:brand_usage_opt_in] || params.dig(:review, :brand_usage_opt_in),
-          params[:brand_id] || params.dig(:review, :brand_id),
-          params[:brand_usage_context] || params.dig(:review, :brand_usage_context)
+          brand_opt_in_param.presence || params[:brand_usage_opt_in] || params.dig(:review, :brand_usage_opt_in),
+          brand_id_param.presence || params[:brand_id] || params.dig(:review, :brand_id),
+          brand_context_param.presence || params[:brand_usage_context] || params.dig(:review, :brand_usage_context)
         )
       rescue StandardError => e
         Rails.logger.warn("[ReviewsController] Falha não-bloqueante ao registrar brand_usage a partir do review #{@review.id}: #{e.message}")
