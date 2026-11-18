@@ -647,6 +647,7 @@ Rails.application.routes.draw do
 
       get 'review_dashboard/summary', to: 'review_dashboard#summary'
       get 'gamification/summary', to: 'gamification#summary'
+      resources :brands, only: %i[index show]
       resources :reviewer_solutions, only: %i[index create destroy]
       namespace :reviewer do
         resources :tree_blocks, path: 'tree/blocks', controller: 'tree_blocks', only: %i[index create update destroy] do
