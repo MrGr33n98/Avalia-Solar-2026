@@ -35,6 +35,12 @@ Doorkeeper.configure do
   # existente e exige uma conta ativa/confirmada, inclusive para consentimento.
   base_controller 'ApplicationController'
 
+  # C2: o resource é persistido no grant/token pelo mecanismo nativo de
+  # custom_access_token_attributes. O controller OAuth exige correspondência
+  # exata com MCP_OAUTH_RESOURCE antes de o Doorkeeper emitir qualquer token.
+  custom_access_token_attributes [:resource]
+  access_token_expires_in 10.minutes
+
   # If you didn't skip applications controller from Doorkeeper routes in your application routes.rb
   # file then you need to declare this block in order to restrict access to the web interface for
   # adding oauth authorized applications. In other case it will return 403 Forbidden response

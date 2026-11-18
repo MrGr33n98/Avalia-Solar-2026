@@ -1,17 +1,17 @@
-# MCP-04 — OAuth 2.1 resource-server boundary (implementation draft)
+# MCP C2 — OAuth resource-server boundary
 
 ## Scope of this PR
 
-This work adds **resource-side token validation** to the isolated `/mcp` adapter. Avalia Solar remains a *protected resource* and does **not** mint tokens, perform OAuth redirects, register client IDs or implement an authorization server. Authorization Code + PKCE (S256), issuer stamping (RFC 9207) and client-registration/CIMD behavior belong to the selected external AS and the consuming client. **End-to-end OAuth cannot be claimed until a provider is connected and tested.**
+This work integrates the isolated `/mcp` adapter with the self-hosted Rails/Devise/Doorkeeper Authorization Server from C1. Avalia Solar does not use Auth0 or another mandatory external provider. Authorization Code + PKCE is still owned by Doorkeeper and the existing Devise session.
 
 The endpoint stays off unless explicitly authorized in a controlled environment. No domain/tool execution is enabled here.
 
-### Prerequisite external decisions
-- Choose and configure an OAuth provider (e.g. Auth0, Keycloak, Entra ID) that supports OAuth 2.1 / PKCE S256 and access-token signing.
-- Register the resource/audience and permission `mcp:public:read`.
-- Register approved MCP clients with secure redirect policies, allowed users, tenant boundaries and consent.
-- Require access tokens signed with `RS256` and `typ=at+jwt`; the resource server intentionally rejects ID tokens. Issuer-specific token shapes must be verified in staging; do not relax these requirements silently.
-- Provide the *public* signing key, delivered securely from the provider. This initial resource verifier expects a pinned key; automatic JWKS rotation/introspection and provider-side revocation are mandatory later.
+### Decisão C2
+- O token C2 padrão é opaco e protegido por hash pelo Doorkeeper.
+- `resource` é persistido no grant/token Doorkeeper e deve ser igual à URL exata do MCP.
+- `mcp:public:read` é o único escopo público desta fase.
+- O Resource Server revalida atividade, recurso, escopo, titular e aplicação; nunca aceita JWT web ou ID token.
+- A validação JWT RS256 permanece somente como modo legado explícito para os testes existentes. Não é o caminho de emissão C2 e não reivindica rotação JWKS.
 
 ### Environment (staging ONLY until AppSec approval)
 | Variable | Purpose |
@@ -21,7 +21,7 @@ The endpoint stays off unless explicitly authorized in a controlled environment.
 | `MCP_REMOTE_OAUTH_ENABLED=true` | Second OAuth-specific enablement switch |
 | `MCP_OAUTH_RESOURCE=https://<staging-host>/mcp` | Exact OAuth audience and protected resource |
 | `MCP_OAUTH_ISSUER=https://<trusted-auth-server>` | Exact issuer; never inferred from request headers |
-| `MCP_OAUTH_JWT_PUBLIC_KEY=<PEM>` | Provider's pinned RS256 PUBLIC verification key; no private signing keys |
+| `MCP_OAUTH_TOKEN_FORMAT=opaque` | C2 default; `jwt` is legacy compatibility only |
 | `MCP_REMOTE_ALLOWED_HOSTS=<staging-host>` | Host allowlist: no wildcard |
 | `MCP_REMOTE_ALLOWED_ORIGINS=<allowed-web-clients>` | Origin allowlist: exact values, no wildcard |
 
@@ -33,16 +33,21 @@ Do not place credentials or private keys in this documentation, GitHub Actions o
 
 `POST /mcp` accepts OAuth bearer tokens *only* in OAuth mode; no fallback to preview API keys, legacy cookies, user-supplied `tenant_id`, or trusted User-Agent values. Requests without a valid access token receive HTTP 401 `WWW-Authenticate` referencing the resource metadata; valid tokens without the read scope receive 403 `insufficient_scope`. Token claims are never logged.
 
-### Required JWT claims and validation
+### Validação de token opaco
+
+`Doorkeeper::AccessToken.by_token` mais `accessible?`, `resource` exato, escopo obrigatório e sujeito estável `user:<id>` são obrigatórios. Revogação e refresh permanecem sob Doorkeeper. Bearers não são registrados em logs.
+
+### Validação JWT legada
 
 Strict `RS256` signed access tokens, `typ=at+jwt` or `application/at+jwt`, mandatory `iss`, `aud`, `sub`, `jti`, `iat`, `exp`, bounded `scope` string. Exact issuer and audience match; `mcp:public:read` is mandatory.
 
-Optionally reject a token whose issuer-scoped hashed `jti` appears in `Rails.cache` at `mcp:oauth:revoked:<sha256(issuer:jti)>`. **This cache alone is not an external provider revocation or durable policy store.** Before production, implement provider revocation/introspection or short-lived credentials with tested rotation/revocation behavior.
+O caminho legado rejeita token cujo `jti` com issuer esteja em `Rails.cache` em `mcp:oauth:revoked:<sha256(issuer:jti)>`. Esse cache não é a autoridade de revogação do C2.
 
 ### Unimplemented blockers (do not enable externally)
-- No external OAuth authorization server or tested PKCE redirect flow.
-- No automated JWKS key rotation; current verification key is pinned.
-- No refresh/logout/revocation integration with provider.
+- No staging PKCE redirect proof with an independent MCP client.
+- No external client interoperability or production DNS/TLS evidence.
+- No automated JWKS key rotation because JWT is not the selected C2 format.
+- No private MCP tenant authorization; this belongs to C3.
 - No tenant/client grant data model or entitlements.
 - No rate limit/metering or token identity access audit.
 - No execution of any `tools/call`; the five names remain discoverable-only.
