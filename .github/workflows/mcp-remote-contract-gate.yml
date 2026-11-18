@@ -121,6 +121,10 @@ jobs:
           node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
           ruby -ryaml -e 'YAML.load_file(ARGV.fetch(0))' ../infra/mcp-staging/compose.yml
           ruby -c app/services/mcp/public_tool_registry.rb
+      - name: Validate external SDK smoke script syntax (offline, no credentials)
+        run: |
+          node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+          python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
       - name: Run legacy, modern and public tool contract specs
