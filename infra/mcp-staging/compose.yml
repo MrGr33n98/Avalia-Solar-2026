@@ -1,0 +1,96 @@
+# C4 MCP staging ONLY. Deploy on an isolated VM with a distinct env file.
+# Never merge into production docker-compose.yml, share production networks,
+# volumes or tokens. Rails runs with RAILS_ENV=production for runtime parity.
+name: avalia-solar-mcp-staging
+
+services:
+  postgres:
+    image: postgres:14
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${MCP_STAGING_POSTGRES_USER:?Set a staging-only DB user}
+      POSTGRES_PASSWORD: ${MCP_STAGING_POSTGRES_PASSWORD:?Set a staging-only DB password}
+      POSTGRES_DB: ${MCP_STAGING_POSTGRES_DB:-avalia_solar_mcp_staging}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - mcp-staging-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MCP_STAGING_POSTGRES_USER} -d ${MCP_STAGING_POSTGRES_DB:-avalia_solar_mcp_staging}"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 256m
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "192mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - mcp-staging-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rails:
+    image: ${MCP_STAGING_BACKEND_IMAGE:?Use an approved immutable SHA-tagged staging image}
+    restart: unless-stopped
+    mem_limit: 768m
+    env_file:
+      - .env
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      PORT: "3001"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${MCP_STAGING_POSTGRES_USER:?Missing staging DB user}
+      POSTGRES_PASSWORD: ${MCP_STAGING_POSTGRES_PASSWORD:?Missing staging DB password}
+      POSTGRES_DB: ${MCP_STAGING_POSTGRES_DB:-avalia_solar_mcp_staging}
+      POSTGRES_DEFAULT_DB: postgres
+      REDIS_URL: redis://redis:6379/1
+      APP_HOST: https://mcp-staging.avaliasolar.com.br
+      MCP_REMOTE_PRODUCTION_ENABLED: "true"  # required because Rails.env.production?; STAGING VM ONLY
+      MCP_REMOTE_TRANSPORT_ENABLED: "true"
+      MCP_REMOTE_AUTH_MODE: oauth
+      MCP_REMOTE_OAUTH_ENABLED: "true"
+      MCP_REMOTE_POLICY_ENABLED: "true"
+      MCP_PUBLIC_TOOLS_EXECUTION_ENABLED: "true"
+      MCP_PRIVATE_REMOTE_TRANSPORT_ENABLED: "true"
+      MCP_PRIVATE_REMOTE_OAUTH_ENABLED: "true"
+      MCP_PRIVATE_REMOTE_POLICY_ENABLED: "true"
+      MCP_OAUTH_TOKEN_FORMAT: opaque
+      MCP_OAUTH_ISSUER: https://mcp-staging.avaliasolar.com.br
+      MCP_OAUTH_RESOURCE: https://mcp-staging.avaliasolar.com.br/mcp
+      MCP_PRIVATE_OAUTH_RESOURCE: https://mcp-staging.avaliasolar.com.br/mcp/private
+      MCP_REMOTE_ALLOWED_HOSTS: mcp-staging.avaliasolar.com.br
+      MCP_PRIVATE_ALLOWED_HOSTS: mcp-staging.avaliasolar.com.br
+      MCP_REMOTE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
+      MCP_PRIVATE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3101:3001"  # TLS terminator on same isolated staging VM only
+    networks:
+      - mcp-staging-internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3001/health/liveness >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 15
+      start_period: 180s
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+
+networks:
+  mcp-staging-internal:
+    driver: bridge

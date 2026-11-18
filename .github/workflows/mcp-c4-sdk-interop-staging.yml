@@ -1,0 +1,71 @@
+name: MCP C4 — Official SDK Staging Interoperability
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type STAGING_ONLY after approval of isolated staging'
+        required: true
+        type: string
+      target:
+        description: 'Staging resource to verify'
+        required: true
+        default: public
+        type: choice
+        options:
+          - public
+          - private
+          - both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-c4-sdk-staging
+  cancel-in-progress: false
+
+jobs:
+  sdk-interop:
+    name: ${{ matrix.sdk }} SDK v2 — ${{ matrix.target }} MCP
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    environment: mcp-staging
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [python, typescript]
+        target: [public, private]
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: ${{ matrix.target }}
+      MCP_STAGING_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
+      MCP_STAGING_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+      MCP_STAGING_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_STAGING_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_STAGING_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+    steps:
+      - name: Verify explicit staging acknowledgement
+        if: inputs.target == 'both' || inputs.target == matrix.target
+        run: test "$MCP_SMOKE_CONFIRMATION" = 'STAGING_ONLY'
+      - uses: actions/checkout@v4
+        if: inputs.target == 'both' || inputs.target == matrix.target
+      - uses: actions/setup-python@v5
+        if: matrix.sdk == 'python' && (inputs.target == 'both' || inputs.target == matrix.target)
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        if: matrix.sdk == 'typescript' && (inputs.target == 'both' || inputs.target == matrix.target)
+        with:
+          node-version: '22'
+      - name: Install isolated Python SDK v2
+        if: matrix.sdk == 'python' && (inputs.target == 'both' || inputs.target == matrix.target)
+        run: python -m pip install --disable-pip-version-check --quiet 'mcp>=2,<3'
+      - name: Execute official Python MCP SDK v2 smoke
+        if: matrix.sdk == 'python' && (inputs.target == 'both' || inputs.target == matrix.target)
+        run: python scripts/mcp/interop/python_sdk_v2_smoke.py
+      - name: Install isolated TypeScript SDK v2
+        if: matrix.sdk == 'typescript' && (inputs.target == 'both' || inputs.target == matrix.target)
+        run: npm install --prefix scripts/mcp/interop --no-audit --no-fund
+      - name: Execute official TypeScript MCP SDK v2 smoke
+        if: matrix.sdk == 'typescript' && (inputs.target == 'both' || inputs.target == matrix.target)
+        run: node scripts/mcp/interop/typescript_sdk_v2_smoke.mjs

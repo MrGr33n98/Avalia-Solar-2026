@@ -13,6 +13,16 @@ on:
       - test/mcp-09-adversarial-conformance-20261117
     paths:
       - 'AB0-1-back/app/controllers/api/v1/mcp/remote_transport_controller.rb'
+      - 'AB0-1-back/app/controllers/api/v1/mcp/private_transport_controller.rb'
+      - 'AB0-1-back/app/services/mcp/private/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/private_transport_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb'
+      - 'AB0-1-back/spec/services/mcp/private/**'
+      - '.github/scripts/mcp_private_staging_smoke.rb'
+      - '.github/workflows/mcp-c4-sdk-interop-staging.yml'
+      - 'scripts/mcp/interop/**'
+      - 'infra/mcp-staging/**'
+      - 'docs/mcp/C4_IMPLEMENTATION_AND_RELEASE_GATES.md'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
       - 'AB0-1-back/app/services/mcp/oauth/**'
       - 'AB0-1-back/app/controllers/api/oauth/**'
@@ -86,6 +96,10 @@ jobs:
       - name: Validate Ruby syntax
         run: |
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
+          ruby -c app/controllers/api/v1/mcp/private_transport_controller.rb
+          ruby -c app/services/mcp/private/executor.rb
+          ruby -c app/services/mcp/private/protocol.rb
+          ruby -c app/services/mcp/private/telemetry.rb
           ruby -c app/services/mcp/modern_preview_protocol.rb
           ruby -c app/services/mcp/oauth/resource_authorization.rb
           ruby -c app/services/mcp/oauth/configuration.rb
@@ -102,7 +116,15 @@ jobs:
           ruby -c app/services/mcp/remote_telemetry.rb
           ruby -c app/services/mcp/public/output_validator.rb
           ruby -c ../.github/scripts/mcp_staging_smoke.rb
+          ruby -c ../.github/scripts/mcp_private_staging_smoke.rb
+          python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
+          node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+          ruby -ryaml -e 'YAML.load_file(ARGV.fetch(0))' ../infra/mcp-staging/compose.yml
           ruby -c app/services/mcp/public_tool_registry.rb
+      - name: Validate external SDK smoke script syntax (offline, no credentials)
+        run: |
+          node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+          python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
       - name: Run legacy, modern and public tool contract specs
@@ -115,8 +137,11 @@ jobs:
             spec/requests/oauth/doorkeeper_authorization_server_spec.rb \
             spec/requests/api/v1/mcp/production_activation_spec.rb \
             spec/requests/api/v1/mcp/remote_quota_spec.rb \
+            spec/requests/api/v1/mcp/private_transport_spec.rb \
+            spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb \
             spec/services/mcp/remote_quota_policy_spec.rb \
             spec/services/mcp/public/*_spec.rb \
             spec/services/mcp/remote_telemetry_spec.rb \
+            spec/services/mcp/private/telemetry_spec.rb \
             spec/requests/api/v1/mcp/public_directory_execution_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb

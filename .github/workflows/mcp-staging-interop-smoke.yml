@@ -7,6 +7,15 @@ on:
         description: 'Type STAGING_ONLY to run against the approved staging host'
         required: true
         type: string
+      target:
+        description: 'Select the OAuth resource(s) to validate on staging'
+        required: true
+        default: public
+        type: choice
+        options:
+          - public
+          - private
+          - both
 
 permissions:
   contents: read
@@ -17,6 +26,7 @@ concurrency:
 
 jobs:
   staging-smoke:
+    if: ${{ inputs.target == 'public' || inputs.target == 'both' }}
     name: Staging HTTPS MCP Smoke (read-only)
     runs-on: ubuntu-24.04
     timeout-minutes: 8
@@ -25,15 +35,162 @@ jobs:
       CONFIRMATION: ${{ inputs.confirmation }}
       MCP_SMOKE_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
       MCP_SMOKE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+      MCP_SMOKE_PUBLIC_COMPANY_A_ID: ${{ vars.MCP_STAGING_PUBLIC_COMPANY_A_ID }}
+      MCP_SMOKE_PUBLIC_COMPANY_B_ID: ${{ vars.MCP_STAGING_PUBLIC_COMPANY_B_ID }}
     steps:
       - name: Verify explicit staging authorization
         run: |
           test "$CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Explicit staging acknowledgement required."; exit 1; }
           test -n "$MCP_SMOKE_RESOURCE_URL" || { echo "::error::MCP_STAGING_RESOURCE_URL missing."; exit 1; }
           test -n "$MCP_SMOKE_ACCESS_TOKEN" || { echo "::error::MCP_STAGING_ACCESS_TOKEN missing."; exit 1; }
+          test -n "$MCP_SMOKE_PUBLIC_COMPANY_A_ID" || { echo "::error::Public staging company A missing."; exit 1; }
+          test -n "$MCP_SMOKE_PUBLIC_COMPANY_B_ID" || { echo "::error::Public staging company B missing."; exit 1; }
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2.2'
       - name: Run staging-only external bearer and protocol smoke
         run: ruby .github/scripts/mcp_staging_smoke.rb
+
+  staging-private-smoke:
+    if: ${{ inputs.target == 'private' || inputs.target == 'both' }}
+    name: Staging HTTPS Private MCP Tenant Smoke (read-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SMOKE_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_SMOKE_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_SMOKE_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+      MCP_SMOKE_PRIVATE_FORBIDDEN_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_FORBIDDEN_COMPANY_ID }}
+    steps:
+      - name: Verify staging-only acknowledgement and nonempty fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging approval required."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_RESOURCE_URL" || { echo "::error::Private staging resource missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_ACCESS_TOKEN" || { echo "::error::Private staging token missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_COMPANY_ID" || { echo "::error::Authorized staging company missing."; exit 1; }
+          test -n "$MCP_SMOKE_PRIVATE_FORBIDDEN_COMPANY_ID" || { echo "::error::Forbidden staging company missing."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+      - name: Validate private authorized and cross-tenant behavior
+        run: ruby .github/scripts/mcp_private_staging_smoke.rb
+
+  sdk-v2-public:
+    if: ${{ inputs.target == 'public' || inputs.target == 'both' }}
+    needs: staging-smoke
+    name: Official Python MCP SDK v2 — Public
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: public
+      MCP_STAGING_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
+      MCP_STAGING_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+    steps:
+      - name: Verify explicit staging approval
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Approval required"; exit 1; }
+          test -n "$MCP_STAGING_RESOURCE_URL" || { echo "::error::Public staging URL missing"; exit 1; }
+          test -n "$MCP_STAGING_ACCESS_TOKEN" || { echo "::error::Public staging token missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reviewed Python SDK dependencies (staging only)
+        run: |
+          python -m pip install --disable-pip-version-check 'mcp==2.3.0' 'httpx2==2.16.2'
+          python -m pip check
+      - name: Verify OAuth bearer with official MCP SDK
+        run: python scripts/mcp/interop/python_sdk_v2_smoke.py
+
+  sdk-v2-private:
+    if: ${{ inputs.target == 'private' || inputs.target == 'both' }}
+    needs: staging-private-smoke
+    name: Official Python MCP SDK v2 — Private
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: private
+      MCP_STAGING_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_STAGING_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_STAGING_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+    steps:
+      - name: Verify explicit staging approval
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Approval required"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_RESOURCE_URL" || { echo "::error::Private staging URL missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_ACCESS_TOKEN" || { echo "::error::Private staging token missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_COMPANY_ID" || { echo "::error::Private staging company fixture missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reviewed Python SDK dependencies (staging only)
+        run: |
+          python -m pip install --disable-pip-version-check 'mcp==2.3.0' 'httpx2==2.16.2'
+          python -m pip check
+      - name: Verify OAuth bearer and tenant isolation with official MCP SDK
+        run: python scripts/mcp/interop/python_sdk_v2_smoke.py
+
+  ts-sdk-v2-public:
+    if: ${{ inputs.target == 'public' || inputs.target == 'both' }}
+    needs: staging-smoke
+    name: Official TypeScript MCP SDK v2 — Public
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: public
+      MCP_STAGING_RESOURCE_URL: ${{ vars.MCP_STAGING_RESOURCE_URL }}
+      MCP_STAGING_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_ACCESS_TOKEN }}
+    steps:
+      - name: Verify staging-only authorization and required fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging-only confirmation required"; exit 1; }
+          test -n "$MCP_STAGING_RESOURCE_URL" || { echo "::error::Staging resource URL missing"; exit 1; }
+          test -n "$MCP_STAGING_ACCESS_TOKEN" || { echo "::error::Staging OAuth bearer missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official TypeScript MCP SDK
+        run: npm --prefix scripts/mcp/interop install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify public resource with independent TypeScript MCP SDK
+        run: node scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
+
+  ts-sdk-v2-private:
+    if: ${{ inputs.target == 'private' || inputs.target == 'both' }}
+    needs: staging-private-smoke
+    name: Official TypeScript MCP SDK v2 — Private
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mcp-staging
+    env:
+      MCP_SMOKE_CONFIRMATION: ${{ inputs.confirmation }}
+      MCP_SDK_TARGET: private
+      MCP_STAGING_PRIVATE_RESOURCE_URL: ${{ vars.MCP_STAGING_PRIVATE_RESOURCE_URL }}
+      MCP_STAGING_PRIVATE_ACCESS_TOKEN: ${{ secrets.MCP_STAGING_PRIVATE_ACCESS_TOKEN }}
+      MCP_STAGING_PRIVATE_COMPANY_ID: ${{ vars.MCP_STAGING_PRIVATE_COMPANY_ID }}
+    steps:
+      - name: Verify staging-only authorization and required fixtures
+        run: |
+          test "$MCP_SMOKE_CONFIRMATION" = "STAGING_ONLY" || { echo "::error::Staging-only confirmation required"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_RESOURCE_URL" || { echo "::error::Private resource URL missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_ACCESS_TOKEN" || { echo "::error::Private OAuth bearer missing"; exit 1; }
+          test -n "$MCP_STAGING_PRIVATE_COMPANY_ID" || { echo "::error::Tenant fixture missing"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official TypeScript MCP SDK
+        run: npm --prefix scripts/mcp/interop install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify private resource with independent TypeScript MCP SDK
+        run: node scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
