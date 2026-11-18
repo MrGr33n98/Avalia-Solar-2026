@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import { BrandCatalogCombobox } from './BrandCatalogCombobox';
 import type { BrandCatalogItem } from '@/lib/api/brands';
