@@ -122,7 +122,7 @@ export function ReviewBrandUsageOptInStep({
               Fabricante do Equipamento *
             </label>
             <BrandCatalogCombobox
-              selectedBrand={data.brand}
+              value={data.brand}
               onSelect={handleBrandSelect}
             />
           </div>
