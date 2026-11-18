@@ -16,6 +16,7 @@ on:
       - 'AB0-1-back/app/controllers/api/v1/mcp/private_transport_controller.rb'
       - 'AB0-1-back/app/services/mcp/private/**'
       - 'AB0-1-back/spec/requests/api/v1/mcp/private_transport_spec.rb'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb'
       - 'AB0-1-back/spec/services/mcp/private/**'
       - '.github/scripts/mcp_private_staging_smoke.rb'
       - 'AB0-1-back/app/services/mcp/modern_preview_protocol.rb'
@@ -126,6 +127,7 @@ jobs:
             spec/requests/api/v1/mcp/production_activation_spec.rb \
             spec/requests/api/v1/mcp/remote_quota_spec.rb \
             spec/requests/api/v1/mcp/private_transport_spec.rb \
+            spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb \
             spec/services/mcp/remote_quota_policy_spec.rb \
             spec/services/mcp/public/*_spec.rb \
             spec/services/mcp/remote_telemetry_spec.rb \
