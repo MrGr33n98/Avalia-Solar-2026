@@ -84,6 +84,12 @@ module Api
             )
           end
 
+          capture_analytics('reviewer_portfolio_project_created', {
+            project_type: project.project_type,
+            visibility: project.visibility,
+            capacity_kwp: project.capacity_kwp&.to_f
+          })
+
           render json: { data: project.as_owner_json }, status: :created
         rescue ActiveRecord::RecordInvalid => e
           render json: { error: e.record.errors.full_messages }, status: :unprocessable_entity
@@ -174,6 +180,15 @@ module Api
             :description,
             :lock_version
           )
+        end
+
+        def capture_analytics(event_name, properties = {})
+          return unless defined?(Analytics::PostHogService)
+
+          distinct_id = current_user.respond_to?(:posthog_distinct_id) ? current_user.posthog_distinct_id : current_user.id.to_s
+          Analytics::PostHogService.capture(event_name, properties.compact, distinct_id: distinct_id)
+        rescue StandardError => e
+          Rails.logger.warn("[Analytics] Falha ao capturar #{event_name}: #{e.message}")
         end
       end
     end

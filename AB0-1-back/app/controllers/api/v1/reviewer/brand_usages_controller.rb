@@ -95,6 +95,12 @@ module Api
             )
           end
 
+          capture_analytics('reviewer_brand_usage_created', {
+            brand_id: usage.brand_id,
+            usage_context: usage.usage_context,
+            visibility: usage.visibility
+          })
+
           render json: { data: usage.as_owner_json }, status: :created
         rescue ActiveRecord::RecordInvalid => e
           render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
@@ -193,6 +199,15 @@ module Api
             error: 'Conflito de concorrência detectado. Os dados foram atualizados por outra requisição.',
             code: 'CONFLICT'
           }, status: :conflict
+        end
+
+        def capture_analytics(event_name, properties = {})
+          return unless defined?(Analytics::PostHogService)
+
+          distinct_id = current_user.respond_to?(:posthog_distinct_id) ? current_user.posthog_distinct_id : current_user.id.to_s
+          Analytics::PostHogService.capture(event_name, properties.compact, distinct_id: distinct_id)
+        rescue StandardError => e
+          Rails.logger.warn("[Analytics] Falha ao capturar #{event_name}: #{e.message}")
         end
       end
     end
