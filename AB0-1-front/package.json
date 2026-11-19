@@ -25,7 +25,12 @@
     "perf:lhci": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json",
     "perf:warm-cache": "node script/warm-home-cache.mjs",
     "perf:simulate-cache-fallback": "node script/simulate-home-cache-fallback.mjs",
-    "test:banners": "cross-env NODE_ENV=development jest --runInBand components/blog/BannerContainer.a11y.spec.tsx components/compare/ComparisonSponsoredRecommendation.test.tsx components/notifications/PromotedCompanyCard.test.tsx __tests__/companies/SponsoredBanner.test.tsx"
+    "test:banners": "cross-env NODE_ENV=development jest --runInBand components/blog/BannerContainer.a11y.spec.tsx components/compare/ComparisonSponsoredRecommendation.test.tsx components/notifications/PromotedCompanyCard.test.tsx __tests__/companies/SponsoredBanner.test.tsx",
+    "perf:lhci:mobile": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.mobile.json",
+    "perf:test": "cross-env NODE_ENV=development jest --runInBand --runTestsByPath __tests__/performance/server-first-contract.test.ts __tests__/performance/server-first-loaders.test.ts __tests__/components/search/MapLoading.test.tsx __tests__/hooks/useCatalogProductsInitial.spec.tsx",
+    "perf:report": "node script/performance/lighthouse-summary.mjs",
+    "perf:bundle": "node script/performance/inspect-route-bundles.mjs",
+    "perf:compare": "node script/performance/compare-lighthouse.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.2.3",

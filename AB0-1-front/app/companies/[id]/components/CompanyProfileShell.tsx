@@ -17,15 +17,17 @@ import CompanyProfileTabs from './CompanyProfileTabs';
 // Novos componentes da Fase 3
 import OverviewTab from './OverviewTab';
 import SidebarPremium from './SidebarPremium';
-import CompanyContactCard from './CompanyContactCard';
+
+// Secondary modules stay out of the public hero's initial import graph.
+const CompanyContactCard = dynamic(() => import('./CompanyContactCard'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
 
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
-import CompanyProducts from './CompanyProducts';
-import CompanyReviews from './CompanyReviews';
-import CompanyFinancing from './CompanyFinancing';
-import FaqSection from './FaqSection';
-import ProjectsGallery from './ProjectsGallery';
-import MaterialsLibrary from './MaterialsLibrary';
+const CompanyProducts = dynamic(() => import('./CompanyProducts'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const CompanyReviews = dynamic(() => import('./CompanyReviews'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const CompanyFinancing = dynamic(() => import('./CompanyFinancing'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const FaqSection = dynamic(() => import('./FaqSection'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const ProjectsGallery = dynamic(() => import('./ProjectsGallery'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const MaterialsLibrary = dynamic(() => import('./MaterialsLibrary'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
 
 const MapProvider = dynamic(() => import('@/components/search/MapProvider'), { ssr: false });
 
@@ -166,49 +168,69 @@ export default function CompanyProfileShell({
 
               {/* ABA 2: PRODUTOS E SERVIÇOS (Placeholder com visualização do legado) */}
               <TabsContent value="products" className="mt-0 focus-visible:outline-none">
-                <CompanyProducts products={products} loading={productsLoading} />
+                {activeTab === 'products' && <CompanyProducts products={products} loading={productsLoading} />}
               </TabsContent>
 
               {/* ABA 3: AVALIAÇÕES (Placeholder com mural de reviews legadas) */}
               <TabsContent value="reviews" className="mt-0 focus-visible:outline-none">
-                <CompanyReviews
-                  reviews={reviews}
-                  loading={reviewsLoading}
-                  companyId={Number(company.id)}
-                  companySlug={company.slug}
-                  companyName={company.name}
-                  aggregates={company.review_aggregates}
-                />
+                {activeTab === 'reviews' && (
+                  <>
+                    <CompanyReviews
+                      reviews={reviews}
+                      loading={reviewsLoading}
+                      companyId={Number(company.id)}
+                      companySlug={company.slug}
+                      companyName={company.name}
+                      aggregates={company.review_aggregates}
+                    />
+                  </>
+                )}
               </TabsContent>
 
               {/* ABA 4: FINANCIAMENTO */}
               {showFinancing && (
                 <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
-                  <CompanyFinancing company={company} />
+                {activeTab === 'financing' && (
+                  <>
+                    <CompanyFinancing company={company} />
+                  </>
+                )}
                 </TabsContent>
               )}
 
               {/* ABA 5: PROJETOS (Apenas se a empresa tiver direito à galeria de mídia) */}
               {showGallery && (
                 <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
-                  <ProjectsGallery companyId={company.id} companyName={company.name} />
-                  <MaterialsLibrary companyId={company.id} />
+                {activeTab === 'projects' && (
+                  <>
+                    <ProjectsGallery companyId={company.id} companyName={company.name} />
+                      <MaterialsLibrary companyId={company.id} />
+                  </>
+                )}
                 </TabsContent>
               )}
 
               {/* ABA 6: CONTATO */}
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <CompanyContactCard company={company} />
-                  <ContactCoverageMap company={company} />
-                </div>
-
-                <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
+                {activeTab === 'contact' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                      <CompanyContactCard company={company} />
+                      <ContactCoverageMap company={company} />
+                    </div>
+    
+                    <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
+                  </>
+                )}
               </TabsContent>
 
               {/* ABA 7: PERGUNTAS FREQUENTES (FAQ) */}
               <TabsContent value="faq" className="mt-0 space-y-6 focus-visible:outline-none">
-                <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
+                {activeTab === 'faq' && (
+                  <>
+                    <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
+                  </>
+                )}
               </TabsContent>
             </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef, Suspense, useCallback } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense, useCallback, useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
@@ -68,11 +68,15 @@ import { track } from '@/lib/analytics/consolidated';
 import { useComparison } from '@/hooks/useComparison';
 import { openComparisonDock } from '@/lib/floating-widget-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useFirstDataVisible } from '@/lib/analytics/first-data-visible';
+import type { InitialCompaniesPage } from '@/lib/server/performance/types';
 
 interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
   categoryNames?: string[];
   canonicalPath?: string;
+  initialCompanies?: InitialCompaniesPage | null;
+  initialSearchParamsKey?: string;
 }
 
 type CompaniesContentProps = CompaniesPageClientProps;
@@ -83,6 +87,8 @@ export function CompaniesContent({
   forcedCategoryIds,
   categoryNames = [],
   canonicalPath,
+  initialCompanies,
+  initialSearchParamsKey,
 }: CompaniesContentProps) {
   usePageTracking({
     type: 'category',
@@ -92,6 +98,7 @@ export function CompaniesContent({
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const searchParamsKey = searchParams.toString();
   const activeForcedCategoryIds = forcedCategoryIds ?? EMPTY_CATEGORY_IDS;
@@ -249,7 +256,7 @@ export function CompaniesContent({
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   const handleApplyFilters = (nextFilters: CompanyFilters) => {
@@ -259,7 +266,7 @@ export function CompaniesContent({
     };
     prefetchCompanies(normalized);
     const targetUrl = buildTargetUrl(normalized);
-    router.replace(targetUrl, { scroll: false });
+    startTransition(() => router.replace(targetUrl, { scroll: false }));
     setIsFiltersOpen(false);
   };
 
@@ -275,7 +282,7 @@ export function CompaniesContent({
         page: 1,
       };
       prefetchCompanies(updated);
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     },
     [buildTargetUrl, filters, prefetchCompanies, router]
   );
@@ -291,7 +298,7 @@ export function CompaniesContent({
         page: 1,
       };
       prefetchCompanies(updated);
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     },
     [buildTargetUrl, filters, prefetchCompanies, router]
   );
@@ -307,7 +314,7 @@ export function CompaniesContent({
       page: 1,
     };
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   }, [buildTargetUrl, filters, prefetchCompanies, router]);
 
   const activeFiltersCount = useMemo(() => {
@@ -401,6 +408,9 @@ export function CompaniesContent({
       return res;
     },
     placeholderData: keepPreviousData,
+    initialData: initialSearchParamsKey === searchParamsKey && viewMode !== 'map'
+      ? initialCompanies ?? undefined
+      : undefined,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
@@ -410,6 +420,8 @@ export function CompaniesContent({
   });
 
   const companies = useMemo(() => companiesResponse?.data || [], [companiesResponse?.data]);
+
+  useFirstDataVisible(pathname || '/companies', companies.length, 'companies_first_card_painted');
   const totalCount = companiesResponse?.meta?.pagination?.total ?? companies.length;
   const error =
     queryError && !isAbortError(queryError)
@@ -421,7 +433,7 @@ export function CompaniesContent({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const updated = { ...filters, search: searchInput, page: 1 };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   useEffect(() => {
@@ -454,7 +466,7 @@ export function CompaniesContent({
         source: 'companies_location_gate',
         radius_km: updated.radius_km,
       });
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     } catch {
       localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
       setShowMobileLocationGate(false);
@@ -494,7 +506,7 @@ export function CompaniesContent({
         source: 'companies_near_me',
         radius_km: updated.radius_km,
       });
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     } catch {
       // Fallback: se falhar por permissão negada, timeout ou unsupported, abre o modal
       setIsFiltersOpen(true);
@@ -528,7 +540,7 @@ export function CompaniesContent({
     }
 
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   useEffect(() => {
@@ -539,7 +551,7 @@ export function CompaniesContent({
   useEffect(() => {
     if (debouncedSearchInput === (filters.search || '')) return;
     const updated = { ...filters, search: debouncedSearchInput, page: 1 };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchInput]);
 
@@ -654,7 +666,7 @@ export function CompaniesContent({
         (Math.abs(bounds.east - bounds.west) * 111.32 * Math.cos((centerLat * Math.PI) / 180)) / 2;
       const radiusKm = Math.max(25, Math.ceil(Math.sqrt(latDistance ** 2 + lngDistance ** 2)));
 
-      router.replace(
+      startTransition(() => router.replace(
         buildTargetUrl({
           ...filters,
           lat: Number(centerLat.toFixed(5)),
@@ -663,7 +675,7 @@ export function CompaniesContent({
           page: 1,
         }),
         { scroll: false }
-      );
+      ));
       track('company_map_area_search', {
         source: 'map',
         view_mode: 'map',
@@ -675,7 +687,7 @@ export function CompaniesContent({
         },
       });
     },
-    [buildTargetUrl, filters, router]
+    [buildTargetUrl, filters, router, startTransition]
   );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -709,7 +721,7 @@ export function CompaniesContent({
   const goToPage = (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
     const updated = { ...filters, page: nextPage };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   const localBusinessSchema = useMemo(() => {
@@ -924,7 +936,7 @@ export function CompaniesContent({
                           sort: e.target.value || 'recommended',
                           page: 1,
                         };
-                        router.replace(buildTargetUrl(updated), { scroll: false });
+                        startTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
                       }}
                       className="appearance-none h-11 sm:h-9 w-full min-w-0 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation truncate"
                     >
@@ -1160,6 +1172,7 @@ export function CompaniesContent({
                     ) : viewMode === 'list' ? (
                       <div
                         data-testid="companies-list"
+                        aria-busy={isPending || isFetching}
                         className="flex flex-col gap-2.5 sm:gap-3 w-full min-w-0"
                       >
                         {visibleCompanies.map((company, index) => (
@@ -1173,6 +1186,7 @@ export function CompaniesContent({
                     ) : (
                       <div
                         data-testid="companies-grid"
+                        aria-busy={isPending || isFetching}
                         className="grid w-full min-w-0 gap-3 sm:gap-4 [--company-card-min:280px] dashboard:[--company-card-min:300px] xl:[--company-card-min:320px] 2xl:[--company-card-min:380px]"
                         style={{
                           gridTemplateColumns:
@@ -1233,7 +1247,7 @@ export function CompaniesContent({
                       variant="link"
                       className="mt-4 text-blue-600"
                       onClick={() => {
-                        router.replace(COMPANIES_PATH, { scroll: false });
+                        startTransition(() => router.replace(COMPANIES_PATH, { scroll: false }));
                       }}
                     >
                       Limpar todos os filtros

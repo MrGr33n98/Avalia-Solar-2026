@@ -11,6 +11,7 @@ import {
 import { shouldNoindexSearchParams } from '@/lib/seo/search-params';
 import { getCompaniesCategorySeoIndex, resolveCategoryNamesFromIds } from '@/lib/server/companies-category-seo';
 import { absoluteUrl } from '@/lib/site';
+import { getInitialCompaniesPage } from '@/lib/server/performance/companies';
 
 interface CompaniesPageProps {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -94,6 +95,9 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
     permanentRedirect(destination);
   }
 
+  const queryString = params.toString();
+  const initialCompanies = await getInitialCompaniesPage(queryString);
+
   return (
     <>
       <BreadcrumbSchema
@@ -102,7 +106,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
           { name: 'Empresas', item: COMPANIES_PATH },
         ]}
       />
-      <CompaniesPageClient canonicalPath={COMPANIES_PATH} />
+      <CompaniesPageClient canonicalPath={COMPANIES_PATH} initialCompanies={initialCompanies} initialSearchParamsKey={queryString} />
     </>
   );
 }

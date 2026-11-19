@@ -1,0 +1,89 @@
+name: Spec 014 — Frontend Performance Contracts
+
+on:
+  pull_request:
+    paths:
+      - 'AB0-1-front/**'
+      - 'specs/014-frontend-performance-remediation/**'
+      - '.github/workflows/spec014-frontend-performance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spec014-contracts:
+    name: Spec 014 TypeScript + Jest + Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install exact frontend dependencies
+        run: npm ci
+      - name: Static TypeScript check
+        run: npm run typecheck
+      - name: Spec 014 focused Jest tests
+        run: npm run perf:test
+      - name: Lint new server-first performance modules
+        run: >-
+          npx eslint
+          lib/server/performance/search.ts
+          lib/server/performance/products.ts
+          lib/server/performance/companies.ts
+          lib/server/performance/company.ts
+          app/companies/[id]/components/CompanyReviewsSection.tsx
+          lib/analytics/first-data-visible.ts
+          components/performance/RouteVitalsReporter.tsx
+      - name: Full frontend lint inventory (existing unrelated debt)
+        continue-on-error: true
+        run: npm run lint
+
+
+# Production Lighthouse and real-browser acceptance are separate release gates.
+# They must run with the real public API, a stable origin and recorded baseline.
+
+  spec014-bundle:
+    name: Spec 014 Production Build + Bundle Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: spec014-contracts
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      ANALYZE: 'true'
+      # The public pages must compile without authenticated/API secrets.
+      NEXT_PUBLIC_API_URL: https://api.avaliasolar.com.br
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install exact frontend dependencies
+        run: npm ci
+      - name: Build App Router with analyzer
+        run: npm run build
+      - name: Audit initial route chunks from real Next build
+        run: node script/performance/inspect-route-bundles.mjs --output .next/spec014-route-bundles.md
+      - name: Publish bundle evidence (even on build failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec014-build-bundle-report
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            AB0-1-front/.next/spec014-route-bundles.md
+            AB0-1-front/.next/analyze/*.html
+            AB0-1-front/.next/app-build-manifest.json
