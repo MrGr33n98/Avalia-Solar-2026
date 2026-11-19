@@ -127,6 +127,12 @@
         "uses-text-compression": [
           "error",
           {}
+        ],
+        "server-response-time": [
+          "warn",
+          {
+            "maxNumericValue": 600
+          }
         ]
       }
     },
