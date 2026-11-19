@@ -1,3 +1,9 @@
+// React's client Jest resolver does not expose React.cache (server-only).
+// Use an identity memoizer in JSDOM; request-scoped cache is tested in Next RSC.
+jest.mock('react', () => {
+  const actual = jest.requireActual('react');
+  return { ...actual, cache: (fn: (...args: any[]) => any) => fn };
+});
 jest.mock('server-only', () => ({}), { virtual: true });
 jest.mock('@/lib/api-public', () => ({
   fetchApiPublic: jest.fn(),
