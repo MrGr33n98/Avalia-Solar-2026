@@ -1,86 +1,95 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { useQuery } from '@tanstack/react-query';
 import ConquistasPage from './page';
-import { useDashboardContext } from '../DashboardLayoutClient';
 import { track } from '@/lib/analytics/lazy';
 
-jest.mock('../DashboardLayoutClient', () => ({
-  useDashboardContext: jest.fn(),
+jest.mock('@tanstack/react-query', () => ({
+  useQuery: jest.fn(),
 }));
 
 jest.mock('@/lib/analytics/lazy', () => ({
   track: jest.fn(),
 }));
 
-const mockUseDashboardContext = useDashboardContext as jest.Mock;
+const mockUseQuery = useQuery as jest.Mock;
 
-describe('ConquistasPage', () => {
+const summary = {
+  unlocked_count: 0,
+  total_count: 0,
+  xp_total: 0,
+  completion_percentage: 0,
+  next_suggested: null,
+};
+
+const badge = (id: string, state: 'locked' | 'unlocked') => ({
+  id,
+  name: id === 'profile_complete' ? 'Perfil completo' : '1ª avaliação aprovada',
+  description: 'Critério da conquista',
+  category: 'review',
+  tier: 'bronze',
+  state,
+  unlocked: state === 'unlocked',
+  progress: state === 'unlocked' ? 1 : 0,
+  threshold: 1,
+  xp: state === 'unlocked' ? 50 : 0,
+  points: 50,
+  unlocked_at: state === 'unlocked' ? '2026-11-18T00:00:00Z' : null,
+  asset: {
+    earned: '/assets/achievements/cards/01_review_approved_1.svg',
+    locked: '/assets/achievements/cards_locked/01_review_approved_1_locked.svg',
+  },
+  action: 'write_review',
+  share: state === 'unlocked' ? { verify_url: 'https://avaliasolar.com.br/conquistas/verificar/abc', token: 'abc' } : null,
+});
+
+describe('Reviewer achievements — G2-inspired catalog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders truthful empty fallback values when no gamification data is available', () => {
-    mockUseDashboardContext.mockReturnValue({
-      summary: null,
-      reviews: [],
+  it('does not celebrate an unseeded catalog or display invented achievements', () => {
+    mockUseQuery.mockReturnValue({
+      data: { schema_version: '2026-11-v1', summary, achievements: [], faq: [] },
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: jest.fn(),
     });
 
     render(<ConquistasPage />);
 
-    expect(track).toHaveBeenCalledWith('achievement_tab_viewed', { surface: 'tab' });
-
-    // Assert that no fake numbers (130, 50) or fake level ('Prata') are rendered
-    expect(screen.queryByText('130')).not.toBeInTheDocument();
-    expect(screen.queryByText('50')).not.toBeInTheDocument();
-    expect(screen.queryByText('Prata')).not.toBeInTheDocument();
-
-    // Assert placeholder ' — ' is rendered for empty metrics
-    const placeholders = screen.getAllByText('—');
-    expect(placeholders.length).toBeGreaterThanOrEqual(4);
-
-    expect(
-      screen.getByText('Nenhuma conquista encontrada nesta categoria.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Catálogo de conquistas temporariamente indisponível')).toBeInTheDocument();
+    expect(screen.queryByText(/Parabéns/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(/^achievement-card-/)).not.toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith('achievement_tab_viewed', {
+      surface: 'tab',
+      unlocked_count: 0,
+      total_count: 0,
+    });
   });
 
-  it('renders real gamification metrics and achievements when provided by API', () => {
-    mockUseDashboardContext.mockReturnValue({
-      summary: {
-        gamification: {
-          green_score: 85,
-          earned_points: 120,
-          level: { name: 'Ouro', key: 'gold', next: null, progress: 100, threshold: 100 },
-          achievements: [
-            {
-              id: 'review_approved_1',
-              title: '1ª avaliação aprovada',
-              description: 'Sua primeira avaliação foi aprovada.',
-              state: 'conquistado',
-              unlocked: true,
-            },
-            {
-              id: 'profile_complete',
-              title: 'Perfil completo',
-              description: 'Perfil 100% preenchido.',
-              state: 'bloqueado',
-              unlocked: false,
-            },
-          ],
-        },
+  it('renders first-party SVG badges, compact filters and accurate zero progress', () => {
+    mockUseQuery.mockReturnValue({
+      data: {
+        schema_version: '2026-11-v1',
+        summary: { ...summary, total_count: 2 },
+        achievements: [badge('review_approved_1', 'locked'), badge('profile_complete', 'unlocked')],
+        faq: [],
       },
-      reviews: [],
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      refetch: jest.fn(),
     });
 
     render(<ConquistasPage />);
 
-    expect(screen.getByText('85')).toBeInTheDocument();
-    expect(screen.getByText('120')).toBeInTheDocument();
-    expect(screen.getByText('Ouro')).toBeInTheDocument();
-    expect(screen.getByText('1/2')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^achievement-card-/)).toHaveLength(2);
+    expect(screen.getByRole('progressbar', { name: 'Progresso geral de conquistas' })).toHaveStyle({ width: '0%' });
+    expect(screen.getByRole('button', { name: /Compartilhar conquista Perfil completo/ })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('tab', { name: /Bloqueadas/ }));
+    expect(screen.getAllByTestId(/^achievement-card-/)).toHaveLength(1);
     expect(screen.getByText('1ª avaliação aprovada')).toBeInTheDocument();
-    expect(screen.getByText('Perfil completo')).toBeInTheDocument();
-    expect(screen.getByText('Desbloqueada')).toBeInTheDocument();
-    expect(screen.getByText('Bloqueada')).toBeInTheDocument();
   });
 });
-

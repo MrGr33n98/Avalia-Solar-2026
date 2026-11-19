@@ -45,7 +45,10 @@ RSpec.describe 'Review dashboard achievements API', type: :request do
         'threshold' => 1,
         'action' => 'write_review'
       )
-      expect(achievement['asset']).to include('earned', 'locked')
+      expect(achievement['asset']).to include(
+        'earned' => '/assets/achievements/cards/01_review_approved_1.svg',
+        'locked' => '/assets/achievements/cards_locked/01_review_approved_1_locked.svg'
+      )
     end
 
     it 'retorna 401 para requisições sem autenticação' do
