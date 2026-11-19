@@ -12,6 +12,9 @@ export default function LogoutPage() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   
   useEffect(() => {
+    let active = true;
+    let redirectTimer: ReturnType<typeof setTimeout> | null = null;
+
     async function performLogout() {
       try {
         // Call logout API
@@ -24,6 +27,8 @@ export default function LogoutPage() {
           },
         });
         
+        if (!active) return;
+
         if (response.ok) {
           setStatus('success');
           
@@ -40,8 +45,8 @@ export default function LogoutPage() {
           }
           
           // Redirect after a short delay
-          setTimeout(() => {
-            router.push('/login?logout=success');
+          redirectTimer = setTimeout(() => {
+            if (active) router.push('/login?logout=success');
           }, 1500);
         } else {
           const data = await response.json().catch(() => ({}));
@@ -49,6 +54,7 @@ export default function LogoutPage() {
           setStatus('error');
         }
       } catch (error) {
+        if (!active) return;
         console.error('Logout error:', error);
         setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
         setStatus('error');
@@ -64,13 +70,18 @@ export default function LogoutPage() {
         }
         
         // Redirect anyway after a delay
-        setTimeout(() => {
-          router.push('/login?logout=error');
+        redirectTimer = setTimeout(() => {
+          if (active) router.push('/login?logout=error');
         }, 2000);
       }
     }
     
     performLogout();
+
+    return () => {
+      active = false;
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, [router]);
   
   return (

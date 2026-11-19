@@ -1,7 +1,7 @@
 import { SOCIAL_FEED_ENABLED } from '@/lib/mvp-reviews';
 import type { User } from '@/lib/api';
 import { ProductSurface } from '@/lib/host-context';
-import { buildCanonicalUrl } from '@/lib/routing/surface-origins';
+import { buildCanonicalUrl, isCanonicalSurfaceHost } from '@/lib/routing/surface-origins';
 
 const AUTH_PATHS = [
   '/login',
@@ -81,6 +81,30 @@ export function isReturnToCompatibleWithRole(
   return true;
 }
 
+function resolveDestinationUrl(
+  targetSurface: ProductSurface,
+  pathWithQuery: string,
+  currentHost?: string | null
+): string {
+  const cleanPath = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
+  const effectiveHost =
+    currentHost !== undefined
+      ? currentHost
+      : typeof window !== 'undefined'
+        ? window.location.host
+        : null;
+
+  // Só redireciona para URL absoluta cross-subdomain quando o navegador já está
+  // em um host canônico das superfícies (www/app/crm). Em localhost, CI E2E ou
+  // ambientes efêmeros, mantém caminho relativo no mesmo origin para preservar
+  // os cookies httpOnly da sessão atual e não redirecionar para produção.
+  if (!effectiveHost || !isCanonicalSurfaceHost(effectiveHost)) {
+    return cleanPath;
+  }
+
+  return buildCanonicalUrl(targetSurface, cleanPath);
+}
+
 /**
  * Resolve o destino canônico pós-autenticação considerando a superfície de produto ativa.
  */
@@ -92,6 +116,7 @@ export function resolvePostAuthDestination({
   activeMembershipsCount = 0,
   creatorEnabled,
   creatorSlug,
+  currentHost,
 }: {
   user: User;
   surface?: ProductSurface;
@@ -101,6 +126,7 @@ export function resolvePostAuthDestination({
   activeMembershipsCount?: number;
   creatorEnabled?: boolean;
   creatorSlug?: string | null;
+  currentHost?: string | null;
 }): string {
   // 1. Respeitar returnTo se for seguro e compatível com a role, mapeando para o domínio da superfície correta
   if (
@@ -111,52 +137,56 @@ export function resolvePostAuthDestination({
     const pathname = destination.pathname;
     const search = destination.search + (pathname === '/invite' ? destination.hash : '');
     if (pathname.startsWith('/dashboard/sales')) {
-      return buildCanonicalUrl('crm', pathname + search);
+      return resolveDestinationUrl('crm', pathname + search, currentHost);
     }
     if (
       pathname.startsWith('/dashboard') ||
       pathname.startsWith('/company-dashboard') ||
       pathname === '/select-company'
     ) {
-      return buildCanonicalUrl('company_app', pathname + search);
+      return resolveDestinationUrl('company_app', pathname + search, currentHost);
     }
-    return buildCanonicalUrl('public', pathname + search);
+    return resolveDestinationUrl('public', pathname + search, currentHost);
   }
 
   // 2. Destino específico por Superfície ativa (quando na superfície CRM ou Company App)
   if (surface === 'crm') {
     if (hasCrmWorkspaceAccess(user)) {
-      return buildCanonicalUrl('crm', '/dashboard/sales/leads');
+      return resolveDestinationUrl('crm', '/dashboard/sales/leads', currentHost);
     }
-    return buildCanonicalUrl('crm', '/forbidden');
+    return resolveDestinationUrl('crm', '/forbidden', currentHost);
   }
 
   if (surface === 'company_app') {
     if (hasCompanyWorkspaceAccess({ user, activeMembershipsCount })) {
-      return buildCanonicalUrl(
+      return resolveDestinationUrl(
         'company_app',
-        activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company'
+        activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company',
+        currentHost
       );
     }
-    return buildCanonicalUrl('company_app', '/select-company');
+    return resolveDestinationUrl('company_app', '/select-company', currentHost);
   }
 
   // 3. Destino padrão quando autenticado a partir da Superfície Pública (www)
   if (hasCrmWorkspaceAccess(user)) {
-    return buildCanonicalUrl('crm', '/dashboard/sales/leads');
+    return resolveDestinationUrl('crm', '/dashboard/sales/leads', currentHost);
   }
 
   if (hasCompanyWorkspaceAccess({ user, activeMembershipsCount })) {
-    return buildCanonicalUrl(
+    return resolveDestinationUrl(
       'company_app',
-      activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company'
+      activeCompanyId ? `/dashboard?company_id=${activeCompanyId}` : '/select-company',
+      currentHost
     );
   }
 
   if (user.role === 'review') {
-    if (SOCIAL_FEED_ENABLED && creatorEnabled && creatorSlug) return buildCanonicalUrl('public', '/feed');
-    return buildCanonicalUrl('public', '/review-dashboard');
+    if (SOCIAL_FEED_ENABLED && creatorEnabled && creatorSlug) {
+      return resolveDestinationUrl('public', '/feed', currentHost);
+    }
+    return resolveDestinationUrl('public', '/review-dashboard', currentHost);
   }
 
-  return buildCanonicalUrl('public', '/');
+  return resolveDestinationUrl('public', '/', currentHost);
 }

@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('JWT Revocation and Logout', () => {
+  // Os testes compartilham o usuário E2E e um deles chama POST /api/v1/auth/logout_all
+  // (que revoga globalmente todos os JWTs do usuário). Executar em série evita
+  // interferência cruzada sem enfraquecer a revogação JWT.
+  test.describe.configure({ mode: 'serial' });
+
   const loginForm = (page: import('@playwright/test').Page) =>
     page.locator('form').filter({ has: page.locator('#email') });
 
@@ -82,6 +87,7 @@ test.describe('JWT Revocation and Logout', () => {
     });
     expect(secondLogin.ok()).toBeTruthy();
     const { token } = await secondLogin.json();
+    expect(token).toBeTruthy();
     await page2.goto('/');
 
     // Verify both sessions are active
@@ -160,6 +166,7 @@ test.describe('JWT Revocation and Logout', () => {
 
     // Confirm the login form issues a fresh session after logout.
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    const expectedOrigin = new URL(page.url()).origin;
     await page.locator('#email').fill(testUser.email);
     await page.locator('#password').fill(testUser.password);
     await loginForm(page).locator('button[type="submit"]').click();
@@ -169,8 +176,11 @@ test.describe('JWT Revocation and Logout', () => {
       .poll(async () => (await context.cookies()).some((cookie) => cookie.name === 'jwt_token'))
       .toBe(true);
 
-    // Wait for post-login navigation to settle
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for post-login navigation to settle on the same origin (never bouncing to production)
+    await page.waitForURL((url) => url.origin === expectedOrigin && !url.pathname.startsWith('/login'), {
+      timeout: 15000,
+    });
+    expect(new URL(page.url()).origin).toBe(expectedOrigin);
 
     // Should be able to access protected resources
     await expect
