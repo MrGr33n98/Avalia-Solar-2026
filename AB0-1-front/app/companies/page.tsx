@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
 import CompaniesPageClient from './CompaniesPageClient';
+import { loadCompaniesInitial } from '@/lib/server/performance/loaders';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import {
   buildCompaniesCategoriesPath,
@@ -94,6 +95,8 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
     permanentRedirect(destination);
   }
 
+  const initialPage = await loadCompaniesInitial(params.toString()).catch(() => undefined);
+
   return (
     <>
       <BreadcrumbSchema
@@ -102,7 +105,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
           { name: 'Empresas', item: COMPANIES_PATH },
         ]}
       />
-      <CompaniesPageClient canonicalPath={COMPANIES_PATH} />
+      <CompaniesPageClient canonicalPath={COMPANIES_PATH} initialPage={initialPage} />
     </>
   );
 }
