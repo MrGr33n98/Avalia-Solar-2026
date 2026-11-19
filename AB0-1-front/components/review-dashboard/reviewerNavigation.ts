@@ -112,7 +112,8 @@ const fullReviewerNavItems: ReviewerNavItem[] = [
     icon: Trophy,
     matchPath: '/review-dashboard/achievements',
     section: 'main',
-    mobilePriority: 5,
+    // Keep the G2-style sidebar entry visible, without adding a fifth bottom-nav shortcut.
+    mobilePriority: 6,
     analyticsKey: 'reviewer_nav_achievements',
   },
   {
@@ -163,7 +164,8 @@ const fullReviewerNavItems: ReviewerNavItem[] = [
  * Routes included here already have owner-scoped API contracts.
  * Single source for desktop sidebar, mobile bar/drawer and reviewer avatar menu.
  */
-const REVIEWER_MVP_ORDER = ['dashboard', 'reviews', 'solutions', 'profile'];
+// Achievements remains part of the core reviewer identity, even in reviews-only mode.
+const REVIEWER_MVP_ORDER = ['dashboard', 'reviews', 'solutions', 'achievements', 'profile'];
 const REVIEWER_MVP_IDS = new Set(REVIEWER_MVP_ORDER);
 
 export const reviewerNavItems: ReviewerNavItem[] = (REVIEWS_ONLY_MVP
