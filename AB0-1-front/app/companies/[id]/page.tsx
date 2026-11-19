@@ -15,65 +15,70 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  try {
-    const company = await getCompanyForInitialRender(params.id);
+  const company = await getCompanyForInitialRender(params.id);
 
-    if (!company) {
-      return {
-        title: 'Empresa não encontrada | Avalia Solar',
-      };
-    }
-
-    const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
-    const canonicalUrl = absoluteUrl(canonicalPath);
-
-    const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
-    const seoTitle = company.seo_title || `${company.name} - Avaliações e Orçamento | Avalia Solar`;
-    const fallbackDescription = [
-      `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
-      company.description,
-    ].filter(Boolean).join(' ');
-    const seoDescription = (company.seo_description || company.meta_description || fallbackDescription).slice(0, 160);
-    const seoKeywords = company.seo_keywords || [
-      'energia solar',
-      company.name,
-      'avaliação solar',
-      'orçamento solar',
-      locationLabel,
-    ].filter(Boolean).join(', ');
-
-    const geoMeta = buildGeoOtherMeta({
-      city: company.city,
-      state: company.state,
-      latitude: company.latitude,
-      longitude: company.longitude,
-    });
-
-    return {
-      title: seoTitle,
-      description: seoDescription,
-      keywords: seoKeywords,
-      other: geoMeta,
-      openGraph: {
-        title: seoTitle,
-        description: seoDescription,
-        url: canonicalUrl,
-        images: company.banner_url ? [{ url: company.banner_url }] : [],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoTitle,
-        description: seoDescription,
-      },
-      alternates: {
-        canonical: canonicalUrl,
-      },
-    };
-  } catch {
+  if (!company) {
     return {
       title: 'Empresa não encontrada | Avalia Solar',
+      robots: {
+        index: false,
+        follow: false,
+      },
+      alternates: {
+        canonical: null,
+      },
     };
   }
+
+  const canonicalPath = buildCompanyPath(company.slug, company.name, company.id);
+  const canonicalUrl = absoluteUrl(canonicalPath);
+
+  const locationLabel = [company.city, company.state].filter(Boolean).join(' - ');
+  const seoTitle = company.seo_title || `${company.name} - Avaliações e Orçamento | Avalia Solar`;
+  const fallbackDescription = [
+    `Veja avaliações, telefone, endereço e solicite orçamento para ${company.name} no Avalia Solar.`,
+    company.description,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const seoDescription = (
+    company.seo_description ||
+    company.meta_description ||
+    fallbackDescription
+  ).slice(0, 160);
+  const seoKeywords =
+    company.seo_keywords ||
+    ['energia solar', company.name, 'avaliação solar', 'orçamento solar', locationLabel]
+      .filter(Boolean)
+      .join(', ');
+
+  const geoMeta = buildGeoOtherMeta({
+    city: company.city,
+    state: company.state,
+    latitude: company.latitude,
+    longitude: company.longitude,
+  });
+
+  return {
+    title: seoTitle,
+    description: seoDescription,
+    keywords: seoKeywords,
+    other: geoMeta,
+    openGraph: {
+      title: seoTitle,
+      description: seoDescription,
+      url: canonicalUrl,
+      images: company.banner_url ? [{ url: company.banner_url }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: seoTitle,
+      description: seoDescription,
+    },
+    alternates: {
+      canonical: canonicalUrl,
+    },
+  };
 }
 
 // Enable ISR with 900s revalidation
@@ -110,9 +115,11 @@ export default async function CompanyDetailPage({ params }: Props) {
       <Suspense fallback={null}>
         <CompanyReviewsSection company={company} canonicalUrl={canonicalUrl} />
       </Suspense>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <CompanyDetailClient company={company} />
     </>
   );
 }
-

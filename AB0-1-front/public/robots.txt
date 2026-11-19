@@ -1,9 +1,0 @@
-User-agent: *
-Allow: /
-
-# Bloquear areas privadas
-Disallow: /dashboard/
-Disallow: /api/
-
-# Sitemap
-Sitemap: https://www.avaliasolar.com.br/sitemap.xml
