@@ -107,6 +107,8 @@ interface CompanyDetailClientProps {
 }
 
 
+const EMPTY_INITIAL_REVIEWS: Review[] = [];
+
 const toFiniteNumber = (value: unknown, fallback = 0): number => {
   const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -131,7 +133,7 @@ const consumerStatsLabels: Record<string, string> = {
 
 export default function CompanyDetailClient({
   company,
-  initialReviews = [],
+  initialReviews = EMPTY_INITIAL_REVIEWS,
   initialReviewsLoaded = false,
 }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
@@ -348,39 +350,46 @@ export default function CompanyDetailClient({
   ]);
 
   useEffect(() => {
-    const fetchData = async (): Promise<void> => {
+    // Public reviews and products load independently of analytics; neither
+    // blocks the already-rendered company hero or identity/CTA.
+    let cancelled = false;
+    const fetchData = async () => {
       if (!companyId) return;
-      try {
-        const [pData, rData] = await Promise.all([
-          productsApiSafe.getByCompany(companyId),
-          !reviewsLoaded
-            ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 })
-            : Promise.resolve(initialReviews),
-        ]);
-        setProducts(pData || []);
-        if (!reviewsLoaded) setReviews(rData || []);
-        if (analyticsEnabled && canViewAnalytics) {
-          const routesAvailable = await analyticsApi.validateRoutes(companyId);
-          if (routesAvailable) {
-            const [rAnalytics, tSources, hData] = await Promise.all([
-              analyticsApi.getReviewAnalytics(companyId),
-              analyticsApi.getTrafficSources(companyId),
-              analyticsApi.getHistoricalData(companyId, timeRange),
-            ]);
-            setReviewAnalytics(rAnalytics);
-            setTrafficSources(tSources);
-            setHistoricalData(hData);
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err);
-      } finally {
-        setProductsLoading(false);
-        setReviewsLoading(false);
-      }
+      const [productResult, reviewResult] = await Promise.allSettled([
+        productsApiSafe.getByCompany(companyId),
+        reviewsLoaded ? Promise.resolve(initialReviews) : reviewsApiSafe.getAll({ company_id: companyId, limit: 6 }),
+      ]);
+      if (cancelled) return;
+      if (productResult.status === 'fulfilled') setProducts(productResult.value || []);
+      if (!reviewsLoaded && reviewResult.status === 'fulfilled') setReviews(reviewResult.value || []);
+      setProductsLoading(false);
+      setReviewsLoading(false);
     };
-    fetchData();
-  }, [companyId, analyticsEnabled, canViewAnalytics, reviewsLoaded, initialReviews]);
+    void fetchData();
+    return () => { cancelled = true; };
+  }, [companyId, reviewsLoaded, initialReviews]);
+
+  useEffect(() => {
+    if (!companyId || !analyticsEnabled || !canViewAnalytics) return;
+    let cancelled = false;
+    const fetchAnalytics = async () => {
+      const available = await analyticsApi.validateRoutes(companyId);
+      if (!available || cancelled) return;
+      const [ratings, sources, history] = await Promise.allSettled([
+        analyticsApi.getReviewAnalytics(companyId),
+        analyticsApi.getTrafficSources(companyId),
+        analyticsApi.getHistoricalData(companyId, timeRange),
+      ]);
+      if (cancelled) return;
+      if (ratings.status === 'fulfilled') setReviewAnalytics(ratings.value);
+      if (sources.status === 'fulfilled') setTrafficSources(sources.value);
+      if (history.status === 'fulfilled') setHistoricalData(history.value);
+    };
+    void fetchAnalytics().catch(() => {
+      // Secondary analytics failure must never blank the public profile.
+    });
+    return () => { cancelled = true; };
+  }, [companyId, analyticsEnabled, canViewAnalytics, timeRange]);
 
   useEffect(() => {
     if (tabs.some((tab) => tab.id === activeTab)) return;
