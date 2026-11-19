@@ -191,7 +191,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!pathname) return;
-    const cleanPath = pathname.replace(/\\/+/g, '/');
+    const cleanPath = pathname;
     const cancel = markAfterPaint('route_shell_visible', {
       route: cleanPath, source: 'hydration_observed',
     });
