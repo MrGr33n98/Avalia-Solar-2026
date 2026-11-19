@@ -36,7 +36,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Company, Product, SearchAllResponse } from '@/lib/api';
-import { searchApi } from '@/lib/api';
+// Search API runtime loads after the first server-rendered results, on interaction.
 import { companiesApiSafe } from '@/lib/api-client';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
 import { markAfterPaint } from '@/lib/analytics/route-performance';
@@ -212,6 +212,7 @@ function SearchPageContent({ initialPage }: { initialPage?: InitialSearchPayload
         page: pageParam,
         per_page: pageSize,
       };
+      const { searchApi } = await import('@/lib/api');
       const response = await searchApi.all(query, apiFilters);
       const companies = response.companies || [];
       const fallbackCompanies =
