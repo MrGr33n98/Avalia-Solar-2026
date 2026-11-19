@@ -123,7 +123,7 @@ function ProductsPageContent({ initialPage }: { initialPage?: InitialProductsPay
   // Sync filters to URL for shareability / back-navigation
   useEffect(() => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('search', searchQuery);
+    if (debouncedSearchQuery) params.set('search', debouncedSearchQuery);
     if (filters.category !== 'all') params.set('category_id', filters.category);
     if (filters.company !== 'all') params.set('company_id', filters.company);
     if (filters.brand !== 'all') params.set('brand_id', filters.brand);
@@ -131,8 +131,11 @@ function ProductsPageContent({ initialPage }: { initialPage?: InitialProductsPay
     if (debouncedPriceRange[0] > 0) params.set('price_min', String(debouncedPriceRange[0]));
     if (debouncedPriceRange[1] < maxPrice && debouncedPriceRange[1] !== 50000) params.set('price_max', String(debouncedPriceRange[1]));
     if (currentPage > 1) params.set('page', String(currentPage));
-    startRouteTransition(() => router.replace(`/products${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false }));
-  }, [searchQuery, filters.category, filters.company, filters.brand, filters.sort, debouncedPriceRange, router, maxPrice, currentPage, startRouteTransition]);
+    const nextUrl = `/products${params.toString() ? `?${params.toString()}` : ''}`;
+    // Avoid a redundant RSC navigation on first hydration or unchanged filters.
+    if (typeof window !== 'undefined' && nextUrl === window.location.pathname + window.location.search) return;
+    startRouteTransition(() => router.replace(nextUrl, { scroll: false }));
+  }, [debouncedSearchQuery, filters.category, filters.company, filters.brand, filters.sort, debouncedPriceRange, router, maxPrice, currentPage, startRouteTransition]);
 
   const activeSpecFilters = useMemo(() => Object.entries(filters.specs || {}).filter(([, value]) =>
     value !== undefined && value !== null && value !== '' && value !== 'all'
