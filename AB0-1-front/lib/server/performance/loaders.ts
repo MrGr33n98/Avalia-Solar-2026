@@ -3,6 +3,12 @@ import 'server-only';
 import { cache } from 'react';
 import type { Company, Product, SearchAllResponse } from '@/lib/api';
 import { fetchApiPublic, publicCompaniesApi } from '@/lib/api-public';
+
+/** Shared by generateMetadata and the page: same public cache/tags, one request memo. */
+export const loadCompanyProfile = cache((id: string) => publicCompaniesApi.getById(id, {
+  revalidate: 900,
+  tags: ['company-profile', `company-${id}`],
+}));
 import { parseQueryParams } from '@/components/filters/query';
 import type {
   InitialCompaniesPayload,
