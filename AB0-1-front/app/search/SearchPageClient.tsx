@@ -91,7 +91,7 @@ const mergeUniqueCompanies = (primary: Company[], fallback: Company[]) => {
 
 function SearchPageContent({ initialPage }: { initialPage?: InitialSearchPayload }) {
   const router = useRouter();
-  const [, startRouteTransition] = useTransition();
+  const [isRoutePending, startRouteTransition] = useTransition();
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const urlCity = searchParams.get('city') || '';
@@ -470,7 +470,8 @@ function SearchPageContent({ initialPage }: { initialPage?: InitialSearchPayload
     (showReviews ? results.reviews?.length || 0 : 0);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-slate-50 text-slate-950" aria-busy={isRoutePending}>
+      <span className="sr-only" role="status">{isRoutePending ? 'Atualizando busca' : ''}</span>
       <SearchHero
         searchTerm={searchTerm}
         locationTerm={locationTerm}
