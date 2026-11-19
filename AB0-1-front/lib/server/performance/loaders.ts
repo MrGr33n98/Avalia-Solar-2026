@@ -124,7 +124,18 @@ export const loadProductsInitial = cache(async (serialized: string): Promise<Ini
         total_pages: Number(meta.total_pages ?? 1),
       },
     },
-    filters,
+    filters: {
+      filters: Array.isArray(filters.filters) ? filters.filters : [],
+      categories: Array.isArray(filters.categories) ? filters.categories : [],
+      companies: Array.isArray(filters.companies) ? filters.companies : [],
+      brands: Array.isArray(filters.brands) ? filters.brands : [],
+      price_range: filters.price_range && typeof filters.price_range === 'object'
+        ? {
+            min: Number((filters.price_range as Record<string, unknown>).min ?? 0),
+            max: Number((filters.price_range as Record<string, unknown>).max ?? 0),
+          }
+        : { min: 0, max: 0 },
+    },
   };
 });
 
