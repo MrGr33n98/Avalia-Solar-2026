@@ -107,4 +107,30 @@ RSpec.describe 'Sitemaps API', type: :request do
       expect(item['group_slug']).to eq(public_group.slug)
     end
   end
+
+  describe 'temporary exporter failures' do
+    it 'returns 503 instead of caching an empty local rankings sitemap' do
+      allow_any_instance_of(Api::V1::SitemapsController)
+        .to receive(:fetch_local_rankings)
+        .and_raise(StandardError, 'database timeout')
+
+      get '/api/v1/sitemaps/local_rankings'
+
+      expect(response).to have_http_status(:service_unavailable)
+      expect(response.headers['Cache-Control']).to eq('no-store')
+      expect(JSON.parse(response.body)['data']).to be_nil
+    end
+
+    it 'returns 503 instead of caching an empty group posts sitemap' do
+      allow_any_instance_of(Api::V1::SitemapsController)
+        .to receive(:fetch_group_posts_data)
+        .and_raise(StandardError, 'database timeout')
+
+      get '/api/v1/sitemaps/group_posts'
+
+      expect(response).to have_http_status(:service_unavailable)
+      expect(response.headers['Cache-Control']).to eq('no-store')
+      expect(JSON.parse(response.body)['data']).to be_nil
+    end
+  end
 end

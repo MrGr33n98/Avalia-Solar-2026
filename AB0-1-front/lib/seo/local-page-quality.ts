@@ -62,12 +62,14 @@ export function isLocalPageIndexable(
 
   const seo = getRecord(input, 'seo');
   const location = getRecord(input, 'location');
-  const minCompanies = options.minCompanies || LOCAL_PAGE_MIN_COMPANIES;
+  // A política Rails é a fonte autoritativa. O limite local só é aplicado quando
+  // um consumidor opta explicitamente por um guard adicional.
+  const minCompanies = options.minCompanies;
   const canonicalPath = getString(location, 'canonical_path');
 
   return (
     getBoolean(seo, 'indexable') === true &&
-    localCompanyCount(input) >= minCompanies &&
+    (minCompanies === undefined || localCompanyCount(input) >= minCompanies) &&
     Boolean(getString(seo, 'title')) &&
     Boolean(getString(seo, 'description')) &&
     Boolean(canonicalPath?.startsWith('/companies/')) &&

@@ -171,6 +171,8 @@ docs/security-audit/
 !docs/security-audit/
 !docs/security-audit/*
 docs/*
+!docs/seo-recovery-w0/
+!docs/seo-recovery-w0/**
 !docs/instagram-automation/
 !docs/instagram-automation/**
 !docs/INBOX_ROOT_CAUSE_AND_EVIDENCE.md

@@ -26,11 +26,24 @@ describe('local page SEO quality gate', () => {
 
   it('blocks pages below the minimum company count', () => {
     expect(
+      isLocalPageIndexable(
+        {
+          ...strongLocalPage,
+          stats: { total_companies: LOCAL_PAGE_MIN_COMPANIES - 1 },
+        },
+        { minCompanies: LOCAL_PAGE_MIN_COMPANIES }
+      )
+    ).toBe(false);
+  });
+
+  it('uses the backend decision as the default source of truth for the company count', () => {
+    expect(
       isLocalPageIndexable({
         ...strongLocalPage,
-        stats: { total_companies: LOCAL_PAGE_MIN_COMPANIES - 1 },
+        stats: { total_companies: 2 },
+        companies: [{ id: 1 }, { id: 2 }],
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('blocks pages with filters/search params', () => {

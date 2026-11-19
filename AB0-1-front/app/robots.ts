@@ -35,6 +35,6 @@ export default function robots(): MetadataRoute.Robots {
         '/*?*project_types=*',
       ],
     },
-    sitemap: [`${SITE.url}/sitemap-index.xml`, `${SITE.url}/sitemap.xml`],
+    sitemap: [`${SITE.url}/sitemap-index.xml`],
   };
 }

@@ -1,6 +1,7 @@
 import sitemap from '@/app/sitemap';
 import robots from '@/app/robots';
 import {
+  getCompanySitemapEntries,
   getSitemapEntriesBySection,
   getSitemapIndexEntries,
   serializeSitemapIndex,
@@ -80,26 +81,68 @@ describe('sitemap', () => {
         ok: true,
         json: async () => ({
           data: url.includes('sitemaps/services')
-            ? [{ company_slug: 'empresa-teste', service_slug: 'instalacao-bess', updated_at: '2026-11-05T00:00:00Z' }]
+            ? [
+                {
+                  company_slug: 'empresa-teste',
+                  service_slug: 'instalacao-bess',
+                  updated_at: '2026-11-05T00:00:00Z',
+                },
+              ]
             : [],
         }),
       } as Response;
     });
 
     const entries = await getSitemapEntriesBySection('services');
-    expect(entries.map(entry => entry.url)).toContain(
+    expect(entries.map((entry) => entry.url)).toContain(
       'https://www.avaliasolar.com.br/companies/empresa-teste/services/instalacao-bess'
     );
     expect(entries).toHaveLength(1);
   });
 
-  it('keeps robots pointing to both the sitemap index and legacy sitemap', () => {
+  it('paginates the company feed beyond the API limit of 100 records', async () => {
+    const firstPage = Array.from({ length: 100 }, (_, index) => ({
+      id: index + 1,
+      name: `Empresa ${index + 1}`,
+      slug: `empresa-${index + 1}`,
+    }));
+    const secondPage = [{ id: 101, name: 'Empresa 101', slug: 'empresa-101' }];
+
+    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(
+      async (input) =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () =>
+            String(input).includes('page=1')
+              ? { data: firstPage, meta: { pagination: { total_pages: 2, next_page: 2 } } }
+              : { data: secondPage, meta: { pagination: { total_pages: 2, next_page: null } } },
+        }) as Response
+    );
+
+    const entries = await getCompanySitemapEntries();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(entries).toHaveLength(101);
+    expect(entries.map((entry) => entry.url)).toContain(
+      'https://www.avaliasolar.com.br/companies/empresa-101'
+    );
+  });
+
+  it('falha explicitamente quando o feed de empresas está indisponível', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ error: 'unavailable' }),
+    } as Response);
+
+    await expect(getCompanySitemapEntries()).rejects.toThrow('HTTP 503');
+  });
+
+  it('keeps robots pointing to the sitemap index as the primary discovery source', () => {
     const robotsConfig = robots();
 
-    expect(robotsConfig.sitemap).toEqual([
-      'https://www.avaliasolar.com.br/sitemap-index.xml',
-      'https://www.avaliasolar.com.br/sitemap.xml',
-    ]);
+    expect(robotsConfig.sitemap).toEqual(['https://www.avaliasolar.com.br/sitemap-index.xml']);
   });
 
   it('generates the static segment without private or utility routes', async () => {
