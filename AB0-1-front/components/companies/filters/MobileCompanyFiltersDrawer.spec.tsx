@@ -56,12 +56,12 @@ jest.mock('@/lib/analytics/consolidated', () => ({
   track: jest.fn(),
 }));
 
-describe('PWA Side Filter Drawer — Specification & Geometry (Max Width 70%)', () => {
-  it('renders as a right-aligned sliding drawer with w-[70vw] max-w-[70vw]', () => {
+describe('SaaS Side Filter Drawer — Responsive Geometry & Interactions', () => {
+  it('renders via portal as a compact right-aligned drawer capped for desktop SaaS widths', () => {
     const handleClose = jest.fn();
     const handleApply = jest.fn();
 
-    const { container } = render(
+    render(
       <MobileCompanyFiltersSheet
         open={true}
         onClose={handleClose}
@@ -73,22 +73,26 @@ describe('PWA Side Filter Drawer — Specification & Geometry (Max Width 70%)', 
     const dialog = screen.getByRole('dialog', { name: /filtrar empresas/i });
     expect(dialog).toBeInTheDocument();
 
-    // Verify Geometry and CSS tokens
+    // Mobile PWA width + Golden SaaS desktop cap (never half/70% of desktop screen)
     expect(dialog.className).toContain('w-[70vw]');
-    expect(dialog.className).toContain('max-w-[70vw]');
-    expect(dialog.className).toContain('rounded-l-[20px]');
+    expect(dialog.className).toContain('max-w-[360px]');
+    expect(dialog.className).toContain('sm:w-[360px]');
+    expect(dialog.className).toContain('lg:w-[380px]');
+    expect(dialog.className).toContain('lg:max-w-[380px]');
+    expect(dialog.className).toContain('rounded-l-2xl');
     expect(dialog.className).toContain('h-[100dvh]');
 
-    // Verify Right-to-Left slide container positioning
-    const backdrop = container.firstChild as HTMLElement;
+    // Verify Right-to-Left slide container positioning inside document.body portal
+    const backdrop = screen.getByRole('presentation');
+    expect(backdrop.parentElement).toBe(document.body);
     expect(backdrop.className).toContain('justify-end');
-    expect(backdrop.className).toContain('bg-black/40');
+    expect(backdrop.className).toContain('bg-slate-950/35');
   });
 
   it('closes on backdrop click', () => {
     const handleClose = jest.fn();
 
-    const { container } = render(
+    render(
       <MobileCompanyFiltersSheet
         open={true}
         onClose={handleClose}
@@ -97,7 +101,7 @@ describe('PWA Side Filter Drawer — Specification & Geometry (Max Width 70%)', 
       />
     );
 
-    const backdrop = container.firstChild as HTMLElement;
+    const backdrop = screen.getByRole('presentation');
     fireEvent.mouseDown(backdrop);
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
@@ -162,7 +166,30 @@ describe('PWA Side Filter Drawer — Specification & Geometry (Max Width 70%)', 
     });
   });
 
-  it('opens category sub-picker internally inside the 70vw drawer', async () => {
+  it('toggles "Com avaliações" active visual and aria-pressed state properly', () => {
+    const handleApply = jest.fn();
+
+    render(
+      <MobileCompanyFiltersSheet
+        open={true}
+        onClose={jest.fn()}
+        filters={DEFAULT_FILTERS}
+        onApply={handleApply}
+      />
+    );
+
+    const hasReviewsBtn = screen.getByRole('button', { name: /com avaliações/i });
+    expect(hasReviewsBtn).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(hasReviewsBtn);
+    expect(hasReviewsBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(hasReviewsBtn.className).toContain('bg-blue-600');
+
+    fireEvent.click(screen.getByRole('button', { name: /contando|aplicar filtros|ver/i }));
+    expect(handleApply).toHaveBeenCalledWith(expect.objectContaining({ has_reviews: true }));
+  });
+
+  it('opens category sub-picker internally inside the drawer', async () => {
     render(
       <MobileCompanyFiltersSheet
         open={true}
