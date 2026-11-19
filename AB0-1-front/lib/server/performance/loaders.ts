@@ -134,7 +134,7 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
   const apiSort = sort === 'rating' ? 'rating_desc' : (sort === 'relevance' || !sort) ? 'recommended' : sort;
   const page = takeNumber(url, 'page');
   const perPage = takeNumber(url, 'per_page', 1, 100);
-  const response = await fetchApiPublic<SearchAllResponse>('search/all', {
+  const rawResponse = await fetchApiPublic<SearchAllResponse>('search/all', {
     params: {
       q: query,
       ...(takeString(url, 'city') ? { city: takeString(url, 'city') } : {}),
@@ -149,6 +149,10 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
     tags: ['search'],
   });
 
+  // fetchApiPublic allows an undefined generic fallback, but this loader
+  // requires an actual public response rather than fabricating successful data.
+  if (!rawResponse) throw new Error('Public search response unavailable');
+  const response: SearchAllResponse = rawResponse;
   const firstCompanies = response.companies || [];
   const isVerified = url.get('verified') === 'true';
   const category = takeString(url, 'category');
