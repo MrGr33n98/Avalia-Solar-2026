@@ -1,7 +1,8 @@
 'use client';
 import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
 
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, useTransition, lazy, Suspense } from 'react';
+import { markAfterPaint } from '@/lib/analytics/route-performance';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -179,6 +180,18 @@ export default function CompanyDetailClient({
   const coverLogRef = useRef<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [tabPending, startTabTransition] = useTransition();
+  const tabTransitionStart = useRef<number | null>(null);
+  useEffect(() => {
+    if (tabPending || tabTransitionStart.current === null) return;
+    const duration = Math.max(0, performance.now() - tabTransitionStart.current);
+    tabTransitionStart.current = null;
+    return markAfterPaint('company_tab_transition_complete', {
+      route: '/companies/[id]',
+      duration_ms: duration,
+      source: 'tab_state_commit',
+    });
+  }, [activeTab, tabPending]);
   const localSolarPage = useMemo(
     () => getCapitalLocalSolarPage(currentCompany.state, currentCompany.city),
     [currentCompany.state, currentCompany.city]
@@ -454,7 +467,8 @@ export default function CompanyDetailClient({
       });
     }
 
-    setActiveTab(value);
+    tabTransitionStart.current = performance.now();
+    startTabTransition(() => setActiveTab(value));
   };
 
   // ===================================================
