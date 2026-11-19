@@ -1,7 +1,18 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { X, MapPin, Loader2, ChevronRight } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  X,
+  MapPin,
+  Loader2,
+  ChevronRight,
+  SlidersHorizontal,
+  ShieldCheck,
+  Star,
+  MessageCircle,
+  Landmark,
+} from 'lucide-react';
 import { useCompanyLocationData } from '@/hooks/useCompanyLocationData';
 import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
 import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
@@ -20,6 +31,14 @@ interface MobileCompanyFiltersSheetProps {
   onApply: (nextFilters: CompanyFilters) => void;
   initialGpsError?: string | null;
 }
+
+const RATING_OPTIONS = [
+  { label: 'Qualquer', value: null },
+  { label: '4.0+', value: 4.0 },
+  { label: '4.5+', value: 4.5 },
+  { label: 'Excelente (5.0)', value: 5.0 },
+  { label: 'Com avaliações', value: 'has_reviews' as const },
+] as const;
 
 export default function MobileCompanyFiltersSheet({
   open,
@@ -46,6 +65,24 @@ export default function MobileCompanyFiltersSheet({
     useCompanyLocationData();
   const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
+
+  const isGpsActive = draftFilters.lat !== null && draftFilters.lng !== null;
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (draftFilters.lat !== null && draftFilters.lng !== null) count += 1;
+    else {
+      if (draftFilters.state.length > 0) count += 1;
+      if (draftFilters.city.length > 0) count += 1;
+    }
+    if (draftFilters.category_ids.length > 0) count += 1;
+    if (draftFilters.verified) count += 1;
+    if (draftFilters.min_rating !== null) count += 1;
+    if (draftFilters.has_reviews) count += 1;
+    if (draftFilters.whatsapp_enabled) count += 1;
+    if (draftFilters.financing_enabled) count += 1;
+    return count;
+  }, [draftFilters]);
 
   // Transition & Communication Surface locking
   useEffect(() => {
@@ -235,12 +272,10 @@ export default function MobileCompanyFiltersSheet({
     setDraftCategoryIds([]);
   };
 
-  const isGpsActive = draftFilters.lat !== null && draftFilters.lng !== null;
-
-  return (
+  const drawerContent = (
     <div
       className={cn(
-        'fixed inset-0 z-[9500] flex justify-end bg-black/40 backdrop-blur-xs transition-opacity duration-[240ms] ease-out',
+        'fixed inset-0 z-[9500] flex justify-end bg-slate-950/35 backdrop-blur-[2px] transition-opacity duration-200 ease-out motion-reduce:transition-none',
         isEntered ? 'opacity-100' : 'opacity-0'
       )}
       role="presentation"
@@ -255,31 +290,50 @@ export default function MobileCompanyFiltersSheet({
         aria-labelledby="mobile-company-filters-title"
         tabIndex={-1}
         className={cn(
-          'relative flex h-full h-[100dvh] max-h-[100dvh] w-[70vw] max-w-[70vw] flex-col overflow-hidden rounded-l-[20px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.15)] transition-transform duration-[240ms] ease-out',
+          'relative flex h-[100dvh] max-h-[100dvh] w-[70vw] max-w-[360px] sm:w-[360px] sm:max-w-[360px] lg:w-[380px] lg:max-w-[380px] flex-col overflow-hidden rounded-l-2xl border-l border-slate-200/80 bg-white shadow-[-12px_0_32px_rgba(15,23,42,0.14)] transition-transform duration-200 ease-out motion-reduce:transition-none focus:outline-none',
           isEntered ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3.5 sm:px-4 py-3 border-b border-slate-100 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <h2 id="mobile-company-filters-title" className="text-sm font-bold text-slate-900 truncate">
-            Filtrar empresas
-          </h2>
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 shrink-0 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
+              aria-hidden="true"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+            </span>
+            <h2
+              id="mobile-company-filters-title"
+              className="truncate text-sm font-semibold tracking-tight text-slate-900"
+            >
+              Filtrar empresas
+            </h2>
+            {activeFiltersCount > 0 && (
+              <span
+                aria-live="polite"
+                className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white"
+              >
+                {activeFiltersCount}
+              </span>
+            )}
+          </div>
           <button
             ref={closeButtonRef}
             type="button"
             onClick={handleCancel}
             aria-label="Fechar filtros"
-            className="p-1 rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors shrink-0"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 sm:px-4 py-3.5 space-y-3.5 [-webkit-overflow-scrolling:touch]">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-py-3 divide-y divide-slate-100 px-4 [-webkit-overflow-scrolling:touch]">
           {/* 1. Localização */}
-          <div className="space-y-2.5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <section className="space-y-2.5 py-3.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Localização
             </h3>
 
@@ -288,56 +342,69 @@ export default function MobileCompanyFiltersSheet({
               <button
                 type="button"
                 onClick={handleGPSLocation}
+                aria-pressed={isGpsActive}
                 className={cn(
-                  'flex items-center justify-center gap-1.5 h-10 w-full rounded-xl px-2 text-[11px] font-bold transition-all border text-center',
+                  'flex h-10 sm:h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
                   isGpsActive
-                    ? 'bg-blue-50 border-blue-200 text-blue-700'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'border-blue-200 bg-blue-50 text-blue-700'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                 )}
               >
                 {detectingGps ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 shrink-0" />
+                  <Loader2
+                    className="h-3.5 w-3.5 shrink-0 animate-spin text-blue-600"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-hidden="true" />
                 )}
                 <span className="truncate">
                   {isGpsActive ? 'Localização GPS Ativa' : 'Usar minha localização atual'}
                 </span>
               </button>
-              {gpsError && <p className="text-[10px] text-red-600 font-medium">{gpsError}</p>}
+              {gpsError && (
+                <p role="alert" className="text-[11px] font-medium text-red-600">
+                  {gpsError}
+                </p>
+              )}
             </div>
 
             {/* Radius Selector if GPS Active */}
             {isGpsActive && (
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-slate-500">
+                <span className="block text-[11px] font-medium text-slate-500">
                   Distância (Raio máximo)
-                </label>
-                <div className="grid grid-cols-4 gap-1">
-                  {([25, 50, 100, 200] as const).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => updateDraft({ radius_km: r })}
-                      className={cn(
-                        'h-8 rounded-lg text-[11px] font-semibold border transition-all text-center',
-                        draftFilters.radius_km === r
-                          ? 'bg-blue-600 border-blue-600 text-white font-bold'
-                          : 'bg-white border-slate-200 text-slate-600'
-                      )}
-                    >
-                      {r} km
-                    </button>
-                  ))}
+                </span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {([25, 50, 100, 200] as const).map((r) => {
+                    const isSelected = draftFilters.radius_km === r;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => updateDraft({ radius_km: r })}
+                        className={cn(
+                          'h-8 rounded-lg border text-[11px] font-semibold transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
+                          isSelected
+                            ? 'border-blue-600 bg-blue-600 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                        )}
+                      >
+                        {r} km
+                      </button>
+                    );
+                  })}
                 </div>
                 <button
                   type="button"
+                  aria-pressed={draftFilters.radius_km === null}
                   onClick={() => updateDraft({ lat: null, lng: null, radius_km: null })}
                   className={cn(
-                    'h-8 w-full rounded-lg text-xs font-semibold border transition-all',
+                    'h-8 w-full rounded-lg border text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
                     draftFilters.radius_km === null
-                      ? 'bg-blue-600 border-blue-600 text-white font-bold'
-                      : 'bg-white border-slate-200 text-slate-600'
+                      ? 'border-blue-600 bg-blue-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                   )}
                 >
                   Todo Brasil
@@ -347,11 +414,11 @@ export default function MobileCompanyFiltersSheet({
 
             {/* Manual Selection (State & City) */}
             {!isGpsActive && (
-              <div className="flex flex-col gap-2">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="min-w-0 space-y-1">
                   <label
                     htmlFor="company-filter-state"
-                    className="text-[10px] font-bold text-slate-500 uppercase"
+                    className="block text-[11px] font-medium text-slate-600"
                   >
                     Estado
                   </label>
@@ -369,7 +436,7 @@ export default function MobileCompanyFiltersSheet({
                       });
                     }}
                     disabled={loadingStates}
-                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                    className="h-9 w-full truncate rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 transition-colors hover:border-slate-300 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="">Selecione...</option>
                     {activeState && !states.includes(activeState) && (
@@ -386,10 +453,10 @@ export default function MobileCompanyFiltersSheet({
                   </select>
                 </div>
 
-                <div className="space-y-1">
+                <div className="min-w-0 space-y-1">
                   <label
                     htmlFor="company-filter-city"
-                    className="text-[10px] font-bold text-slate-500 uppercase"
+                    className="block text-[11px] font-medium text-slate-600"
                   >
                     Cidade
                   </label>
@@ -406,7 +473,7 @@ export default function MobileCompanyFiltersSheet({
                       });
                     }}
                     disabled={!activeState || loadingCities}
-                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:opacity-50"
+                    className="h-9 w-full truncate rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 transition-colors hover:border-slate-300 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60"
                   >
                     <option value="">Selecione...</option>
                     {(draftFilters.city[0] || '') &&
@@ -424,19 +491,24 @@ export default function MobileCompanyFiltersSheet({
                 </div>
               </div>
             )}
-          </div>
+          </section>
 
           {/* 2. Categoria */}
-          <div className="space-y-1.5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <section className="space-y-2 py-3.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               O que você procura?
             </h3>
             <button
               type="button"
               onClick={() => setIsCategoryPickerOpen(true)}
-              className="w-full h-10 px-3 border border-slate-200 rounded-xl bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all text-left"
+              className={cn(
+                'flex h-9 w-full items-center justify-between gap-2 rounded-lg border px-3 text-left text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
+                draftFilters.category_ids.length > 0
+                  ? 'border-blue-200 bg-blue-50/50 text-blue-900'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+              )}
             >
-              <span className="truncate pr-1">
+              <span className="truncate">
                 {draftFilters.category_ids.length === 0
                   ? 'Todas as categorias'
                   : draftFilters.category_ids.length === 1
@@ -444,98 +516,151 @@ export default function MobileCompanyFiltersSheet({
                       'Categoria selecionada'
                     : `${draftFilters.category_ids.length} categorias selecionadas`}
               </span>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
             </button>
-          </div>
+          </section>
 
           {/* 3. Confiança */}
-          <div className="space-y-1.5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Confiança</h3>
-            <label className="flex items-center gap-2.5 min-h-10 w-full bg-slate-50 rounded-xl px-3 py-2 cursor-pointer select-none">
+          <section className="space-y-2 py-3.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Confiança
+            </h3>
+            <label
+              className={cn(
+                'flex min-h-10 sm:min-h-9 w-full cursor-pointer select-none items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors',
+                draftFilters.verified
+                  ? 'border-blue-200 bg-blue-50/60 text-blue-950'
+                  : 'border-slate-200/80 bg-slate-50/60 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+              )}
+            >
               <input
                 type="checkbox"
                 checked={draftFilters.verified}
                 onChange={(e) => updateDraft({ verified: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-xs font-semibold text-slate-700 leading-tight">
+              <ShieldCheck
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0',
+                  draftFilters.verified ? 'text-blue-600' : 'text-slate-400'
+                )}
+                aria-hidden="true"
+              />
+              <span className="text-xs font-medium leading-tight">
                 Somente empresas verificadas
               </span>
             </label>
-          </div>
+          </section>
 
           {/* 4. Avaliação */}
-          <div className="space-y-1.5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Avaliação</h3>
+          <section className="space-y-2 py-3.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Avaliação
+            </h3>
             <div className="grid grid-cols-2 gap-1.5">
-              {(
-                [
-                  { label: 'Qualquer', value: null },
-                  { label: '4.0+', value: 4.0 },
-                  { label: '4.5+', value: 4.5 },
-                  { label: 'Excelente (5.0)', value: 5.0 },
-                  { label: 'Com avaliações', value: 'has_reviews' as const },
-                ] as const
-              ).map((opt) => (
-                <button
-                  key={opt.label}
-                  type="button"
-                  onClick={() =>
-                    updateDraft(
-                      opt.value === 'has_reviews'
-                        ? { has_reviews: !draftFilters.has_reviews }
-                        : { min_rating: opt.value }
-                    )
-                  }
-                  className={cn(
-                    'flex flex-col items-center justify-center h-10 rounded-xl border text-[10px] font-bold transition-all px-1 text-center',
-                    opt.value === 'has_reviews' && 'col-span-2',
-                    opt.value === 'has_reviews'
-                      ? draftFilters.has_reviews
-                      : draftFilters.min_rating === opt.value
-                        ? 'bg-blue-600 border-blue-600 text-white font-extrabold'
-                        : 'bg-white border-slate-200 text-slate-600'
-                  )}
-                >
-                  <span className="truncate">{opt.label}</span>
-                </button>
-              ))}
+              {RATING_OPTIONS.map((opt) => {
+                const isSelected =
+                  opt.value === 'has_reviews'
+                    ? draftFilters.has_reviews
+                    : draftFilters.min_rating === opt.value;
+
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() =>
+                      updateDraft(
+                        opt.value === 'has_reviews'
+                          ? { has_reviews: !draftFilters.has_reviews }
+                          : { min_rating: opt.value }
+                      )
+                    }
+                    className={cn(
+                      'flex h-9 items-center justify-center gap-1 rounded-lg border px-2 text-center text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
+                      opt.value === 'has_reviews' && 'col-span-2',
+                      isSelected
+                        ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                    )}
+                  >
+                    {typeof opt.value === 'number' && (
+                      <Star
+                        className={cn(
+                          'h-3 w-3 shrink-0',
+                          isSelected ? 'fill-white text-white' : 'fill-amber-400 text-amber-400'
+                        )}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </section>
 
           {/* 5. Atendimento */}
-          <div className="space-y-1.5">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <section className="space-y-2 py-3.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Atendimento e Recursos
             </h3>
             <div className="flex flex-col gap-1.5">
-              <label className="flex items-center gap-2.5 min-h-10 border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
+              <label
+                className={cn(
+                  'flex min-h-10 sm:min-h-9 cursor-pointer select-none items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors',
+                  draftFilters.whatsapp_enabled
+                    ? 'border-blue-200 bg-blue-50/60 text-blue-950'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                )}
+              >
                 <input
                   type="checkbox"
                   checked={draftFilters.whatsapp_enabled}
                   onChange={(e) => updateDraft({ whatsapp_enabled: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 shrink-0"
+                  className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                 />
-                <span className="text-xs font-bold text-slate-600 leading-tight">WhatsApp disponível</span>
+                <MessageCircle
+                  className={cn(
+                    'h-3.5 w-3.5 shrink-0',
+                    draftFilters.whatsapp_enabled ? 'text-emerald-600' : 'text-slate-400'
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="text-xs font-medium leading-tight">WhatsApp disponível</span>
               </label>
 
-              <label className="flex items-center gap-2.5 min-h-10 border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
+              <label
+                className={cn(
+                  'flex min-h-10 sm:min-h-9 cursor-pointer select-none items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors',
+                  draftFilters.financing_enabled
+                    ? 'border-blue-200 bg-blue-50/60 text-blue-950'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                )}
+              >
                 <input
                   type="checkbox"
                   checked={draftFilters.financing_enabled}
                   onChange={(e) => updateDraft({ financing_enabled: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 shrink-0"
+                  className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                 />
-                <span className="text-xs font-bold text-slate-600 leading-tight">Financiamento</span>
+                <Landmark
+                  className={cn(
+                    'h-3.5 w-3.5 shrink-0',
+                    draftFilters.financing_enabled ? 'text-blue-600' : 'text-slate-400'
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="text-xs font-medium leading-tight">Financiamento</span>
               </label>
             </div>
-          </div>
+          </section>
         </div>
 
-        {/* Subvisão interna de Categorias (restringida aos 70vw) */}
+        {/* Subvisão interna de Categorias (restringida à largura do drawer) */}
         {isCategoryPickerOpen && (
           <div
-            className="absolute inset-0 z-30 flex flex-col bg-white rounded-l-[20px] overflow-hidden"
+            className="absolute inset-0 z-30 flex flex-col overflow-hidden rounded-l-2xl bg-white"
             role="dialog"
             aria-modal="true"
             aria-label="Selecionar categorias"
@@ -557,17 +682,15 @@ export default function MobileCompanyFiltersSheet({
         )}
 
         {/* Footer */}
-        <div
-          className="shrink-0 px-3.5 sm:px-4 py-3 border-t border-slate-100 bg-white flex flex-col gap-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        >
+        <div className="flex shrink-0 flex-col gap-1.5 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={() => {
               onApply({ ...draftFilters, page: 1 });
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl h-10 flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
           >
-            {loadingCount && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {loadingCount && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
             <span className="truncate">
               {loadingCount
                 ? 'Contando...'
@@ -580,7 +703,7 @@ export default function MobileCompanyFiltersSheet({
           <button
             type="button"
             onClick={handleClear}
-            className="w-full text-center text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors h-8"
+            className="h-8 w-full rounded-lg text-center text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Limpar filtros
           </button>
@@ -588,4 +711,10 @@ export default function MobileCompanyFiltersSheet({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(drawerContent, document.body);
+  }
+
+  return drawerContent;
 }
