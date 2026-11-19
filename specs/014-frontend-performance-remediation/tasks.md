@@ -1,0 +1,45 @@
+# Spec 014 — Task tracking
+
+Status codes: [x] applied to branch; [ ] not yet validated or not implemented. A task is only DONE after CI and acceptance.
+- [ ] T001 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T002 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T003 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T004 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T005 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T006 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T007 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T008 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T009 — Foundation / baseline — see user-provided PDR for complete acceptance text.
+- [ ] T010 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T011 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T012 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T013 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T014 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T015 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T016 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T017 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T018 — US1 initial server results — see user-provided PDR for complete acceptance text.
+- [ ] T019 — US2 progressive company profile — see user-provided PDR for complete acceptance text.
+- [ ] T020 — US2 progressive company profile — see user-provided PDR for complete acceptance text.
+- [ ] T021 — US2 progressive company profile — see user-provided PDR for complete acceptance text.
+- [ ] T022 — US2 progressive company profile — see user-provided PDR for complete acceptance text.
+- [ ] T023 — US2 progressive company profile — see user-provided PDR for complete acceptance text.
+- [ ] T024 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T025 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T026 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T027 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T028 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T029 — US3 bundle splitting — see user-provided PDR for complete acceptance text.
+- [ ] T030 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T031 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T032 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T033 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T034 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T035 — US4 transitions and lists — see user-provided PDR for complete acceptance text.
+- [ ] T036 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T037 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T038 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T039 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T040 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T041 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
+- [ ] T042 — US5 budgets / rollout — see user-provided PDR for complete acceptance text.
