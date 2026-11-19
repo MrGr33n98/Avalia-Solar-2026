@@ -19,7 +19,7 @@ module Mcp
       end
 
       def self.oauth_request_allowed?(client_id:, subject:, code_challenge_method: nil)
-        return true unless Configuration.enabled?
+        return true unless Configuration.enforced?
         return false unless Configuration.configured?
         return false unless Configuration.client_allowed?(client_id)
         return false unless Configuration.subject_allowed?(subject)
@@ -33,7 +33,7 @@ module Mcp
       end
 
       def authorize!(method:, tool_name: nil)
-        return true unless Configuration.enabled?
+        return true unless Configuration.enforced?
         raise Failure, :unavailable unless Configuration.configured?
 
         validate_token_context!

@@ -98,7 +98,7 @@ module Mcp
     private
 
     def execution_authorized?
-      return false if ::Mcp::Canary::Configuration.enabled? && !canary_authorized?('tools/call', @message.fetch('params', {}))
+      return false if ::Mcp::Canary::Configuration.enforced? && !canary_authorized?('tools/call', @message.fetch('params', {}))
 
       ENV['MCP_PUBLIC_TOOLS_EXECUTION_ENABLED'] == 'true' &&
         ENV['MCP_REMOTE_POLICY_ENABLED'] == 'true' &&
@@ -111,7 +111,7 @@ module Mcp
     end
 
     def authorize_canary(method, params)
-      return nil unless ::Mcp::Canary::Configuration.enabled?
+      return nil unless ::Mcp::Canary::Configuration.enforced?
 
       ::Mcp::Canary::Guard.authorize!(
         method: method, tool_name: params['name'], auth_context: @auth_context

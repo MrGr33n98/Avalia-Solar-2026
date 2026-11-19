@@ -15,6 +15,8 @@ da VM de produção nesta execução.
   verificado, scope `mcp:public:read` e recurso canônico.
 - Authorization Code + PKCE S256 é exigido no issuance quando o canary está
   ativo.
+- Refresh token só é aceito para AccessToken Doorkeeper acessível, resource
+  canônico, mesmo cliente e subject ainda allowlisted; revogação é respeitada.
 - Discovery e read-only são fases distintas.
 - Somente cinco ferramentas públicas têm autorização de execução.
 - O protocolo legado não oferece caminho alternativo para execução.

@@ -128,6 +128,14 @@ não inventa um callback.
 O backend rejeita grant sem `authorization_code`, sem `code_verifier` ou com
 `code_challenge_method` diferente de S256 quando o canary está habilitado.
 
+### Renovação
+
+O grant `refresh_token` é aceito somente quando o refresh token aponta para um
+AccessToken Doorkeeper acessível, com resource canônico, cliente correspondente
+ao token e subject ainda presente na allowlist. Tokens revogados, expirados,
+client IDs diferentes ou subjects removidos são rejeitados. O refresh não cria
+uma autorização fora da allowlist e não dispensa a validação do resource.
+
 ## Auditoria READ-ONLY da VM
 
 Executar manualmente, somente após autorização SSH, mascarando valores:
@@ -169,19 +177,40 @@ Nenhuma etapa de ativação é executada por esta PR.
 
 ## Rollback imediato
 
-Desligar, nesta ordem, no ambiente canary aprovado:
+Desligar, nesta ordem, no ambiente canary aprovado. Os dois primeiros gates
+bloqueiam execução e transporte antes do kill switch específico:
 
 ```text
 MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=false
+MCP_REMOTE_TRANSPORT_ENABLED=false
+MCP_REMOTE_PRODUCTION_ENABLED=false
 MCP_CANARY_PHASE=disabled
 MCP_CANARY_ENABLED=false
-MCP_REMOTE_PRODUCTION_ENABLED=false
 ```
 
-O primeiro e o segundo controles bloqueiam execução/fase; o kill switch torna a
-camada adicional indisponível; o gate de produção mantém o endpoint oculto.
-Revogar o token e remover o client ID/subject da allowlist conforme o processo
-de credenciais. Não depender somente de rollback de imagem.
+Os gates globais bloqueiam execução/transporte e o gate de produção mantém o
+endpoint oculto. O kill switch específico impede que uma configuração parcial
+do canary seja aceita; ele nunca é a única garantia de desativação. Revogar o
+token e remover o client ID/subject da allowlist conforme o processo de
+credenciais. Não depender somente de rollback de imagem.
+
+Validar HTTP depois da alteração, sem bearer token real:
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}\n' \\
+  -H 'Host: api.avaliasolar.com.br' \\
+  -H 'Content-Type: application/json' \\
+  -H 'Accept: application/json, text/event-stream' \\
+  --data '{"jsonrpc":"2.0","id":1,"method":"ping"}' \\
+  https://api.avaliasolar.com.br/mcp
+
+curl -sk -o /dev/null -w '%{http_code}\n' \\
+  https://api.avaliasolar.com.br/.well-known/oauth-protected-resource/mcp
+```
+
+Resultado esperado: `404` nos dois requests. Qualquer `2xx`, `401` ou `403`
+deve ser tratado como rollback incompleto até a configuração efetiva dos gates
+ser corrigida.
 
 ## Monitoramento
 

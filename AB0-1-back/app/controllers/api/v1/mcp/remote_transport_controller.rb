@@ -233,7 +233,7 @@ module Api
         end
 
         def authorize_canary_legacy_request!(method, params)
-          return nil unless ::Mcp::Canary::Configuration.enabled?
+          return nil unless ::Mcp::Canary::Configuration.enforced?
 
           ::Mcp::Canary::Guard.authorize!(
             method: method, tool_name: params['name'], auth_context: @mcp_auth_context

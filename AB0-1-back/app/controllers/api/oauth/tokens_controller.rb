@@ -20,9 +20,22 @@ module Api
       end
 
       def validate_mcp_canary_request!
-        return unless ::Mcp::Canary::Configuration.enabled?
+        return unless ::Mcp::Canary::Configuration.enforced?
         return render_canary_error unless params[:resource] == ::Mcp::Canary::Configuration::CANONICAL_RESOURCE
-        return render_canary_error unless params[:grant_type] == 'authorization_code'
+
+        case params[:grant_type].to_s
+        when 'authorization_code'
+          validate_authorization_code_canary_request!
+        when 'refresh_token'
+          validate_refresh_token_canary_request!
+        else
+          render_canary_error
+        end
+      rescue ActiveRecord::RecordNotFound
+        render_canary_error
+      end
+
+      def validate_authorization_code_canary_request!
         return render_canary_error if params[:code_verifier].blank?
 
         grant = Doorkeeper::AccessGrant.by_token(params[:code].to_s)
@@ -34,8 +47,19 @@ module Api
           code_challenge_method: grant.code_challenge_method
         )
         render_canary_error unless allowed
-      rescue ActiveRecord::RecordNotFound
-        render_canary_error
+      end
+
+      def validate_refresh_token_canary_request!
+        token = Doorkeeper::AccessToken.by_refresh_token(params[:refresh_token].to_s)
+        return render_canary_error unless token&.accessible?
+        return render_canary_error unless token.resource == ::Mcp::Canary::Configuration::CANONICAL_RESOURCE
+        return render_canary_error unless token.application&.uid == params[:client_id].to_s
+
+        subject = ::Mcp::Oauth::Configuration.subject_for(token.resource_owner_id)
+        allowed = ::Mcp::Canary::Guard.oauth_request_allowed?(
+          client_id: params[:client_id].to_s, subject: subject
+        )
+        render_canary_error unless allowed
       end
 
       def render_canary_error

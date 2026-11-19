@@ -92,4 +92,24 @@ RSpec.describe Mcp::Canary::Guard do
     expect { described_class.authorize!(method: 'tools/list', auth_context: context) }
       .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:unavailable) }
   end
+
+  it 'fails closed in production when transport rollout is active but canary is disabled' do
+    allow(Rails.env).to receive(:production?).and_return(true)
+    allow(ENV).to receive(:[]).with('MCP_CANARY_ENABLED').and_return('false')
+    allow(ENV).to receive(:[]).with('MCP_REMOTE_PRODUCTION_ENABLED').and_return('true')
+    allow(ENV).to receive(:[]).with('MCP_REMOTE_TRANSPORT_ENABLED').and_return('true')
+    allow(ENV).to receive(:[]).with('MCP_PUBLIC_TOOLS_EXECUTION_ENABLED').and_return('true')
+
+    expect(Mcp::Canary::Configuration.required?).to be(true)
+    expect(Mcp::Canary::Configuration.enforced?).to be(true)
+    expect do
+      described_class.authorize!(method: 'tools/call', tool_name: 'list_integrators', auth_context: context)
+    end.to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:unavailable) }
+  end
+
+  it 'preserves non-production compatibility when the canary is disabled' do
+    allow(ENV).to receive(:[]).with('MCP_CANARY_ENABLED').and_return('false')
+
+    expect(described_class.authorize!(method: 'tools/list', auth_context: nil)).to be(true)
+  end
 end

@@ -24,6 +24,15 @@ module Mcp
         ENV['MCP_CANARY_ENABLED'] == 'true'
       end
 
+      def required?
+        Rails.env.production? && ENV['MCP_REMOTE_PRODUCTION_ENABLED'] == 'true' &&
+          ENV['MCP_REMOTE_TRANSPORT_ENABLED'] == 'true'
+      end
+
+      def enforced?
+        enabled? || required?
+      end
+
       def phase
         ENV.fetch('MCP_CANARY_PHASE', 'disabled').to_s
       end

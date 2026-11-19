@@ -77,7 +77,7 @@ RSpec.describe 'MCP production canary guard', type: :request do
       code_verifier: verifier, resource: resource
     }
     expect(response).to have_http_status(:ok)
-    [client, response.parsed_body.fetch('access_token')]
+    [client, response.parsed_body.fetch('access_token'), response.parsed_body.fetch('refresh_token')]
   end
 
   def modern_request(method, bearer:, name: nil, arguments: {})
@@ -168,6 +168,55 @@ RSpec.describe 'MCP production canary guard', type: :request do
 
     expect(response).to have_http_status(:unauthorized)
     expect(response.body).not_to include('invalid-opaque-token')
+  end
+
+  it 'renews an authorized public token through Doorkeeper refresh' do
+    client, _access_token, refresh_token = client_and_token
+    post '/oauth/token', params: {
+      grant_type: 'refresh_token', client_id: client.uid,
+      refresh_token: refresh_token, resource: resource
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.fetch('access_token')).to be_present
+  end
+
+  it 'rejects refresh with a client outside the canary allowlist' do
+    _client, _access_token, refresh_token = client_and_token
+    other_client = Doorkeeper::Application.create!(
+      name: 'Unauthorized refresh client', redirect_uri: redirect_uri,
+      scopes: 'mcp:public:read', confidential: false, secret: nil
+    )
+    post '/oauth/token', params: {
+      grant_type: 'refresh_token', client_id: other_client.uid,
+      refresh_token: refresh_token, resource: resource
+    }
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'rejects refresh when the token subject is no longer allowlisted' do
+    client, _access_token, refresh_token = client_and_token
+    allow(ENV).to receive(:[]).with('MCP_CANARY_ALLOWED_SUBJECTS').and_return('user:999999')
+    post '/oauth/token', params: {
+      grant_type: 'refresh_token', client_id: client.uid,
+      refresh_token: refresh_token, resource: resource
+    }
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it 'rejects refresh after the source access token is revoked' do
+    client, access_token, refresh_token = client_and_token
+    post '/oauth/revoke', params: { client_id: client.uid, token: access_token }
+    expect(response).to have_http_status(:ok)
+
+    post '/oauth/token', params: {
+      grant_type: 'refresh_token', client_id: client.uid,
+      refresh_token: refresh_token, resource: resource
+    }
+
+    expect(response).to have_http_status(:forbidden)
   end
 
   it 'keeps private MCP disabled even when the public canary is configured' do
