@@ -23,6 +23,14 @@ class AchievementBadge < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :ordered, -> { order(:position, :id) }
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[action_enum active category created_at description earned_asset_path id locked_asset_path name points_xp position revocable slug threshold tier updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[user_achievements users achievement_ledgers]
+  end
+
   def points
     points_xp
   end
