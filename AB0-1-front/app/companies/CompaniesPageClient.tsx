@@ -254,7 +254,7 @@ export function CompaniesContent({
   const handleToggleVerified = () => {
     const updated = { ...filters, verified: !filters.verified, page: 1 };
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   const handleApplyFilters = (nextFilters: CompanyFilters) => {
@@ -264,7 +264,7 @@ export function CompaniesContent({
     };
     prefetchCompanies(normalized);
     const targetUrl = buildTargetUrl(normalized);
-    router.replace(targetUrl, { scroll: false });
+    startRouteTransition(() => router.replace(targetUrl, { scroll: false }));
     setIsFiltersOpen(false);
   };
 
@@ -280,7 +280,7 @@ export function CompaniesContent({
         page: 1,
       };
       prefetchCompanies(updated);
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     },
     [buildTargetUrl, filters, prefetchCompanies, router]
   );
@@ -296,7 +296,7 @@ export function CompaniesContent({
         page: 1,
       };
       prefetchCompanies(updated);
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     },
     [buildTargetUrl, filters, prefetchCompanies, router]
   );
@@ -312,7 +312,7 @@ export function CompaniesContent({
       page: 1,
     };
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   }, [buildTargetUrl, filters, prefetchCompanies, router]);
 
   const activeFiltersCount = useMemo(() => {
@@ -468,7 +468,7 @@ export function CompaniesContent({
         source: 'companies_location_gate',
         radius_km: updated.radius_km,
       });
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     } catch {
       localStorage.setItem('avalia.location_gate.dismissed_at', String(Date.now()));
       setShowMobileLocationGate(false);
@@ -508,7 +508,7 @@ export function CompaniesContent({
         source: 'companies_near_me',
         radius_km: updated.radius_km,
       });
-      router.replace(buildTargetUrl(updated), { scroll: false });
+      startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     } catch {
       // Fallback: se falhar por permissão negada, timeout ou unsupported, abre o modal
       setIsFiltersOpen(true);
@@ -542,7 +542,7 @@ export function CompaniesContent({
     }
 
     prefetchCompanies(updated);
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   useEffect(() => {
@@ -553,7 +553,7 @@ export function CompaniesContent({
   useEffect(() => {
     if (debouncedSearchInput === (filters.search || '')) return;
     const updated = { ...filters, search: debouncedSearchInput, page: 1 };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchInput]);
 
@@ -723,7 +723,7 @@ export function CompaniesContent({
   const goToPage = (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
     const updated = { ...filters, page: nextPage };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   const localBusinessSchema = useMemo(() => {
@@ -844,7 +844,8 @@ export function CompaniesContent({
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50">
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50/50" aria-busy={isRoutePending}>
+      <span className="sr-only" role="status">{isRoutePending ? 'Atualizando empresas' : ''}</span>
       {/* Swiss Style: Barra de alerta de localização */}
       {showMobileLocationGate && (
         <div className="w-full bg-blue-600 text-white px-4 py-2.5 flex items-center justify-between gap-3 z-40">
@@ -938,7 +939,7 @@ export function CompaniesContent({
                           sort: e.target.value || 'recommended',
                           page: 1,
                         };
-                        router.replace(buildTargetUrl(updated), { scroll: false });
+                        startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
                       }}
                       className="appearance-none h-11 sm:h-9 w-full min-w-0 pl-3 pr-8 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-700 font-medium shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation truncate"
                     >
@@ -1247,7 +1248,7 @@ export function CompaniesContent({
                       variant="link"
                       className="mt-4 text-blue-600"
                       onClick={() => {
-                        router.replace(COMPANIES_PATH, { scroll: false });
+                        startRouteTransition(() => router.replace(COMPANIES_PATH, { scroll: false }));
                       }}
                     >
                       Limpar todos os filtros
