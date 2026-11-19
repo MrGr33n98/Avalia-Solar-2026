@@ -1,0 +1,48 @@
+name: Spec 014 — Frontend Performance Regression
+
+on:
+  pull_request:
+    paths:
+      - 'AB0-1-front/**'
+      - 'specs/014-frontend-performance-remediation/**'
+      - '.github/workflows/spec-014-frontend-performance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spec014-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-checks:
+    name: Spec 014 Jest + TypeScript + lint + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Focused server loader/hydration/measurement regression tests
+        run: >
+          npm test -- --ci --runInBand
+          lib/server/performance/loaders.spec.ts
+          __tests__/hooks/useCatalogProductsInitial.spec.tsx
+          lib/analytics/route-performance.spec.ts
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Next lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
