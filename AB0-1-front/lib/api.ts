@@ -3691,7 +3691,7 @@ export const citiesApi = {
 };
 
 export const searchApi = {
-  all: async (query: string, filters?: any): Promise<SearchAllResponse> => {
+  all: async (query: string, filters?: any, signal?: AbortSignal): Promise<SearchAllResponse> => {
     const emptySearchResponse: SearchAllResponse = {
       companies: [],
       products: [],
@@ -3713,6 +3713,7 @@ export const searchApi = {
         fallback: emptySearchResponse,
         silentStatusCodes: [500, 502, 503, 504],
         tag: 'search',
+        signal,
       });
     } catch (error) {
       console.error('Search error:', error);

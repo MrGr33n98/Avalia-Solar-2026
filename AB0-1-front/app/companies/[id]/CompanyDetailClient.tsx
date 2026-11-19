@@ -1,104 +1,16 @@
 'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import type { Company, Product, Review } from '@/lib/api';
 import { canShowCompanyQuoteCTA } from '@/lib/company-cta-visibility';
-
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
-import {
-  BarChart3,
-  HelpCircle,
-  AlertCircle,
-  MapPin,
-} from 'lucide-react';
-import { useComparison } from '@/hooks/useComparison';
-
-import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-
-import { Company, Product, Review } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { productsApiSafe, reviewsApiSafe } from '@/lib/api-client';
-import { openQuoteWizard } from '@/lib/quote-wizard';
 import { getCompanyProfileTabs } from './components/companyProfileTabsConfig';
-
-// GTM Tracking
+import CompanyProfileShell from './components/CompanyProfileShell';
 import { usePageTracking } from '@/hooks/usePageTracking';
-
-import analyticsApi, {
-  ReviewAnalytics,
-  TrafficSource,
-  HistoricalData,
-  CompanyAnalyticsSettings,
-} from '@/lib/api-analytics';
-
-
-
-import CompanyHero from './components/CompanyHero';
-import CompanySidebar from './components/CompanySidebar';
-import CompanyOverview from './components/CompanyOverview';
-import { CompanyAeoFactSheet } from './components/CompanyAeoFactSheet';
-import CompanyComparisonSection from './components/CompanyComparisonSection';
-import WinnerBadge from '@/components/company/WinnerBadge';
-import Top1StickyCTA from '@/components/company/Top1StickyCTA';
-import ReviewIdentityModalTrigger from '@/components/company/ReviewIdentityModalTrigger';
-
-// Dynamic Components for Performance
-const CompanyProducts = dynamic(() => import('./components/CompanyProducts'), {
-  loading: () => (
-    <div className="space-y-4">
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-48 w-full" />
-    </div>
-  ),
-});
-const CompanyReviews = dynamic(() => import('./components/CompanyReviews'), {
-  loading: () => (
-    <div className="space-y-4">
-      <Skeleton className="h-64 w-full" />
-    </div>
-  ),
-});
-const CompanyFinancing = dynamic(() => import('./components/CompanyFinancing'), {
-  loading: () => (
-    <div className="space-y-4">
-      <Skeleton className="h-48 w-full" />
-    </div>
-  ),
-});
-const MediaGallery = dynamic(() => import('@/app/dashboard/components/MediaGallery'), {
-  loading: () => (
-    <div className="grid grid-cols-3 gap-4">
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-32 w-full" />
-    </div>
-  ),
-});
-const FaqSection = dynamic(() => import('./components/FaqSection'), {
-  loading: () => (
-    <div className="space-y-2">
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </div>
-  ),
-});
-const SocialProof = dynamic(() => import('./components/SocialProof'), {
-  loading: () => <Skeleton className="h-24 w-full" />,
-});
-const StickyCTA = dynamic(() => import('./components/StickyCTA'), { ssr: false });
-
-import { AppBreadcrumb, BreadcrumbItemData } from '@/components/AppBreadcrumb';
-import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 import { trackCompanyProfileViewed, trackDashboardViewed } from '@/lib/analytics/consolidated';
 import { track } from '@/lib/analytics/lazy';
 import { useScrollPause, sendIntentSignal } from '@/lib/analytics/hooks/useIntentTracking';
-import { isFeatureEnabled, canShowMediaGallery } from '@/lib/feature-access';
-import CompanyProfileShell from './components/CompanyProfileShell';
-import { getCapitalLocalSolarPage } from '@/lib/locations/local-page-slugs';
+import { canShowMediaGallery } from '@/lib/feature-access';
 
 interface CompanyDetailClientProps {
   company: Company;
@@ -106,38 +18,63 @@ interface CompanyDetailClientProps {
   initialReviewsLoaded?: boolean;
 }
 
-
-const toFiniteNumber = (value: unknown, fallback = 0): number => {
-  const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
-  return Number.isFinite(parsed) ? parsed : fallback;
+const finite = (value: unknown): number => {
+  const number = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
+  return Number.isFinite(number) ? number : 0;
 };
 
-const toSafeRating = (value: unknown, fallback = 0): number => {
-  const parsed = toFiniteNumber(value, fallback);
-  return Math.min(5, Math.max(0, parsed));
-};
+const safeRating = (value: unknown) => Math.min(5, Math.max(0, finite(value)));
+const safeCount = (value: unknown) => Math.max(0, Math.floor(finite(value)));
 
-const toSafeCount = (value: unknown, fallback = 0): number => {
-  const parsed = toFiniteNumber(value, fallback);
-  return parsed > 0 ? Math.floor(parsed) : 0;
-};
+function resolveMediaUrl(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  const origin = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
+    .replace(/\/api.*$/, '').replace(/\/$/, '');
+  return `${origin}${value.startsWith('/') ? '' : '/'}${value}`;
+}
 
-const consumerStatsLabels: Record<string, string> = {
-  rating: 'Nota dos clientes',
-  reviewCount: 'Avaliações publicadas',
-  productCount: 'Soluções cadastradas',
-  yearsInBusiness: 'Anos na Avalia Solar',
-};
-
+/**
+ * The premium shell is the only active rendering path. The previous always-false
+ * legacy branch kept its dashboard imports in the initial client graph even when
+ * its JSX was unreachable, so it has been removed without changing the premium
+ * tabs, paid CTAs, authorization checks or tracking contract.
+ */
 export default function CompanyDetailClient({
   company,
   initialReviews = [],
   initialReviewsLoaded = false,
 }: CompanyDetailClientProps): JSX.Element {
   const { user, isAuthenticated } = useAuth();
-  const { isInComparison, addToComparison, removeFromComparison } = useComparison();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const reviewsLoaded = initialReviewsLoaded || initialReviews.length > 0;
+  const [reviewsLoading, setReviewsLoading] = useState(!reviewsLoaded);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [bannerError, setBannerError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
-  // GTM Page Tracking
+  const companyId = Number(company.id);
+  const canEdit = isAuthenticated && user?.role === 'company' && user.company_id === companyId;
+  const canViewAnalytics = isAuthenticated && (
+    user?.role === 'admin' ||
+    user?.role === 'review' ||
+    (user?.role === 'company' && user.company_id === companyId && company.status === 'active')
+  );
+  const canRequestQuote = canShowCompanyQuoteCTA(company);
+  const showFaq = true;
+  const showGallery = canShowMediaGallery(company);
+  const showFinancing = Boolean(
+    company.public_financing_visible === true ||
+    (company.financing_tab_visible === true &&
+      (company.financing_enabled === true || company.segment === 'finance'))
+  );
+  const tabs = useMemo(
+    () => getCompanyProfileTabs({ showFinancing, showGallery, showFaq, canEdit }),
+    [showFinancing, showGallery, showFaq, canEdit]
+  );
+
   const trackingOptions = useMemo(
     () => ({
       type: 'company' as const,
@@ -157,271 +94,115 @@ export default function CompanyDetailClient({
     }),
     [company]
   );
-
   usePageTracking(trackingOptions);
 
-  const [currentCompany] = useState<Company>(company);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
-  const [productsLoading, setProductsLoading] = useState<boolean>(true);
-  const reviewsLoaded = initialReviewsLoaded || initialReviews.length > 0;
-  const [reviewsLoading, setReviewsLoading] = useState<boolean>(!reviewsLoaded);
-  const [error, setError] = useState<string | null>(null);
-
-  const [reviewAnalytics, setReviewAnalytics] = useState<ReviewAnalytics | null>(null);
-  const [trafficSources, setTrafficSources] = useState<TrafficSource[] | null>(null);
-  const [historicalData, setHistoricalData] = useState<HistoricalData[] | null>(null);
-
-  const [bannerError, setBannerError] = useState<boolean>(false);
-  const [logoError, setLogoError] = useState<boolean>(false);
-  const coverLogRef = useRef<string | null>(null);
-
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const localSolarPage = useMemo(
-    () => getCapitalLocalSolarPage(currentCompany.state, currentCompany.city),
-    [currentCompany.state, currentCompany.city]
-  );
-
-  const breadcrumbItems: BreadcrumbItemData[] = useMemo(() => {
-    const items: BreadcrumbItemData[] = [{ label: 'Empresas', href: '/companies' }];
-    if (company.category_info) {
-      items.push({
-        label: company.category_info.name,
-        href: `/categories/${company.category_info.seo_url}`,
-      });
-    }
-    items.push({ label: company.name, active: true });
-    return items;
-  }, [company]);
-
-  const jsonLdItems = useMemo(() => {
-    const items = [
-      { name: 'Home', item: '/' },
-      { name: 'Empresas', item: '/companies' },
-    ];
-    if (company.category_info) {
-      items.push({
-        name: company.category_info.name,
-        item: `/categories/${company.category_info.seo_url}`,
-      });
-    }
-    items.push({ name: company.name, item: `/companies/${company.slug}` });
-    return items;
-  }, [company]);
-
-  const timeRange = 30;
-  const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false';
-  const companyId = Number(currentCompany?.id || company?.id);
-
-  // Track profile view on mount
   useEffect(() => {
-    if (companyId && currentCompany?.name) {
-      trackCompanyProfileViewed(companyId, currentCompany.name, (currentCompany as any).plan_tier);
+    if (companyId && company.name) {
+      trackCompanyProfileViewed(companyId, company.name, company.plan_tier ?? undefined);
     }
-  }, [companyId, currentCompany?.name, currentCompany]);
+  }, [companyId, company.name, company.plan_tier]);
 
-  const isAdmin = user?.role === 'admin';
-  const isReviewer = user?.role === 'review';
-
-  const canEdit = useMemo(() => {
-    return isAuthenticated && user?.role === 'company' && user?.company_id === companyId;
-  }, [isAuthenticated, user?.role, user?.company_id, companyId]);
-
-  const canViewAnalytics = useMemo(() => {
-    const companyIsActive = currentCompany?.status === 'active';
-    if (isAdmin || isReviewer) return true;
-    return (
-      isAuthenticated &&
-      user?.role === 'company' &&
-      user?.company_id === companyId &&
-      companyIsActive
-    );
-  }, [
-    companyId,
-    currentCompany?.status,
-    isAdmin,
-    isReviewer,
-    isAuthenticated,
-    user?.company_id,
-    user?.role,
-  ]);
-
-  const canManageMedia = useMemo(() => {
-    if (!isAuthenticated) return false;
-    if (user?.role === 'admin') return true;
-    return user?.role === 'company' && user?.company_id === companyId;
-  }, [companyId, isAuthenticated, user?.company_id, user?.role]);
-
-  const canRequestQuote = canShowCompanyQuoteCTA(currentCompany);
-  const showFaq = true;
-  const showGallery = canShowMediaGallery(currentCompany);
-  const showSocialProof = currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'social_proof')
-    : Boolean(currentCompany.can_use_social_proof ?? currentCompany.social_proof_enabled);
-  const showAlternatives = currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'show_alternatives')
-    : true;
-  const showCompetitorBanners = currentCompany.feature_access
-    ? isFeatureEnabled(currentCompany.feature_access, 'show_competitor_banners')
-    : true;
-  const showFinancing = Boolean(
-    (currentCompany as any)?.public_financing_visible === true ||
-    (
-      currentCompany?.financing_tab_visible === true &&
-      (currentCompany?.financing_enabled === true || (currentCompany as any)?.segment === 'finance')
-    )
-  );
   const scrollPauseMetadata = useMemo(
-    () => ({
-      source: 'company_profile',
-      active_tab: activeTab,
-    }),
+    () => ({ source: 'company_profile', active_tab: activeTab }),
     [activeTab]
   );
-
-  useScrollPause(String(companyId || currentCompany.id), 3000, {
+  useScrollPause(String(companyId || company.id), 3000, {
     signalCategory: 'research_intent',
     elementSelector: 'company-detail-page',
     metadata: scrollPauseMetadata,
   });
 
-  const tabs = useMemo(() => {
-    return getCompanyProfileTabs({
-      showFinancing,
-      showGallery,
-      showFaq,
-      canEdit,
-    });
-  }, [canEdit, showFaq, showFinancing, showGallery]);
+  // Products and reviews have isolated error/loading lifecycles. One failing
+  // endpoint no longer prevents the other from rendering its content.
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    void import('@/lib/api-client')
+      .then(({ productsApiSafe }) => productsApiSafe.getByCompany(companyId))
+      .then((value) => { if (!cancelled) setProducts(value || []); })
+      .catch((error: unknown) => {
+        if (!cancelled) console.error('Produtos indisponíveis no perfil:', error);
+      })
+      .finally(() => { if (!cancelled) setProductsLoading(false); });
+    return () => { cancelled = true; };
+  }, [companyId]);
+
+  useEffect(() => {
+    if (reviewsLoaded || !companyId) return;
+    let cancelled = false;
+    void import('@/lib/api-client')
+      .then(({ reviewsApiSafe }) => reviewsApiSafe.getAll({ company_id: companyId, limit: 6 }))
+      .then((value) => { if (!cancelled) setReviews(value || []); })
+      .catch((error: unknown) => {
+        if (!cancelled) console.error('Avaliações indisponíveis no perfil:', error);
+      })
+      .finally(() => { if (!cancelled) setReviewsLoading(false); });
+    return () => { cancelled = true; };
+  }, [companyId, reviewsLoaded]);
+
+  // Protected analytics remain authorized and separate from public requests.
+  // Dynamic import prevents their JS modules from joining the public hero chunk.
+  useEffect(() => {
+    if (!companyId || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'false' || !canViewAnalytics) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { default: analyticsApi } = await import('@/lib/api-analytics');
+        if (cancelled || !(await analyticsApi.validateRoutes(companyId))) return;
+        await Promise.all([
+          analyticsApi.getReviewAnalytics(companyId),
+          analyticsApi.getTrafficSources(companyId),
+          analyticsApi.getHistoricalData(companyId, 30),
+        ]);
+      } catch (error) {
+        if (!cancelled) console.error('Analytics secundário indisponível:', error);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [companyId, canViewAnalytics]);
+
+  useEffect(() => {
+    if (!tabs.some((tab) => tab.id === activeTab)) setActiveTab('overview');
+  }, [tabs, activeTab]);
 
   const companyStats = useMemo(() => {
-    // Fonte canônica única de reputação: objeto Company e agregados oficiais
-    const canonicalRating = toSafeRating(
-      (company as any).rating_avg ??
-      (company as any).review_aggregates?.global?.average_rating ??
-      (company as any).average_rating ??
-      (company as any).rating,
-      0
+    const aggregate = company.review_aggregates?.global;
+    const canonicalRating = safeRating(
+      company.rating_avg ?? aggregate?.average_rating ?? company.average_rating ?? company.rating
     );
-
-    const canonicalReviewCount = toSafeCount(
-      (company as any).rating_count ??
-      (company as any).review_aggregates?.global?.total_reviews ??
-      (company as any).reviews_count ??
-      (company as any).total_reviews,
-      0
+    const canonicalCount = safeCount(
+      company.rating_count ?? aggregate?.total_reviews ?? company.reviews_count ?? company.total_reviews
     );
-
-    // Resiliência contra cache denormalizado obsoleto: reconcilia com avaliações reais carregadas
-    const effectiveReviewCount = reviews.length > 0 ? Math.max(canonicalReviewCount, reviews.length) : canonicalReviewCount;
-    const computedAverage =
-      reviews.length > 0
-        ? reviews.reduce((acc, r) => acc + toSafeRating((r as any)?.rating, 0), 0) / reviews.length
-        : 0;
-    const effectiveRating =
-      reviews.length > 0 && (canonicalReviewCount === 0 || Math.abs(computedAverage - canonicalRating) > 0.05)
-        ? computedAverage
-        : canonicalRating;
-
+    const reviewCount = Math.max(canonicalCount, reviews.length);
+    const reviewedRating = reviews.length
+      ? reviews.reduce((total, review) => total + safeRating(review.rating), 0) / reviews.length
+      : 0;
+    const rating = reviews.length && (canonicalCount === 0 || Math.abs(reviewedRating - canonicalRating) > 0.05)
+      ? reviewedRating
+      : canonicalRating;
     const createdYear = company.created_at
       ? new Date(company.created_at).getFullYear()
       : new Date().getFullYear();
-
     return {
-      rating: effectiveRating.toFixed(1),
-      reviewCount: effectiveReviewCount,
+      rating: rating.toFixed(1),
+      reviewCount,
       productCount: products.length,
       yearsInBusiness: Math.max(0, new Date().getFullYear() - createdYear),
     };
-  }, [
-    reviews,
-    products,
-    company.created_at,
-    company.rating_avg,
-    company.rating,
-    company.rating_count,
-    (company as any).review_aggregates,
-    (company as any).average_rating,
-    (company as any).reviews_count,
-    (company as any).total_reviews,
-    company,
-  ]);
+  }, [company, products.length, reviews]);
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      if (!companyId) return;
-      try {
-        const [pData, rData] = await Promise.all([
-          productsApiSafe.getByCompany(companyId),
-          !reviewsLoaded
-            ? reviewsApiSafe.getAll({ company_id: companyId, limit: 6 })
-            : Promise.resolve(initialReviews),
-        ]);
-        setProducts(pData || []);
-        if (!reviewsLoaded) setReviews(rData || []);
-        if (analyticsEnabled && canViewAnalytics) {
-          const routesAvailable = await analyticsApi.validateRoutes(companyId);
-          if (routesAvailable) {
-            const [rAnalytics, tSources, hData] = await Promise.all([
-              analyticsApi.getReviewAnalytics(companyId),
-              analyticsApi.getTrafficSources(companyId),
-              analyticsApi.getHistoricalData(companyId, timeRange),
-            ]);
-            setReviewAnalytics(rAnalytics);
-            setTrafficSources(tSources);
-            setHistoricalData(hData);
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err);
-      } finally {
-        setProductsLoading(false);
-        setReviewsLoading(false);
-      }
-    };
-    fetchData();
-  }, [companyId, analyticsEnabled, canViewAnalytics, reviewsLoaded, initialReviews]);
+  const bannerUrl = useMemo(() => resolveMediaUrl(company.banner_url), [company.banner_url]);
+  const logoUrl = useMemo(() => resolveMediaUrl(company.logo_url), [company.logo_url]);
 
-  useEffect(() => {
-    if (tabs.some((tab) => tab.id === activeTab)) return;
-    setActiveTab('overview');
-  }, [activeTab, tabs]);
-
-  const bannerUrl = useMemo(() => {
-    if (!currentCompany?.banner_url || currentCompany.banner_url.trim() === '') return null;
-    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
-      /\/api.*$/,
-      ''
-    );
-    return currentCompany.banner_url.startsWith('http')
-      ? currentCompany.banner_url
-      : `${base}${currentCompany.banner_url.startsWith('/') ? '' : '/'}${currentCompany.banner_url}`;
-  }, [currentCompany?.banner_url]);
-
-  const logoUrl = useMemo(() => {
-    if (!currentCompany?.logo_url || currentCompany.logo_url.trim() === '') return null;
-    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(
-      /\/api.*$/,
-      ''
-    );
-    return currentCompany.logo_url.startsWith('http')
-      ? currentCompany.logo_url
-      : `${base}${currentCompany.logo_url.startsWith('/') ? '' : '/'}${currentCompany.logo_url}`;
-  }, [currentCompany?.logo_url]);
-
-  const handleTabChange = (value: string) => {
-    const tab = tabs.find((t) => t.id === value);
-
-    // Canonical Dashboard View tracking
+  function handleTabChange(value: string) {
+    const tab = tabs.find((entry) => entry.id === value);
     trackDashboardViewed(companyId, value);
-
     track('company_tab_change', {
       company_id: companyId,
       company_name: company.name,
       tab_id: value,
       tab_label: tab?.label || value,
     });
-
     if (value === 'reviews') {
       sendIntentSignal({
         company_id: companyId,
@@ -444,211 +225,29 @@ export default function CompanyDetailClient({
         metadata: { tab_label: tab?.label },
       });
     }
-
     setActiveTab(value);
-  };
-
-  // ===================================================
-  // FEATURE FLAG PARA REFACTOR PREMIUM LEVE (FASE 2)
-  // ===================================================
-  const ENABLE_PREMIUM_PROFILE = true;
-
-  if (ENABLE_PREMIUM_PROFILE) {
-    return (
-      <CompanyProfileShell
-        company={currentCompany}
-        companyStats={companyStats as any}
-        products={products}
-        reviews={reviews}
-        productsLoading={productsLoading}
-        reviewsLoading={reviewsLoading}
-        bannerUrl={bannerUrl}
-        bannerError={bannerError}
-        setBannerError={setBannerError}
-        logoUrl={logoUrl}
-        logoError={logoError}
-        setLogoError={setLogoError}
-        canRequestQuote={canRequestQuote}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        showFinancing={showFinancing}
-        showGallery={showGallery}
-        showFaq={showFaq}
-      />
-    );
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] pb-20 md:pb-0">
-      <BreadcrumbJsonLd items={jsonLdItems} />
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <header className="bg-[#f3f4f6]">
-          <div className="mx-auto max-w-[1280px] px-4 py-2 md:px-6 md:py-3">
-            <AppBreadcrumb items={breadcrumbItems} compact className="mb-2" />
-            {localSolarPage ? (
-              <Link
-                href={localSolarPage.href}
-                className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3 py-1 text-xs font-medium text-blue-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
-              >
-                <MapPin className="h-3.5 w-3.5" />
-                Ver outras empresas de energia solar em {localSolarPage.city}/{localSolarPage.state}
-              </Link>
-            ) : null}
-
-            <CompanyHero
-              company={currentCompany}
-              companyStats={companyStats as any}
-              bannerUrl={bannerUrl}
-              bannerError={bannerError}
-              setBannerError={setBannerError}
-              logoUrl={logoUrl}
-              logoError={logoError}
-              setLogoError={setLogoError}
-              canRequestQuote={canRequestQuote}
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-[1280px] px-4 py-5 md:px-6 md:py-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
-            <div className="space-y-6 lg:col-span-8">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-6"
-                >
-                  <TabsContent
-                    value="overview"
-                    className="mt-0 space-y-6 focus-visible:outline-none"
-                  >
-                    {(() => {
-                      const recognitions = currentCompany.recognitions || currentCompany.badges || [];
-                      const winnerRecognition = recognitions.find(
-                        (b) => b?.position && [1, 2, 3].includes(b.position)
-                      );
-                      if (!winnerRecognition) return null;
-                      return (
-                        <WinnerBadge
-                          companyName={currentCompany.name}
-                          rank={winnerRecognition.position || 1}
-                          city={currentCompany.city || 'Sua Região'}
-                          year={typeof winnerRecognition.year === 'number' ? winnerRecognition.year : 2026}
-                        />
-                      );
-                    })()}
-                    <CompanyOverview
-                      company={currentCompany}
-                      reviews={reviews}
-                      reviewsLoading={reviewsLoading}
-                      showCompetitorBanners={showCompetitorBanners}
-                    />
-                    <CompanyAeoFactSheet
-                      company={currentCompany}
-                      reviewCount={companyStats.reviewCount}
-                      rating={Number(companyStats.rating || 0)}
-                    />
-                    {showSocialProof && (
-                      <SocialProof companyId={companyId} companyName={currentCompany.name} />
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="products" className="mt-0 focus-visible:outline-none">
-                    <CompanyProducts products={products} loading={productsLoading} />
-                  </TabsContent>
-
-                  <TabsContent
-                    value="reviews"
-                    className="mt-0 space-y-6 focus-visible:outline-none"
-                  >
-                    <CompanyReviews
-                      reviews={reviews}
-                      loading={reviewsLoading}
-                      companyId={companyId}
-                      companySlug={currentCompany?.slug}
-                      reviewWhatsapp={currentCompany.review_channels?.whatsapp}
-                      companyName={currentCompany?.name}
-                      aggregates={currentCompany?.review_aggregates}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
-                    <CompanyFinancing company={currentCompany} companyId={companyId} />
-                  </TabsContent>
-
-                  <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
-                    <MediaGallery
-                      companyId={companyId.toString()}
-                      showControls={canManageMedia}
-                      planFeatures={(currentCompany as any)?.plan_features}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="faq" className="mt-0 focus-visible:outline-none">
-                    <FaqSection companyId={companyId} companyName={currentCompany?.name} company={currentCompany} />
-                  </TabsContent>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <aside className="space-y-6 lg:col-span-4">
-              <CompanySidebar
-                company={currentCompany}
-                showFaq={showFaq}
-                showCompetitorBanners={showCompetitorBanners}
-              />
-
-              {canRequestQuote && (
-                <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-white shadow-sm">
-                  <CardContent className="p-6 text-center">
-                    <HelpCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-                    <h4 className="mb-1 font-bold text-slate-950">Precisa de ajuda?</h4>
-                    <p className="mb-4 text-xs text-slate-500">
-                      Fale com nossos especialistas para garantir a melhor escolha.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs font-bold"
-                      onClick={() =>
-                        openQuoteWizard({
-                          source: 'company-sidebar-help',
-                          preferredCompanyId: currentCompany.id,
-                        })
-                      }
-                    >
-                      Falar com especialista
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </aside>
-          </div>
-
-          <CompanyComparisonSection currentCompany={currentCompany} enabled={showAlternatives} />
-        </main>
-      </Tabs>
-
-      <Top1StickyCTA
-        company={currentCompany}
-        rank={(currentCompany as any).priority_score >= 100 ? 1 : 0}
-      />
-
-      {/* Rank-1 sticky and regular sticky must not compete in the same viewport. */}
-      {!((currentCompany as any).priority_score >= 100 && canRequestQuote) && (
-        <StickyCTA
-          company={currentCompany}
-          canRequestQuote={canRequestQuote}
-        />
-      )}
-
-      <ReviewIdentityModalTrigger activeTab={activeTab} />
-    </div>
+    <CompanyProfileShell
+      company={company}
+      companyStats={companyStats}
+      products={products}
+      reviews={reviews}
+      productsLoading={productsLoading}
+      reviewsLoading={reviewsLoading}
+      bannerUrl={bannerUrl}
+      bannerError={bannerError}
+      setBannerError={setBannerError}
+      logoUrl={logoUrl}
+      logoError={logoError}
+      setLogoError={setLogoError}
+      canRequestQuote={canRequestQuote}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+      showFinancing={showFinancing}
+      showGallery={showGallery}
+      showFaq={showFaq}
+    />
   );
 }

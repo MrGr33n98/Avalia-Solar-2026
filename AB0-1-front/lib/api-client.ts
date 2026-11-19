@@ -999,13 +999,15 @@ export const productsApiSafe = {
     sort?: string;
     page?: number;
     per_page?: number;
+    signal?: AbortSignal;
   }): Promise<{
     data: Product[];
     meta: { total: number; page: number; per_page: number; total_pages: number };
   }> => {
     try {
-      const url = `products${buildQueryParams(params || {})}`;
-      const response = await fetchApiSafe<any>(url);
+      const { signal, ...queryParams } = params || {};
+      const url = `products${buildQueryParams(queryParams)}`;
+      const response = await fetchApiSafe<any>(url, { signal });
       if (response && Array.isArray(response.data)) {
         return {
           data: response.data,
@@ -1025,6 +1027,7 @@ export const productsApiSafe = {
       }
       return { data: [], meta: { total: 0, page: 1, per_page: 12, total_pages: 0 } };
     } catch (error) {
+      if (isAbortError(error) || params?.signal?.aborted) throw error;
       console.error('Error fetching products paginated:', error);
       return { data: [], meta: { total: 0, page: 1, per_page: 12, total_pages: 0 } };
     }

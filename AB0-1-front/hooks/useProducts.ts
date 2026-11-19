@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Product } from '@/lib/api';
 import { productsApiSafe } from '@/lib/api-client';
+import type { InitialProducts } from '@/lib/server/performance/products';
 
 interface UseProductsParams {
   q?: string;
@@ -76,24 +77,30 @@ interface UseProductsResult {
   totalPages: number;
 }
 
-export function useProducts(params?: UseProductsParams): UseProductsResult {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filtersMeta, setFiltersMeta] = useState<ProductSpecFilterMeta[]>([]);
-  const [categoriesMeta, setCategoriesMeta] = useState<ProductCategoryFilter[]>([]);
-  const [companiesMeta, setCompaniesMeta] = useState<ProductCompanyFilter[]>([]);
-  const [brandsMeta, setBrandsMeta] = useState<ProductBrandFilter[]>([]);
-  const [priceRangeMeta, setPriceRangeMeta] = useState<ProductPriceRange>({ min: 0, max: 0 });
-  const [loading, setLoading] = useState<boolean>(true);
+export function useProducts(params?: UseProductsParams, initialData?: InitialProducts | null): UseProductsResult {
+  const [products, setProducts] = useState<Product[]>(initialData?.data ?? []);
+  const [filtersMeta, setFiltersMeta] = useState<ProductSpecFilterMeta[]>((initialData?.filters?.filters ?? []) as ProductSpecFilterMeta[]);
+  const [categoriesMeta, setCategoriesMeta] = useState<ProductCategoryFilter[]>((initialData?.filters?.categories ?? []) as ProductCategoryFilter[]);
+  const [companiesMeta, setCompaniesMeta] = useState<ProductCompanyFilter[]>((initialData?.filters?.companies ?? []) as ProductCompanyFilter[]);
+  const [brandsMeta, setBrandsMeta] = useState<ProductBrandFilter[]>((initialData?.filters?.brands ?? []) as ProductBrandFilter[]);
+  const [priceRangeMeta, setPriceRangeMeta] = useState<ProductPriceRange>(initialData?.filters?.price_range ?? { min: 0, max: 0 });
+  const [loading, setLoading] = useState<boolean>(!initialData);
   const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const filtersMetaFetched = useRef(false);
+  const [total, setTotal] = useState<number>(initialData?.meta.total ?? 0);
+  const [totalPages, setTotalPages] = useState<number>(initialData?.meta.total_pages ?? 1);
+  const filtersMetaFetched = useRef(Boolean(initialData?.filters));
 
   // Stable key for params to avoid infinite loop
   const paramsKey = JSON.stringify(params || {});
+  const hydratedKeyRef = useRef<string | null>(initialData ? paramsKey : null);
 
   useEffect(() => {
+    if (hydratedKeyRef.current === paramsKey) {
+      hydratedKeyRef.current = null;
+      return;
+    }
     let cancelled = false;
+    const controller = new AbortController();
 
     const fetchProducts = async () => {
       try {
@@ -108,7 +115,7 @@ export function useProducts(params?: UseProductsParams): UseProductsResult {
         }
 
         const [result, filters] = await Promise.all([
-          productsApiSafe.getAllPaginated({ include_specs: false, ...cleanParams }),
+          productsApiSafe.getAllPaginated({ include_specs: false, ...cleanParams, signal: controller.signal }),
           filtersMetaFetched.current ? Promise.resolve(null) : productsApiSafe.getFilters(),
         ]);
 
@@ -140,6 +147,7 @@ export function useProducts(params?: UseProductsParams): UseProductsResult {
     fetchProducts();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
