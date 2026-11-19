@@ -15,6 +15,7 @@ class BackfillReviewerAchievementCatalog < ActiveRecord::Migration[7.0]
   ].freeze
 
   def up
+    return if Rails.env.test?
     return unless table_exists?(:achievement_badges)
 
     catalog = Rails.root.join('db', 'seeds', 'achievements.yml')

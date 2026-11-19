@@ -50,6 +50,13 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+  config.before(:suite) do
+    if defined?(AchievementBadge) && ActiveRecord::Base.connection.table_exists?(:achievement_badges)
+      UserAchievement.delete_all if ActiveRecord::Base.connection.table_exists?(:user_achievements)
+      AchievementLedger.delete_all if ActiveRecord::Base.connection.table_exists?(:achievement_ledgers)
+      AchievementBadge.delete_all
+    end
+  end
   # Rack::Attack mantém o cache fora de Rails.cache; isole contadores por exemplo.
   config.around do |example|
     rack_attack = Rack::Attack
