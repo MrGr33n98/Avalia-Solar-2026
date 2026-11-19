@@ -65,6 +65,7 @@ import {
 } from '@/lib/seo/companies-category-url';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePageTracking } from '@/hooks/usePageTracking';
+import { markAfterPaint } from '@/lib/analytics/route-performance';
 import { track } from '@/lib/analytics/consolidated';
 import { useComparison } from '@/hooks/useComparison';
 import { openComparisonDock } from '@/lib/floating-widget-events';
@@ -416,6 +417,14 @@ export function CompaniesContent({
 
   const companies = useMemo(() => companiesResponse?.data || [], [companiesResponse?.data]);
   const totalCount = companiesResponse?.meta?.pagination?.total ?? companies.length;
+  useEffect(() => {
+    if (loading || !companiesResponse) return;
+    const fields = { route: '/companies', result_count: companies.length, source: 'client_post_paint' };
+    const cancelData = markAfterPaint('first_data_visible', fields);
+    const cancelCard = companies.length ? markAfterPaint('companies_first_card_painted', fields) : () => {};
+    return () => { cancelData(); cancelCard(); };
+  }, [loading, companiesResponse, companies.length]);
+
   const error =
     queryError && !isAbortError(queryError)
       ? queryError instanceof Error
