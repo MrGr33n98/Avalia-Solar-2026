@@ -95,3 +95,31 @@ user.skip_confirmation_notification!
 user.save!
 
 puts "Usuário E2E pronto: #{user.email}"
+
+# Os testes do Review Dashboard não podem compartilhar a conta E2E usada por
+# auth-logout.spec.ts: logout_all revoga os JWTs de todos os dispositivos do
+# usuário. Um reviewer independente elimina a interferência entre workers,
+# preservando login, cookies e autorização Rails reais.
+reviewer_email = ENV.fetch('E2E_REVIEWER_EMAIL', 'reviewer-ci@avaliasolar.test')
+raise 'E2E reviewer must be isolated from the shared auth fixture' if reviewer_email == email
+
+reviewer = User.find_or_initialize_by(email: reviewer_email)
+reviewer.assign_attributes(
+  name: 'Avaliador E2E Avalia Solar',
+  city: 'Florianópolis',
+  state: 'SC',
+  role: 'review',
+  status: :active,
+  terms_accepted: true,
+  terms_accepted_at: Time.current,
+  public_name_consent: true,
+  display_full_name_consent: true,
+  review_name_consent: true,
+  lgpd_name_consent: true,
+  confirmed_at: reviewer.confirmed_at || Time.current,
+  password: password,
+  password_confirmation: password
+)
+reviewer.skip_confirmation_notification!
+reviewer.save!
+puts "Revisor E2E isolado pronto: #{reviewer.email}"
