@@ -10,6 +10,7 @@ export const loadCompanyProfile = cache((id: string) => publicCompaniesApi.getBy
   tags: ['company-profile', `company-${id}`],
 }));
 import { parseQueryParams } from '@/components/filters/query';
+import { normalizeSearchPage, normalizeSearchPageSize } from '@/components/search/searchPagination';
 import type {
   InitialCompaniesPayload,
   InitialProductsPayload,
@@ -132,8 +133,8 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
   const query = takeString(url, 'q');
   const sort = takeString(url, 'sort');
   const apiSort = sort === 'rating' ? 'rating_desc' : (sort === 'relevance' || !sort) ? 'recommended' : sort;
-  const page = takeNumber(url, 'page');
-  const perPage = takeNumber(url, 'per_page', 1, 100);
+  const page = normalizeSearchPage(url.get('page'));
+  const perPage = normalizeSearchPageSize(url.get('per_page'));
   const rawResponse = await fetchApiPublic<SearchAllResponse>('search/all', {
     params: {
       q: query,
@@ -143,7 +144,7 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
       ...(takeString(url, 'category') ? { category: takeString(url, 'category') } : {}),
       sort: apiSort,
       page,
-      per_page: url.get('per_page') ? perPage : 12,
+      per_page: perPage,
     },
     revalidate: 120,
     tags: ['search'],
@@ -161,7 +162,7 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
         q: query,
         ...(takeString(url, 'city') ? { city: takeString(url, 'city') } : {}),
         ...(takeString(url, 'state') ? { state: takeString(url, 'state') } : {}),
-        status: 'active', sort: apiSort, page, limit: url.get('per_page') ? perPage : 12, fields: 'card',
+        status: 'active', sort: apiSort, page, limit: perPage, fields: 'card',
       }, { revalidate: 120, tags: ['companies'] })
     : [];
 
@@ -177,7 +178,7 @@ export const loadSearchInitial = cache(async (serialized: string): Promise<Initi
       : response.meta?.total_count
   );
   const totalCount = typeof totalCountRaw === 'number' ? totalCountRaw : companies.length;
-  const effectivePerPage = url.get('per_page') ? perPage : 12;
+  const effectivePerPage = perPage;
 
   return {
     key: serialized,
