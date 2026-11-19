@@ -17,8 +17,6 @@ class AchievementLedger < ApplicationRecord
 
   alias_attribute :points_delta, :xp_delta
 
-  before_validation :ensure_defaults, on: :create
-
   scope :recent, -> { order(created_at: :desc) }
 
   def self.ransackable_attributes(_auth_object = nil)
@@ -27,11 +25,5 @@ class AchievementLedger < ApplicationRecord
 
   def self.ransackable_associations(_auth_object = nil)
     %w[achievement_badge admin_user user]
-  end
-
-  private
-
-  def ensure_defaults
-    self.idempotency_key ||= "manual_#{kind}_#{user_id}_#{achievement_badge_id}_#{Time.current.to_f}_#{SecureRandom.hex(4)}"
   end
 end

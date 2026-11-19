@@ -31,6 +31,7 @@ ActiveAdmin.register UserAchievement do
         achievement_badge: user_achievement.achievement_badge,
         kind: 'manual_revoke',
         points_delta: -user_achievement.achievement_badge.points_xp,
+        idempotency_key: "manual_revoke_#{user_achievement.id}_#{Time.current.to_f}",
         metadata: {
           admin_user_id: current_admin_user.id,
           admin_email: current_admin_user.email,
@@ -52,6 +53,7 @@ ActiveAdmin.register UserAchievement do
         achievement_badge: user_achievement.achievement_badge,
         kind: 'reinstated',
         points_delta: user_achievement.achievement_badge.points_xp,
+        idempotency_key: "reinstate_#{user_achievement.id}_#{Time.current.to_f}",
         metadata: {
           admin_user_id: current_admin_user.id,
           admin_email: current_admin_user.email,
@@ -90,6 +92,7 @@ ActiveAdmin.register UserAchievement do
         achievement_badge: badge,
         kind: 'manual_grant',
         points_delta: badge.points_xp,
+        idempotency_key: "manual_grant_#{user.id}_#{badge.id}_#{Time.current.to_f}",
         metadata: {
           admin_user_id: current_admin_user.id,
           admin_email: current_admin_user.email,
