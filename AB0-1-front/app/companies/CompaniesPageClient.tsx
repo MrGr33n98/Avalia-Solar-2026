@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef, Suspense, useCallback } from 'react';
+import { useEffect, useMemo, useState, useRef, Suspense, useCallback, useTransition } from 'react';
+import type { InitialCompaniesPayload } from '@/lib/server/performance/types';
 import dynamic from 'next/dynamic';
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 
@@ -73,6 +74,7 @@ interface CompaniesPageClientProps {
   forcedCategoryIds?: number[];
   categoryNames?: string[];
   canonicalPath?: string;
+  initialPage?: InitialCompaniesPayload;
 }
 
 type CompaniesContentProps = CompaniesPageClientProps;
@@ -83,6 +85,7 @@ export function CompaniesContent({
   forcedCategoryIds,
   categoryNames = [],
   canonicalPath,
+  initialPage,
 }: CompaniesContentProps) {
   usePageTracking({
     type: 'category',
@@ -92,6 +95,7 @@ export function CompaniesContent({
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isRoutePending, startRouteTransition] = useTransition();
   const pathname = usePathname();
   const searchParamsKey = searchParams.toString();
   const activeForcedCategoryIds = forcedCategoryIds ?? EMPTY_CATEGORY_IDS;
@@ -387,6 +391,7 @@ export function CompaniesContent({
     refetch,
   } = useQuery({
     queryKey: ['companies', requestParams],
+    initialData: initialPage?.key === JSON.stringify(requestParams) ? initialPage.response : undefined,
     queryFn: async ({ signal }) => {
       if (typeof window !== 'undefined' && 'performance' in window) {
         performance.mark('companies_fetch_start');
@@ -421,7 +426,7 @@ export function CompaniesContent({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const updated = { ...filters, search: searchInput, page: 1 };
-    router.replace(buildTargetUrl(updated), { scroll: false });
+    startRouteTransition(() => router.replace(buildTargetUrl(updated), { scroll: false }));
   };
 
   useEffect(() => {
