@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { Product } from '@/lib/api';
+import type { InitialProductsPayload } from '@/lib/server/performance/types';
 import { productsApiSafe } from '@/lib/api-client';
 
 interface UseProductsParams {
@@ -76,23 +77,28 @@ interface UseProductsResult {
   totalPages: number;
 }
 
-export function useProducts(params?: UseProductsParams): UseProductsResult {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filtersMeta, setFiltersMeta] = useState<ProductSpecFilterMeta[]>([]);
-  const [categoriesMeta, setCategoriesMeta] = useState<ProductCategoryFilter[]>([]);
-  const [companiesMeta, setCompaniesMeta] = useState<ProductCompanyFilter[]>([]);
-  const [brandsMeta, setBrandsMeta] = useState<ProductBrandFilter[]>([]);
-  const [priceRangeMeta, setPriceRangeMeta] = useState<ProductPriceRange>({ min: 0, max: 0 });
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const filtersMetaFetched = useRef(false);
-
-  // Stable key for params to avoid infinite loop
+export function useProducts(params?: UseProductsParams, initialPage?: InitialProductsPayload): UseProductsResult {
   const paramsKey = JSON.stringify(params || {});
+  const hydrated = initialPage?.key === paramsKey;
+  const skipFirstRequest = useRef(hydrated);
+  const [products, setProducts] = useState<Product[]>(() => hydrated ? initialPage!.response.data : []);
+  const [filtersMeta, setFiltersMeta] = useState<ProductSpecFilterMeta[]>(() => hydrated ? (initialPage!.filters.filters || []) as ProductSpecFilterMeta[] : []);
+  const [categoriesMeta, setCategoriesMeta] = useState<ProductCategoryFilter[]>(() => hydrated ? (initialPage!.filters.categories || []) as ProductCategoryFilter[] : []);
+  const [companiesMeta, setCompaniesMeta] = useState<ProductCompanyFilter[]>(() => hydrated ? (initialPage!.filters.companies || []) as ProductCompanyFilter[] : []);
+  const [brandsMeta, setBrandsMeta] = useState<ProductBrandFilter[]>(() => hydrated ? (initialPage!.filters.brands || []) as ProductBrandFilter[] : []);
+  const [priceRangeMeta, setPriceRangeMeta] = useState<ProductPriceRange>(() => hydrated ? initialPage!.filters.price_range || { min: 0, max: 0 } : { min: 0, max: 0 });
+  const [loading, setLoading] = useState<boolean>(!hydrated);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState<number>(hydrated ? initialPage!.response.meta.total : 0);
+  const [totalPages, setTotalPages] = useState<number>(hydrated ? initialPage!.response.meta.total_pages : 1);
+  const filtersMetaFetched = useRef(hydrated);
 
+  // The server result is the initial query, not a second client fetch.
   useEffect(() => {
+    if (skipFirstRequest.current) {
+      skipFirstRequest.current = false;
+      return;
+    }
     let cancelled = false;
 
     const fetchProducts = async () => {
