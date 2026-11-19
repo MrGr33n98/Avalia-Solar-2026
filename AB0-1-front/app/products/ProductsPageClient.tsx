@@ -237,7 +237,8 @@ function ProductsPageContent({ initialPage }: { initialPage?: InitialProductsPay
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20">
+    <div className="min-h-screen bg-[#f8fafc] pb-20" aria-busy={isRoutePending}>
+      <span className="sr-only" role="status">{isRoutePending ? 'Atualizando produtos' : ''}</span>
       <ProductsHeader />
       {/* Categorias compactas em carrossel horizontal: mobile, PWA e desktop. */}
       <ProductCategoryRail
