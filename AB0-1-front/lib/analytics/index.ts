@@ -20,7 +20,8 @@ import { hasAnalyticsConsent, onConsentChange } from './consent';
 import { getAttribution, getCurrentUTMs, updateAttribution } from './utm';
 import { getSessionId } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
-import { ANALYTICS_CONTRACT_VERSION, getSurfaceKind, resolveEventContract } from './contract';
+import { ANALYTICS_CONTRACT_VERSION, getSurfaceKindForHostname, resolveEventContract } from './contract';
+import { pushAnalyticsDataLayerEvent } from './data-layer';
 import { opaqueUserId, sanitizeAnalyticsProperties } from './sanitize';
 import {
   isQueuedOfflineMutationResult,
@@ -222,7 +223,7 @@ export function getAnalyticsContext(): AnalyticsContext {
     }
   }
 
-  const surfaceKind = getSurfaceKind(window.location.pathname);
+  const surfaceKind = getSurfaceKindForHostname(window.location.hostname, window.location.pathname);
   const isInternal = localStorage.getItem('is_internal_team') === 'true' ||
     window.location.search.includes('is_internal=true') ||
     window.location.search.includes('internal=true');
@@ -340,15 +341,9 @@ export function track<K extends AnalyticsEventName>(
     }
   }
 
-  // 2. Dispatch to GTM DataLayer (For Meta/Google Pixels)
-  if (typeof window !== 'undefined' && (window as any).dataLayer) {
-    // Mapeia o evento para o padrão GA4 conforme a Matrix (TRG-003 a TRG-009)
-    const gtmEventName = mapToGtmEvent(eventName);
-    (window as any).dataLayer.push({
-      event: gtmEventName,
-      ...matrixProps
-    });
-  }
+  // 2. Disponibiliza o evento consentido no dataLayer, inclusive antes do GTM carregar.
+  // O GTM permanece responsável por pixels; não criar tags GA4 duplicadas.
+  pushAnalyticsDataLayerEvent(mapToGtmEvent(eventName), matrixProps);
 
   // 3. Sync with Backend
   sendToBackend(eventName, eventId, context, matrixProps, options);

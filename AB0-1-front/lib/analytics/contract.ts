@@ -98,3 +98,19 @@ export function getSurfaceKind(pathname: string): NonNullable<AnalyticsContext['
     return 'auth';
   return 'public';
 }
+
+/**
+ * Classificação da superfície por hostname antes de interpretar a rota.
+ *
+ * /login e /dashboard podem existir em mais de um domínio. Usar somente
+ * pathname mistura CRM, portal empresarial e marketplace nos relatórios.
+ */
+export function getSurfaceKindForHostname(
+  hostname: string,
+  pathname: string
+): NonNullable<AnalyticsContext['surface_kind']> {
+  const host = hostname.toLowerCase().trim().replace(/\.$/, '').replace(/:\d+$/, '');
+  if (host === 'crm.avaliasolar.com.br') return 'crm';
+  if (host === 'app.avaliasolar.com.br') return 'app';
+  return getSurfaceKind(pathname);
+}

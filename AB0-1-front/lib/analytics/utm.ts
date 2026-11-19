@@ -157,7 +157,7 @@ function buildTouch(values: UTMParameters, pathname?: string, referrer?: string)
 function isInternalUtm(values: UTMParameters): boolean {
   const source = values.utm_source?.toLowerCase();
   const medium = values.utm_medium?.toLowerCase();
-  return medium === 'internal' || source === 'blog' || source === 'avaliasolar' || source === 'internal';
+  return medium === 'internal' || source === 'blog' || source === 'avaliasolar' || source === 'avaliasolar_ads' || source === 'internal';
 }
 
 /**
