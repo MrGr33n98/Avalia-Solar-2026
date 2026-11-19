@@ -34,6 +34,7 @@ import { usePathname } from 'next/navigation';
 import { setupGlobalErrorHandlers } from '@/lib/error-handler';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { getConsent, onConsentChange } from '@/lib/analytics/consent';
+import { markAfterPaint } from '@/lib/analytics/route-performance';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -74,6 +75,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     const handleInteraction = () => {
       enableModals();
+      loadAnalytics('interaction');
     };
 
     window.addEventListener('pointerdown', handleInteraction, { once: true });
@@ -95,7 +97,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         win.clearTimeout(timerId);
       }
     };
-  }, []);
+  }, [loadAnalytics]);
 
   useEffect(() => {
     // Check for returning user
@@ -119,10 +121,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const handleInteraction = () => loadAnalytics('interaction');
-    window.addEventListener('pointerdown', handleInteraction, { once: true });
-    window.addEventListener('keydown', handleInteraction, { once: true });
-
     // PERFORMANCE FIX: Delay aumentado para não bloquear LCP.
     // Com consentimento: 2s (já tem dados para pageview inicial).
     // Sem consentimento mobile: 12s (TBT mobile muito alto com PostHog no critical path).
@@ -132,8 +130,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const timeoutId = window.setTimeout(() => loadAnalytics('timeout'), timeoutDelay);
 
     return () => {
-      window.removeEventListener('pointerdown', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
       window.clearTimeout(timeoutId);
     };
   }, [loadAnalytics]);
@@ -192,6 +188,23 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       window.removeEventListener('error', handleError);
     };
   }, []);
+
+  useEffect(() => {
+    if (!pathname) return;
+    const cleanPath = pathname.replace(/\\/+/g, '/');
+    const cancel = markAfterPaint('route_shell_visible', {
+      route: cleanPath, source: 'hydration_observed',
+    });
+    return cancel;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!pathname) return;
+    const cancel = markAfterPaint('route_interactive', {
+      route: pathname, source: 'hydration_observed',
+    });
+    return cancel;
+  }, [pathname]);
 
   useEffect(() => {
     if (!analyticsLoadedRef.current) return;
