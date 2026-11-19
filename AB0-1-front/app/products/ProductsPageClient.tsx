@@ -20,6 +20,7 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
 import { track } from '@/lib/analytics/lazy';
+import { markAfterPaint } from '@/lib/analytics/route-performance';
 
 function ProductsPageContent({ initialPage }: { initialPage?: InitialProductsPayload }) {
   // GTM Page Tracking
@@ -91,6 +92,14 @@ function ProductsPageContent({ initialPage }: { initialPage?: InitialProductsPay
     total,
     totalPages
   } = useProducts(hookParams, initialPage);
+
+  useEffect(() => {
+    if (loading) return;
+    const fields = { route: '/products', result_count: products.length, source: 'client_post_paint' };
+    const cancelData = markAfterPaint('first_data_visible', fields);
+    const cancelProduct = products.length ? markAfterPaint('products_first_card_painted', fields) : () => {};
+    return () => { cancelData(); cancelProduct(); };
+  }, [loading, products]);
 
   // Telemetria: busca/resultados carregados
   useEffect(() => {
