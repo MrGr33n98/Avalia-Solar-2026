@@ -71,6 +71,9 @@ module Api
             return rpc_error(id, -32602, 'MCP-Protocol-Version header required.', :bad_request)
           end
 
+          canary_error = authorize_canary_legacy_request!(message['method'], params)
+          return canary_error if canary_error
+
           unless has_id
             return head(:accepted) if message['method'] == 'notifications/initialized'
 
@@ -227,6 +230,18 @@ module Api
           end
 
           head :service_unavailable
+        end
+
+        def authorize_canary_legacy_request!(method, params)
+          return nil unless ::Mcp::Canary::Configuration.enforced?
+
+          ::Mcp::Canary::Guard.authorize!(
+            method: method, tool_name: params['name'], auth_context: @mcp_auth_context
+          )
+          nil
+        rescue ::Mcp::Canary::Guard::Failure => e
+          status = e.type == :unavailable ? :not_found : :forbidden
+          rpc_error(params['id'], -32001, 'MCP canary authorization denied.', status)
         end
 
         def modern_request?(params)

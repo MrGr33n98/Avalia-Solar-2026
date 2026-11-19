@@ -42,6 +42,10 @@ on:
       - 'AB0-1-back/spec/requests/api/v1/mcp/public_directory_execution_spec.rb'
       - 'AB0-1-back/app/services/mcp/remote_telemetry.rb'
       - 'AB0-1-back/spec/services/mcp/remote_telemetry_spec.rb'
+      - 'AB0-1-back/app/services/mcp/canary/**'
+      - 'AB0-1-back/spec/services/mcp/canary/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/production_canary_guard_spec.rb'
+      - '.env.example'
       - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
@@ -115,6 +119,8 @@ jobs:
           ruby -c app/services/mcp/public/reputation_service.rb
           ruby -c app/services/mcp/public/comparison_service.rb
           ruby -c app/services/mcp/remote_telemetry.rb
+          ruby -c app/services/mcp/canary/configuration.rb
+          ruby -c app/services/mcp/canary/guard.rb
           ruby -c app/services/mcp/public/output_validator.rb
           ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c ../.github/scripts/mcp_private_staging_smoke.rb
@@ -146,5 +152,7 @@ jobs:
             spec/services/mcp/public/*_spec.rb \
             spec/services/mcp/remote_telemetry_spec.rb \
             spec/services/mcp/private/telemetry_spec.rb \
+            spec/services/mcp/canary/*_spec.rb \
             spec/requests/api/v1/mcp/public_directory_execution_spec.rb \
+            spec/requests/api/v1/mcp/production_canary_guard_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb

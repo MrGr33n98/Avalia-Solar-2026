@@ -84,7 +84,8 @@ module Mcp
         raise Failure, :invalid_token if revoked?(digest)
 
         { subject: subject, client_id: client_id, token_id_digest: digest,
-          scopes: scopes.freeze, issuer: self.class.issuer }.freeze
+          scopes: scopes.freeze, issuer: self.class.issuer, resource: self.class.resource,
+          token_format: 'opaque' }.freeze
       end
 
       def opaque_token(raw_token)
@@ -119,7 +120,8 @@ module Mcp
         raise Failure, :invalid_token if revoked?(digest)
 
         { subject: claims['sub'], client_id: jwt_client_id(claims), token_id_digest: digest,
-          scopes: scopes.freeze, issuer: self.class.issuer }.freeze
+          scopes: scopes.freeze, issuer: self.class.issuer, resource: self.class.resource,
+          token_format: 'jwt' }.freeze
       end
 
       def decode_jwt(raw_token)

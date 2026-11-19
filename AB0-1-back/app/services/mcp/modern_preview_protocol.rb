@@ -49,6 +49,9 @@ module Mcp
         return error(id, HEADER_MISMATCH, 'Mcp-Name header mismatch.', :bad_request) unless validated_name_header?(@headers['Mcp-Name'].to_s, tool_name)
       end
 
+      canary_error = authorize_canary(method, params)
+      return canary_error if canary_error
+
       case method
       when 'server/discover'
         return error(id, -32_602, 'Unexpected discovery parameters.', :bad_request) unless (params.keys - ['_meta']).empty?
@@ -95,6 +98,8 @@ module Mcp
     private
 
     def execution_authorized?
+      return false if ::Mcp::Canary::Configuration.enforced? && !canary_authorized?('tools/call', @message.fetch('params', {}))
+
       ENV['MCP_PUBLIC_TOOLS_EXECUTION_ENABLED'] == 'true' &&
         ENV['MCP_REMOTE_POLICY_ENABLED'] == 'true' &&
         ENV['MCP_REMOTE_AUTH_MODE'] == 'oauth' &&
@@ -103,6 +108,28 @@ module Mcp
         @auth_context[:subject].present? &&
         @auth_context[:client_id].present? &&
         Array(@auth_context[:scopes]).include?('mcp:public:read')
+    end
+
+    def authorize_canary(method, params)
+      return nil unless ::Mcp::Canary::Configuration.enforced?
+
+      ::Mcp::Canary::Guard.authorize!(
+        method: method, tool_name: params['name'], auth_context: @auth_context
+      )
+      nil
+    rescue ::Mcp::Canary::Guard::Failure => e
+      return error(@message['id'], -32_001, 'MCP canary authorization denied.', :not_found) if e.type == :unavailable
+
+      error(@message['id'], -32_001, 'MCP canary authorization denied.', :forbidden)
+    end
+
+    def canary_authorized?(method, params)
+      ::Mcp::Canary::Guard.authorize!(
+        method: method, tool_name: params['name'], auth_context: @auth_context
+      )
+      true
+    rescue ::Mcp::Canary::Guard::Failure
+      false
     end
 
     def validated_name_header?(raw_header, expected)
