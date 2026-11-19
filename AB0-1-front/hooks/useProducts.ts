@@ -100,6 +100,7 @@ export function useProducts(params?: UseProductsParams, initialPage?: InitialPro
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
 
     const fetchProducts = async () => {
       try {
@@ -114,7 +115,7 @@ export function useProducts(params?: UseProductsParams, initialPage?: InitialPro
         }
 
         const [result, filters] = await Promise.all([
-          productsApiSafe.getAllPaginated({ include_specs: false, ...cleanParams }),
+          productsApiSafe.getAllPaginated({ include_specs: false, ...cleanParams, signal: controller.signal }),
           filtersMetaFetched.current ? Promise.resolve(null) : productsApiSafe.getFilters(),
         ]);
 
@@ -146,6 +147,7 @@ export function useProducts(params?: UseProductsParams, initialPage?: InitialPro
     fetchProducts();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
