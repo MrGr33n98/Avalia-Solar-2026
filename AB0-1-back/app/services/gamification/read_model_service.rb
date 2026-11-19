@@ -91,10 +91,14 @@ module Gamification
         threshold: badge.threshold, target: badge.threshold,
         points: badge.points_xp, xp: unlocked ? badge.points_xp : 0,
         unlocked_at: unlocked ? user_achievement&.unlocked_at&.iso8601 : nil,
-        asset: { earned: badge.earned_asset_path, locked: badge.locked_asset_path },
+        asset: { earned: public_asset_path(badge.earned_asset_path), locked: public_asset_path(badge.locked_asset_path) },
         action: badge.action_enum,
         share: build_share_data(unlocked, user_achievement)
       }
+    end
+
+    def public_asset_path(path)
+      "/assets/achievements/#{path.to_s.delete_prefix('/').delete_prefix('assets/achievements/')}"
     end
 
     def resolve_state_and_progress(badge, user_achievement, rule)
