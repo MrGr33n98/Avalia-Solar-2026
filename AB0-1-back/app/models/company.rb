@@ -711,7 +711,9 @@ end
   end
 
   def normalize_multiselects
-    self.project_types = Array(project_types).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:project_types)
+    if respond_to?(:project_types)
+      self.project_types = Array(project_types).map { |value| normalize_project_type(value) }.reject(&:blank?)
+    end
     self.niche_tags = Array(niche_tags).map { |v| v.to_s.strip }.reject(&:blank?) if respond_to?(:niche_tags)
     if respond_to?(:equipment_brands)
       self.equipment_brands = Array(equipment_brands).map do |v|
@@ -726,6 +728,11 @@ end
     return unless respond_to?(:services_offered)
 
     self.services_offered = Array(services_offered).map { |v| v.to_s.strip }.reject(&:blank?)
+  end
+
+  def normalize_project_type(value)
+    normalized = value.to_s.gsub(/[\u0000-\u001F\u007F]/, ' ').squeeze(' ').strip
+    PROJECT_TYPES.find { |allowed| allowed.casecmp?(normalized) } || normalized
   end
 
   # Analytics methods

@@ -11,6 +11,7 @@ import { isLocalPageIndexable } from '@/lib/seo/local-page-quality';
 import { CAPITAL_COVERAGE_REPORT } from '@/lib/seo/sector-reports';
 import { TRUST_PAGES } from '@/lib/seo/trust-pages';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED, absoluteUrl } from '@/lib/site';
+import { buildCompanyPath } from '@/lib/slug';
 
 export const SITEMAP_SECTIONS = [
   'static',
@@ -35,6 +36,8 @@ const SITEMAP_FETCH_TIMEOUT_MS = 6_000;
 const MAX_URLS_PER_SITEMAP = 50_000;
 const CATEGORY_SITEMAP_PAGE_SIZE = 200;
 const CATEGORY_SITEMAP_MAX_PAGES = 250;
+const COMPANY_SITEMAP_PAGE_SIZE = 100;
+const PAGINATED_SITEMAP_MAX_PAGES = 500;
 
 export class SitemapUpstreamError extends Error {
   public readonly section: string;
@@ -79,7 +82,11 @@ const getString = (record: ApiRecord, key: string) => {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 };
 
-const getNumber = (record: ApiRecord, key: string) => {
+const getNumber = (record: ApiRecord | undefined, key: string) => {
+  if (!record || record[key] === null || record[key] === undefined || record[key] === '') {
+    return undefined;
+  }
+
   const value = Number(record[key]);
   return Number.isFinite(value) ? value : undefined;
 };
@@ -89,6 +96,28 @@ const unwrapData = (payload: unknown): ApiRecord[] => {
   if (!isRecord(payload)) return [];
   const data = payload.data;
   return Array.isArray(data) ? data.filter(isRecord) : [];
+};
+
+const recordsFromPayload = (payload: unknown, section: string): ApiRecord[] => {
+  if (Array.isArray(payload)) return payload.filter(isRecord);
+  if (isRecord(payload) && Array.isArray(payload.data)) {
+    return payload.data.filter(isRecord);
+  }
+
+  throw new SitemapUpstreamError(
+    section,
+    'Payload incompatível: esperada uma lista de registros no campo data',
+    503
+  );
+};
+
+const sectionFromEndpoint = (endpoint: string) => endpoint.split(/[/?]/, 1)[0] || 'unknown';
+
+const appendQuery = (endpoint: string, params: Record<string, string | number>) => {
+  const query = new URLSearchParams(
+    Object.entries(params).map(([key, value]) => [key, String(value)])
+  );
+  return `${endpoint}${endpoint.includes('?') ? '&' : '?'}${query.toString()}`;
 };
 
 const normalizeSitemapEntries = (entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap => {
@@ -120,6 +149,7 @@ const normalizeSitemapEntries = (entries: MetadataRoute.Sitemap): MetadataRoute.
 };
 
 async function fetchRecords(endpoint: string, revalidate = 3600): Promise<ApiRecord[]> {
+  const section = sectionFromEndpoint(endpoint);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
 
@@ -128,13 +158,107 @@ async function fetchRecords(endpoint: string, revalidate = 3600): Promise<ApiRec
       next: { revalidate },
       signal: controller.signal,
     });
-    if (!response.ok) return [];
-    return unwrapData(await response.json());
-  } catch {
-    return [];
+    if (!response.ok) {
+      throw new SitemapUpstreamError(
+        section,
+        `Falha no feed de sitemap (HTTP ${response.status})`,
+        response.status || 503
+      );
+    }
+
+    return recordsFromPayload(await response.json(), section);
+  } catch (error) {
+    if (error instanceof SitemapUpstreamError) throw error;
+
+    console.error(`[Sitemap][${section}] Network/timeout failure:`, error);
+    throw new SitemapUpstreamError(
+      section,
+      'Falha de comunicação ou timeout ao exportar sitemap',
+      503
+    );
   } finally {
     clearTimeout(timeout);
   }
+}
+
+type RecordsPage = {
+  records: ApiRecord[];
+  totalPages?: number;
+  nextPage?: number;
+};
+
+async function fetchRecordsPage(
+  endpoint: string,
+  page: number,
+  pageSize: number,
+  revalidate = 3600
+): Promise<RecordsPage> {
+  const section = sectionFromEndpoint(endpoint);
+  const query = appendQuery(endpoint, { page, per_page: pageSize });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(buildApiUrl(query), {
+      next: { revalidate },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new SitemapUpstreamError(
+        section,
+        `Falha no feed paginado de sitemap (HTTP ${response.status})`,
+        response.status || 503
+      );
+    }
+
+    const payload = (await response.json()) as unknown;
+    const records = recordsFromPayload(payload, section);
+    const meta = isRecord(payload) && isRecord(payload.meta) ? payload.meta : undefined;
+    const pagination = meta && isRecord(meta.pagination) ? meta.pagination : undefined;
+    const totalPages = getNumber(pagination, 'total_pages');
+    const nextPage = getNumber(pagination, 'next_page');
+
+    return { records, totalPages, nextPage };
+  } catch (error) {
+    if (error instanceof SitemapUpstreamError) throw error;
+
+    console.error(`[Sitemap][${section}] Paginated network/timeout failure:`, error);
+    throw new SitemapUpstreamError(
+      section,
+      'Falha de comunicação ou timeout ao exportar sitemap paginado',
+      503
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchPaginatedRecords(
+  endpoint: string,
+  pageSize: number,
+  revalidate = 3600
+): Promise<ApiRecord[]> {
+  const records: ApiRecord[] = [];
+
+  for (let page = 1; page <= PAGINATED_SITEMAP_MAX_PAGES; page += 1) {
+    const result = await fetchRecordsPage(endpoint, page, pageSize, revalidate);
+    records.push(...result.records);
+
+    const hasMoreByMetadata = result.nextPage !== undefined && result.nextPage > page;
+    const hasMoreBySize = result.totalPages === undefined && result.records.length >= pageSize;
+    const hasMore =
+      result.totalPages !== undefined
+        ? page < result.totalPages
+        : hasMoreByMetadata || hasMoreBySize;
+
+    if (!hasMore) return records;
+  }
+
+  throw new SitemapUpstreamError(
+    sectionFromEndpoint(endpoint),
+    `Paginação excedeu o limite seguro de ${PAGINATED_SITEMAP_MAX_PAGES} páginas`,
+    503
+  );
 }
 
 export function getStaticSitemapEntries(): MetadataRoute.Sitemap {
@@ -198,10 +322,10 @@ export async function getBlogSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     validPosts
       .filter((post): post is ApiRecord => Boolean(post))
       .map((post) => ({
-      url: absoluteUrl(`/blog/${getString(post, 'slug')}`),
-      lastModified: getString(post, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
+        url: absoluteUrl(`/blog/${getString(post, 'slug')}`),
+        lastModified: getString(post, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
       }))
   );
 }
@@ -239,9 +363,7 @@ async function fetchCategorySitemapFeed(revalidate = 3600): Promise<ApiRecord[]>
       });
 
       if (!response.ok) {
-        console.error(
-          `[Sitemap][categories] Upstream HTTP ${response.status} on ${query}`
-        );
+        console.error(`[Sitemap][categories] Upstream HTTP ${response.status} on ${query}`);
         throw new SitemapUpstreamError(
           'categories',
           `Falha no feed de sitemap de categorias (HTTP ${response.status})`,
@@ -285,8 +407,7 @@ export async function getCategorySitemapEntries(): Promise<MetadataRoute.Sitemap
   return normalizeSitemapEntries(
     categories.map((category) => {
       const slug = getString(category, 'slug') || getString(category, 'seo_url');
-      const canonicalPath =
-        getString(category, 'canonical_path') || `/categories/${slug}`;
+      const canonicalPath = getString(category, 'canonical_path') || `/categories/${slug}`;
       return {
         url: absoluteUrl(canonicalPath),
         lastModified:
@@ -314,8 +435,7 @@ export async function getCompanyCategorySitemapEntries(): Promise<MetadataRoute.
       .map((category) => {
         const id = getNumber(category, 'id') as number;
         const name = getString(category, 'name') as string;
-        const seoUrl = (getString(category, 'seo_url') ||
-          getString(category, 'slug')) as string;
+        const seoUrl = (getString(category, 'seo_url') || getString(category, 'slug')) as string;
         return {
           url: absoluteUrl(
             `/companies/categorias/${buildCategorySegment({ id, name, seo_url: seoUrl })}`
@@ -336,38 +456,56 @@ export async function getLocalRankingSitemapEntries(): Promise<MetadataRoute.Sit
   return normalizeSitemapEntries(
     rankings
       .filter((item) => {
-      return (
-        getString(item, 'category_slug') &&
-        getString(item, 'state') &&
-        getString(item, 'city_slug')
-      );
+        return (
+          getString(item, 'category_slug') &&
+          getString(item, 'state') &&
+          getString(item, 'city_slug')
+        );
       })
       .map((item) => ({
-      url: absoluteUrl(
-        `/melhores-empresas/${getString(item, 'category_slug')}/${getString(
-          item,
-          'state'
-        )}/${getString(item, 'city_slug')}`
-      ),
-      lastModified: getString(item, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
+        url: absoluteUrl(
+          `/melhores-empresas/${getString(item, 'category_slug')}/${getString(
+            item,
+            'state'
+          )}/${getString(item, 'city_slug')}`
+        ),
+        lastModified: getString(item, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
       }))
   );
 }
 
 export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const companies = await fetchRecords('companies?status=active&per_page=100');
-  return normalizeSitemapEntries(
-    companies
-      .filter((company) => getString(company, 'slug'))
-      .map((company) => ({
-      url: absoluteUrl(`/companies/${getString(company, 'slug')}`),
+  const companies = await fetchPaginatedRecords(
+    'companies?status=active',
+    COMPANY_SITEMAP_PAGE_SIZE,
+    900
+  );
+  const entries = companies
+    .filter((company) => getString(company, 'slug'))
+    .map((company) => ({
+      url: absoluteUrl(
+        buildCompanyPath(
+          getString(company, 'slug'),
+          getString(company, 'name'),
+          getNumber(company, 'id')
+        )
+      ),
       lastModified: getString(company, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
       changeFrequency: 'daily' as const,
       priority: 0.9,
-      }))
-  );
+    }));
+
+  if (entries.length > MAX_URLS_PER_SITEMAP) {
+    throw new SitemapUpstreamError(
+      'companies',
+      `A seção companies excede o limite de ${MAX_URLS_PER_SITEMAP} URLs; particionamento necessário`,
+      503
+    );
+  }
+
+  return normalizeSitemapEntries(entries);
 }
 
 /** Cada serviço ativo tem URL indexável própria, sem misturar empresas ou rascunhos. */
@@ -420,7 +558,13 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
             next: { revalidate: 3600 },
             signal: controller.signal,
           });
-          if (!response.ok) return null;
+          if (!response.ok) {
+            throw new SitemapUpstreamError(
+              'local-solar',
+              `Falha ao verificar página local (HTTP ${response.status})`,
+              response.status || 503
+            );
+          }
 
           const payload = await response.json();
           if (!isLocalPageIndexable(payload)) {
@@ -433,8 +577,15 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
             changeFrequency: 'weekly' as const,
             priority: page.priority,
           };
-        } catch {
-          return null;
+        } catch (error) {
+          if (error instanceof SitemapUpstreamError) throw error;
+
+          console.error('[Sitemap][local-solar] Network/timeout failure:', error);
+          throw new SitemapUpstreamError(
+            'local-solar',
+            'Falha de comunicação ou timeout ao verificar páginas locais',
+            503
+          );
         } finally {
           clearTimeout(timeout);
         }
@@ -449,25 +600,41 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
 export async function getCreatorSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   if (!CREATOR_EXPERIENCE_ENABLED) return [];
   const creators = await fetchRecords('creators?per_page=100');
-  const entries = await Promise.all(creators.flatMap((creator) => {
-    const slug = getString(creator, 'public_slug');
-    if (!slug || creator.creator_enabled !== true) return [];
-    return [fetchRecords(`creators/${encodeURIComponent(slug)}/publications`, 1800).then((publications) => [
-      { url: absoluteUrl(`/creators/${slug}`), priority: 0.7, changeFrequency: 'weekly' as const },
-      ...publications.flatMap((publication) => {
-        const postSlug = getString(publication, 'slug');
-        if (!postSlug) return [];
-        return [{ url: absoluteUrl(`/creators/${slug}/posts/${postSlug}`), priority: 0.6, changeFrequency: 'weekly' as const }];
-      }),
-    ])];
-  }));
+  const entries = await Promise.all(
+    creators.flatMap((creator) => {
+      const slug = getString(creator, 'public_slug');
+      if (!slug || creator.creator_enabled !== true) return [];
+      return [
+        fetchRecords(`creators/${encodeURIComponent(slug)}/publications`, 1800).then(
+          (publications) => [
+            {
+              url: absoluteUrl(`/creators/${slug}`),
+              priority: 0.7,
+              changeFrequency: 'weekly' as const,
+            },
+            ...publications.flatMap((publication) => {
+              const postSlug = getString(publication, 'slug');
+              if (!postSlug) return [];
+              return [
+                {
+                  url: absoluteUrl(`/creators/${slug}/posts/${postSlug}`),
+                  priority: 0.6,
+                  changeFrequency: 'weekly' as const,
+                },
+              ];
+            }),
+          ]
+        ),
+      ];
+    })
+  );
   return normalizeSitemapEntries(entries.flat());
 }
 
 export async function getGroupSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const groups = await fetchRecords('groups?per_page=500');
   const entries: MetadataRoute.Sitemap = [
-    { url: absoluteUrl('/groups'), priority: 0.8, changeFrequency: 'daily' as const }
+    { url: absoluteUrl('/groups'), priority: 0.8, changeFrequency: 'daily' as const },
   ];
 
   groups.forEach((group) => {

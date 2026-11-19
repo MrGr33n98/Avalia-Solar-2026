@@ -32,7 +32,8 @@ module Api
           render json: { data: data }, status: :ok
         rescue StandardError => e
           Rails.logger.error("[SitemapsController] Failed to generate local rankings: #{e.message}")
-          render json: { data: [] }, status: :ok
+          response.headers['Cache-Control'] = 'no-store'
+          render json: { error: 'Local rankings sitemap temporarily unavailable' }, status: :service_unavailable
         end
       end
 
@@ -45,7 +46,8 @@ module Api
           render json: { data: data }, status: :ok
         rescue StandardError => e
           Rails.logger.error("[SitemapsController] Failed to generate group posts sitemap: #{e.message}")
-          render json: { data: [] }, status: :ok
+          response.headers['Cache-Control'] = 'no-store'
+          render json: { error: 'Group posts sitemap temporarily unavailable' }, status: :service_unavailable
         end
       end
 

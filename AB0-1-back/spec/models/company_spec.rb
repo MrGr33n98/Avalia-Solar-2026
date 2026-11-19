@@ -60,6 +60,13 @@ RSpec.describe Company, type: :model do
       expect(company.errors[:minimum_ticket]).to be_present
     end
 
+    it 'normaliza caracteres de controle em project_types antes da validação' do
+      company = build(:company, project_types: ["Carregadores \npara Veículos Elétricos"])
+
+      expect(company).to be_valid
+      expect(company.project_types).to eq(['Carregadores para Veículos Elétricos'])
+    end
+
     context 'corporate email validation' do
       it 'allows public email when status is pending' do
         company = build(:company, status: 'pending', email_public: 'test@gmail.com')
