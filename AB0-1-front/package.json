@@ -25,7 +25,8 @@
     "perf:lhci": "npx @lhci/cli@0.14.x autorun --config=./lighthouserc.json",
     "perf:warm-cache": "node script/warm-home-cache.mjs",
     "perf:simulate-cache-fallback": "node script/simulate-home-cache-fallback.mjs",
-    "test:banners": "cross-env NODE_ENV=development jest --runInBand components/blog/BannerContainer.a11y.spec.tsx components/compare/ComparisonSponsoredRecommendation.test.tsx components/notifications/PromotedCompanyCard.test.tsx __tests__/companies/SponsoredBanner.test.tsx"
+    "test:banners": "cross-env NODE_ENV=development jest --runInBand components/blog/BannerContainer.a11y.spec.tsx components/compare/ComparisonSponsoredRecommendation.test.tsx components/notifications/PromotedCompanyCard.test.tsx __tests__/companies/SponsoredBanner.test.tsx",
+    "perf:report": "node script/performance/collect-lighthouse-measurements.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.2.3",
