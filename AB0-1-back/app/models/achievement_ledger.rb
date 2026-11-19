@@ -20,7 +20,7 @@ class AchievementLedger < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[achievement_badge_id admin_user_id created_at id idempotency_key kind metadata updated_at user_id xp_delta]
+    %w[achievement_badge_id admin_user_id created_at id idempotency_key kind reason updated_at user_id xp_delta]
   end
 
   def self.ransackable_associations(_auth_object = nil)

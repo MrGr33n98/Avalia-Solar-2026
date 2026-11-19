@@ -3,114 +3,70 @@
 ActiveAdmin.register UserAchievement do
   menu parent: 'Gamificação', label: 'Conquistas de Usuários', priority: 2
 
-  actions :index, :show, :destroy
+  # Histórico de conquistas não sofre exclusão física: revogações são transições
+  # de estado auditadas no ledger (ver Gamification::AdminAchievementService).
+  actions :index, :show
+  config.batch_actions = false
 
-  filter :user, as: :select, collection: -> { User.where(role: 'review').order(:name).limit(100) }
+  filter :user, as: :select, collection: -> { User.where(role: 'review').order(:name).limit(100).pluck(:name, :id) }
   filter :achievement_badge, as: :select, collection: -> { AchievementBadge.order(:name) }
   filter :state, as: :select, collection: UserAchievement::STATES
   filter :unlocked_at
   filter :share_token
 
   scope :all, default: true
-  scope('Desbloqueados') { |s| s.unlocked }
-  scope('Revogados') { |s| s.revoked }
+  scope('Desbloqueados', &:unlocked)
+  scope('Revogados', &:revoked)
+
+  controller do
+    def scoped_collection
+      super.includes(:user, :achievement_badge).references(:user, :achievement_badge)
+    end
+
+    private
+
+    def achievement_service
+      Gamification::AdminAchievementService.new(admin_user: current_admin_user)
+    end
+
+    def redirect_with_result(path, result, success_message)
+      if result.applied?
+        redirect_to path, notice: success_message
+      elsif result.noop?
+        redirect_to path, notice: 'Nenhuma alteração aplicada: a conquista já estava no estado solicitado.'
+      else
+        redirect_to path, flash: { error: result.error }
+      end
+    end
+  end
 
   member_action :revoke, method: :post do
-    user_achievement = resource
-    reason = params[:justification].to_s.strip
-
-    if reason.length < 20
-      flash[:error] = 'A justificativa de revogação deve conter no mínimo 20 caracteres.'
-      return redirect_to admin_user_achievement_path(user_achievement)
-    end
-
-    ActiveRecord::Base.transaction do
-      user_achievement.revoke!
-      AchievementLedger.create!(
-        user: user_achievement.user,
-        achievement_badge: user_achievement.achievement_badge,
-        kind: 'manual_revoke',
-        points_delta: -user_achievement.achievement_badge.points_xp,
-        idempotency_key: "manual_revoke_#{user_achievement.id}_#{Time.current.to_f}",
-        metadata: {
-          admin_user_id: current_admin_user.id,
-          admin_email: current_admin_user.email,
-          reason: reason
-        }
-      )
-    end
-
-    redirect_to admin_user_achievement_path(user_achievement), notice: 'Conquista revogada com sucesso e registrada no livro-razão.'
+    result = achievement_service.revoke(resource, reason: params[:justification])
+    redirect_with_result(admin_user_achievement_path(resource), result,
+                         'Conquista revogada com sucesso e registrada no livro-razão.')
   end
 
   member_action :reinstate, method: :post do
-    user_achievement = resource
-
-    ActiveRecord::Base.transaction do
-      user_achievement.reinstate!
-      AchievementLedger.create!(
-        user: user_achievement.user,
-        achievement_badge: user_achievement.achievement_badge,
-        kind: 'reinstated',
-        points_delta: user_achievement.achievement_badge.points_xp,
-        idempotency_key: "reinstate_#{user_achievement.id}_#{Time.current.to_f}",
-        metadata: {
-          admin_user_id: current_admin_user.id,
-          admin_email: current_admin_user.email,
-          reason: 'Restabelecida administrativamente'
-        }
-      )
-    end
-
-    redirect_to admin_user_achievement_path(user_achievement), notice: 'Conquista restabelecida com sucesso.'
+    result = achievement_service.reinstate(resource, reason: params[:justification])
+    redirect_with_result(admin_user_achievement_path(resource), result,
+                         'Conquista restabelecida com sucesso e registrada no livro-razão.')
   end
 
   collection_action :manual_grant, method: :post do
     user = User.find_by(id: params[:user_id])
     badge = AchievementBadge.find_by(id: params[:badge_id])
-    reason = params[:justification].to_s.strip
-
-    if user.nil? || badge.nil?
-      flash[:error] = 'Usuário ou Conquista inválida.'
-      return redirect_to admin_user_achievements_path
-    end
-
-    if reason.length < 20
-      flash[:error] = 'A justificativa de concessão manual deve conter no mínimo 20 caracteres.'
-      return redirect_to admin_user_achievements_path
-    end
-
-    ActiveRecord::Base.transaction do
-      ua = UserAchievement.find_or_initialize_by(user: user, achievement_badge: badge)
-      ua.state = 'unlocked'
-      ua.unlocked_at ||= Time.current
-      ua.revoked_at = nil
-      ua.save!
-
-      AchievementLedger.create!(
-        user: user,
-        achievement_badge: badge,
-        kind: 'manual_grant',
-        points_delta: badge.points_xp,
-        idempotency_key: "manual_grant_#{user.id}_#{badge.id}_#{Time.current.to_f}",
-        metadata: {
-          admin_user_id: current_admin_user.id,
-          admin_email: current_admin_user.email,
-          reason: reason
-        }
-      )
-    end
-
-    redirect_to admin_user_achievements_path, notice: "Conquista #{badge.name} concedida manualmente para #{user.name}."
+    result = achievement_service.grant(user: user, badge: badge, reason: params[:justification])
+    message = "Conquista #{badge&.name} concedida manualmente para #{user&.name}." if result.applied?
+    redirect_with_result(admin_user_achievements_path, result, message)
   end
 
-  action_item :revoke, only: :show, if: -> { resource.unlocked? } do
-    link_to 'Revogar Conquista', '#', class: 'button', onclick: "
-      var reason = prompt('Informe a justificativa obrigatória para revogar (mínimo 20 caracteres):');
-      if (reason && reason.length >= 20) {
+  justification_onclick = lambda do |path, label|
+    <<~JS
+      var reason = prompt('Informe a justificativa obrigatória para #{label} (mínimo 20 caracteres):');
+      if (reason && reason.trim().length >= 20) {
         var form = document.createElement('form');
         form.method = 'POST';
-        form.action = '#{revoke_admin_user_achievement_path(resource)}';
+        form.action = '#{path}';
         var csrf = document.querySelector('meta[name=csrf-token]');
         if (csrf) {
           var inputCsrf = document.createElement('input');
@@ -130,18 +86,30 @@ ActiveAdmin.register UserAchievement do
         alert('A justificativa deve ter no mínimo 20 caracteres.');
       }
       return false;
-    "
+    JS
+  end
+
+  action_item :revoke, only: :show, if: -> { resource.unlocked? } do
+    link_to 'Revogar Conquista', '#', class: 'button',
+                                      onclick: justification_onclick.call(revoke_admin_user_achievement_path(resource),
+                                                                          'revogar')
   end
 
   action_item :reinstate, only: :show, if: -> { resource.revoked? } do
-    link_to 'Restabelecer Conquista', reinstate_admin_user_achievement_path(resource), method: :post, data: { confirm: 'Deseja restabelecer esta conquista?' }
+    link_to 'Restabelecer Conquista', '#', class: 'button',
+                                           onclick: justification_onclick.call(
+                                             reinstate_admin_user_achievement_path(resource), 'restabelecer'
+                                           )
   end
 
   index do
-    selectable_column
     id_column
-    column 'Usuário', :user, sortable: 'users.name'
-    column 'Conquista', :achievement_badge, sortable: 'achievement_badges.name'
+    column 'Usuário', sortable: 'users.name' do |ua|
+      auto_link(ua.user, ua.user.name.presence || ua.user.email)
+    end
+    column 'Conquista', sortable: 'achievement_badges.name' do |ua|
+      auto_link(ua.achievement_badge, ua.achievement_badge.name)
+    end
     column 'Status' do |ua|
       status_tag ua.state, class: ua.unlocked? ? 'yes' : 'no'
     end
@@ -159,8 +127,8 @@ ActiveAdmin.register UserAchievement do
   show do
     attributes_table do
       row :id
-      row :user
-      row :achievement_badge
+      row('Usuário') { |ua| auto_link(ua.user, ua.user.name.presence || ua.user.email) }
+      row('Conquista') { |ua| auto_link(ua.achievement_badge, ua.achievement_badge.name) }
       row :state do |ua|
         status_tag ua.state
       end
@@ -169,7 +137,8 @@ ActiveAdmin.register UserAchievement do
       row :share_token
       row 'URL Pública de Verificação' do |ua|
         if ua.share_token.present?
-          link_to "/conquistas/verificar/#{ua.share_token}", "/conquistas/verificar/#{ua.share_token}", target: '_blank'
+          link_to "/conquistas/verificar/#{ua.share_token}", "/conquistas/verificar/#{ua.share_token}",
+                  target: '_blank'
         end
       end
       row :created_at
@@ -177,13 +146,15 @@ ActiveAdmin.register UserAchievement do
     end
 
     panel 'Histórico de Auditoria no Livro-Razão' do
-      table_for AchievementLedger.where(user: user_achievement.user, achievement_badge: user_achievement.achievement_badge).order(created_at: :desc) do
+      ledgers = AchievementLedger.includes(:admin_user)
+                                 .where(user_id: resource.user_id, achievement_badge_id: resource.achievement_badge_id)
+                                 .order(created_at: :desc)
+      table_for ledgers do
         column 'Evento', :kind
-        column 'Pontos (XP)', :points_delta
+        column 'XP', :xp_delta
+        column('Administrador') { |ledger| ledger.admin_user&.email || 'Sistema' }
+        column 'Justificativa', :reason
         column 'Data', :created_at
-        column 'Metadados / Justificativa' do |ledger|
-          ledger.metadata.to_json
-        end
       end
     end
   end

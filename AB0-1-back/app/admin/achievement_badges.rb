@@ -3,6 +3,10 @@
 ActiveAdmin.register AchievementBadge do
   menu parent: 'Gamificação', label: 'Catálogo de Conquistas', priority: 1
 
+  # Sem exclusão física (preserva histórico); aposente conquistas com `active: false`.
+  actions :all, except: [:destroy]
+  config.batch_actions = false
+
   permit_params :name, :slug, :category, :tier, :points_xp, :active, :action_enum,
                 :threshold, :position, :description, :earned_asset_path, :locked_asset_path, :revocable
 
@@ -14,7 +18,6 @@ ActiveAdmin.register AchievementBadge do
   filter :points_xp
 
   index do
-    selectable_column
     id_column
     column :asset do |badge|
       if badge.earned_asset_path.present?
@@ -66,7 +69,7 @@ ActiveAdmin.register AchievementBadge do
     panel 'Usuários com esta Conquista (Recentes)' do
       table_for achievement_badge.user_achievements.includes(:user).order(unlocked_at: :desc).limit(25) do
         column 'Usuário' do |ua|
-          link_to ua.user.name, admin_user_path(ua.user)
+          auto_link(ua.user, ua.user.name.presence || ua.user.email)
         end
         column 'Status' do |ua|
           status_tag ua.state
@@ -74,9 +77,7 @@ ActiveAdmin.register AchievementBadge do
         column 'Desbloqueado em' do |ua|
           ua.unlocked_at&.strftime('%d/%m/%Y %H:%M')
         end
-        column 'Token' do |ua|
-          ua.share_token
-        end
+        column 'Token', :share_token
       end
     end
   end
