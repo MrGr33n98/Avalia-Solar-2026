@@ -7,6 +7,37 @@ export const SURFACE_ORIGINS = {
   api: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.avaliasolar.com.br',
 } as const;
 
+const CANONICAL_SURFACE_HOSTS = new Set(
+  [SURFACE_ORIGINS.public, SURFACE_ORIGINS.company, SURFACE_ORIGINS.crm]
+    .map((origin) => {
+      try {
+        return new URL(origin).hostname.toLowerCase();
+      } catch {
+        return '';
+      }
+    })
+    .filter(Boolean)
+);
+
+export function isCanonicalSurfaceHost(hostOrOrigin: string | null | undefined): boolean {
+  if (!hostOrOrigin) return false;
+  const raw = hostOrOrigin.trim().toLowerCase();
+  if (!raw) return false;
+
+  let hostname = raw;
+  try {
+    hostname = raw.includes('://') ? new URL(raw).hostname.toLowerCase() : raw.split(':')[0];
+  } catch {
+    hostname = raw.split(':')[0];
+  }
+
+  if (!hostname) return false;
+  if (CANONICAL_SURFACE_HOSTS.has(hostname)) return true;
+  if (CANONICAL_SURFACE_HOSTS.has(`www.${hostname}`)) return true;
+
+  return false;
+}
+
 export function getSurfaceOrigin(surface: ProductSurface): string {
   switch (surface) {
     case 'company_app':

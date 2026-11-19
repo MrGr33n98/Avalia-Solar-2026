@@ -320,7 +320,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAuth]);
 
   const getPostLoginDestination = async (nextUser: User, returnTo?: string | null, surface?: ProductSurface) => {
-    const currentSurface = surface || resolveSurfaceFromHost(typeof window !== 'undefined' ? window.location.host : '');
+    const currentHost = typeof window !== 'undefined' ? window.location.host : '';
+    const currentSurface = surface || resolveSurfaceFromHost(currentHost);
 
     // Para role=company E role=review, primeiro verificar memberships empresariais.
     if (nextUser.role === 'company' || nextUser.role === 'review') {
@@ -357,6 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           returnTo,
           activeCompanyId: companyId,
           activeMembershipsCount: activeMemberships.length,
+          currentHost,
         });
       }
 
@@ -367,6 +369,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           surface: currentSurface,
           returnTo,
           activeMembershipsCount: 0,
+          currentHost,
         });
       }
     }
@@ -383,6 +386,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           activeMembershipsCount: 0,
           creatorEnabled: profile?.creator_enabled,
           creatorSlug: profile?.public_slug,
+          currentHost,
         });
       } catch (profileError) {
         logError(profileError instanceof Error ? profileError : new Error(String(profileError)), {
@@ -395,6 +399,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: nextUser,
       surface: currentSurface,
       returnTo,
+      currentHost,
     });
   };
 
