@@ -186,22 +186,18 @@ export default function CompanyProfileShell({
               )}
 
               {/* ABA 4: FINANCIAMENTO */}
-              {showFinancing && (
-                {activeTab === 'financing' && (
+              {showFinancing && activeTab === 'financing' && (
               <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
                   <CompanyFinancing company={company} />
                 </TabsContent>
               )}
-              )}
 
               {/* ABA 5: PROJETOS (Apenas se a empresa tiver direito à galeria de mídia) */}
-              {showGallery && (
-                {activeTab === 'projects' && (
+              {showGallery && activeTab === 'projects' && (
               <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
                   <ProjectsGallery companyId={company.id} companyName={company.name} />
                   <MaterialsLibrary companyId={company.id} />
                 </TabsContent>
-              )}
               )}
 
               {/* ABA 6: CONTATO */}
