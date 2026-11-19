@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, Suspense } from 'react';
-import * as Sentry from '@sentry/nextjs';
 
 import { hasAnalyticsConsent, onConsentChange } from '@/lib/analytics/consent';
 import { getPageTemplateInfo } from '@/lib/analytics/page-template';
@@ -238,8 +237,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
               const distinctId = ph.get_distinct_id();
               const sessionId = ph.get_session_id();
-              if (distinctId) Sentry.setTag('posthog_distinct_id', distinctId);
-              if (sessionId) Sentry.setTag('posthog_session_id', sessionId);
+              // Keep Sentry out of the mandatory provider bundle.
+              if (distinctId || sessionId) {
+                void import('@sentry/nextjs').then(({ setTag }) => {
+                  if (distinctId) setTag('posthog_distinct_id', distinctId);
+                  if (sessionId) setTag('posthog_session_id', sessionId);
+                }).catch(() => undefined);
+              }
 
               if (process.env.NODE_ENV === 'development') {
                 console.log('[PostHog] Inicializado. ID:', ph.get_distinct_id());
