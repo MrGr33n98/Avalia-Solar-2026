@@ -39,6 +39,7 @@ import type { Company, Product, SearchAllResponse } from '@/lib/api';
 import { searchApi } from '@/lib/api';
 import { companiesApiSafe } from '@/lib/api-client';
 import { track, page as trackPage } from '@/lib/analytics/lazy';
+import { markAfterPaint } from '@/lib/analytics/route-performance';
 import { CONTACT } from '@/lib/site';
 import { buildCategoryPath } from '@/lib/slug';
 
@@ -138,6 +139,15 @@ function SearchPageContent({ initialPage }: { initialPage?: InitialSearchPayload
   const previousPageRef = useRef(pageParam);
   const [productFavorites, setProductFavorites] = useState<Set<number>>(new Set());
   const { isAuthenticated } = useAuth();
+  useEffect(() => {
+    if (loading) return;
+    const count = results.companies.length + results.products.length;
+    const fields = { route: '/search', result_count: count, source: 'client_post_paint' };
+    const cancelData = markAfterPaint('first_data_visible', fields);
+    const cancelResults = count ? markAfterPaint('search_first_results', fields) : () => {};
+    return () => { cancelData(); cancelResults(); };
+  }, [loading, results]);
+
 
   useEffect(() => {
     setSearchTerm(query);
