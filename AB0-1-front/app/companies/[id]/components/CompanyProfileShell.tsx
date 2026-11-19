@@ -20,12 +20,12 @@ import SidebarPremium from './SidebarPremium';
 import CompanyContactCard from './CompanyContactCard';
 
 // Importações dos subcomponentes legados de exibição para manter as abas funcionais
-import CompanyProducts from './CompanyProducts';
-import CompanyReviews from './CompanyReviews';
-import CompanyFinancing from './CompanyFinancing';
-import FaqSection from './FaqSection';
-import ProjectsGallery from './ProjectsGallery';
-import MaterialsLibrary from './MaterialsLibrary';
+const CompanyProducts = dynamic(() => import('./CompanyProducts'));
+const CompanyReviews = dynamic(() => import('./CompanyReviews'));
+const CompanyFinancing = dynamic(() => import('./CompanyFinancing'));
+const FaqSection = dynamic(() => import('./FaqSection'));
+const ProjectsGallery = dynamic(() => import('./ProjectsGallery'));
+const MaterialsLibrary = dynamic(() => import('./MaterialsLibrary'));
 
 const MapProvider = dynamic(() => import('@/components/search/MapProvider'), { ssr: false });
 
@@ -165,11 +165,14 @@ export default function CompanyProfileShell({
               </TabsContent>
 
               {/* ABA 2: PRODUTOS E SERVIÇOS (Placeholder com visualização do legado) */}
+              {activeTab === 'products' && (
               <TabsContent value="products" className="mt-0 focus-visible:outline-none">
                 <CompanyProducts products={products} loading={productsLoading} />
               </TabsContent>
+              )}
 
               {/* ABA 3: AVALIAÇÕES (Placeholder com mural de reviews legadas) */}
+              {activeTab === 'reviews' && (
               <TabsContent value="reviews" className="mt-0 focus-visible:outline-none">
                 <CompanyReviews
                   reviews={reviews}
@@ -180,23 +183,29 @@ export default function CompanyProfileShell({
                   aggregates={company.review_aggregates}
                 />
               </TabsContent>
+              )}
 
               {/* ABA 4: FINANCIAMENTO */}
               {showFinancing && (
-                <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
+                {activeTab === 'financing' && (
+              <TabsContent value="financing" className="mt-0 focus-visible:outline-none">
                   <CompanyFinancing company={company} />
                 </TabsContent>
+              )}
               )}
 
               {/* ABA 5: PROJETOS (Apenas se a empresa tiver direito à galeria de mídia) */}
               {showGallery && (
-                <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
+                {activeTab === 'projects' && (
+              <TabsContent value="projects" className="mt-0 focus-visible:outline-none">
                   <ProjectsGallery companyId={company.id} companyName={company.name} />
                   <MaterialsLibrary companyId={company.id} />
                 </TabsContent>
               )}
+              )}
 
               {/* ABA 6: CONTATO */}
+              {activeTab === 'contact' && (
               <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                   <CompanyContactCard company={company} />
@@ -205,11 +214,14 @@ export default function CompanyProfileShell({
 
                 <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
               </TabsContent>
+              )}
 
               {/* ABA 7: PERGUNTAS FREQUENTES (FAQ) */}
+              {activeTab === 'faq' && (
               <TabsContent value="faq" className="mt-0 space-y-6 focus-visible:outline-none">
                 <FaqSection companyId={Number(company.id)} companyName={company.name} company={company} />
               </TabsContent>
+              )}
             </div>
 
             {/* Coluna da Direita (4 Colunas) — Sidebar Premium */}
