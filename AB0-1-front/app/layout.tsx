@@ -45,16 +45,9 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.webmanifest',
   metadataBase: new URL(SITE.url),
-  alternates: {
-    canonical: '/',
-    languages: {
-      'pt-BR': '/',
-    },
-  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: SITE.url,
     siteName: SITE.name,
     title: 'Avalia Solar | Compare Empresas de Energia Solar',
     description: SITE.description,
@@ -73,12 +66,10 @@ export const metadata: Metadata = {
     description: SITE.description,
     images: [SITE.ogImagePath],
   },
+  // Não definir index/follow globalmente: respostas HTTP 404 recebem noindex
+  // pelo Next.js, e não podem herdar diretivas positivas da home.
   robots: {
-    index: true,
-    follow: true,
     googleBot: {
-      index: true,
-      follow: true,
       'max-image-preview': 'large',
       'max-snippet': -1,
     },

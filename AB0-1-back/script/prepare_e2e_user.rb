@@ -71,42 +71,55 @@ raise 'E2E banner fixture must have no custom banner' if free_banner_company.ban
 
 puts "Empresa E2E Free pronta: #{free_banner_company.slug}"
 
-def prepare_e2e_user(email:, password:, name:)
-  user = User.find_or_initialize_by(email: email)
-  user.assign_attributes(
-    name: name,
-    city: 'São Paulo',
-    state: 'SP',
-    role: 'review',
-    status: :active,
-    terms_accepted: true,
-    terms_accepted_at: Time.current,
-    public_name_consent: true,
-    display_full_name_consent: true,
-    review_name_consent: true,
-    lgpd_name_consent: true,
-    confirmed_at: user.confirmed_at || Time.current,
-    password: password,
-    password_confirmation: password
-  )
-  user.skip_confirmation_notification!
-  user.save!
-  user
-end
-
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
 password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
-prepare_e2e_user(email: email, password: password, name: 'Usuário E2E Avalia Solar')
 
-puts "Usuário E2E pronto: #{email}"
+user = User.find_or_initialize_by(email: email)
+user.assign_attributes(
+  name: 'Usuário E2E Avalia Solar',
+  city: 'São Paulo',
+  state: 'SP',
+  role: 'review',
+  status: :active,
+  terms_accepted: true,
+  terms_accepted_at: Time.current,
+  public_name_consent: true,
+  display_full_name_consent: true,
+  review_name_consent: true,
+  lgpd_name_consent: true,
+  confirmed_at: user.confirmed_at || Time.current,
+  password: password,
+  password_confirmation: password
+)
+user.skip_confirmation_notification!
+user.save!
 
-# A suíte de logout chama `logout_all`, que revoga todas as sessões do usuário.
-# Mantê-la em uma conta dedicada evita invalidar, em paralelo, as sessões dos
-# fluxos de reviewer e de propostas que usam E2E_USER_EMAIL.
-auth_email = ENV.fetch('E2E_AUTH_EMAIL', 'auth@avaliasolar.test')
-auth_password = auth_email == email ? password : ENV.fetch('E2E_AUTH_PASSWORD', password)
+puts "Usuário E2E pronto: #{user.email}"
 
-unless auth_email == email
-  prepare_e2e_user(email: auth_email, password: auth_password, name: 'Usuário E2E de Autenticação')
-  puts "Usuário E2E de autenticação pronto: #{auth_email}"
-end
+# Os testes do Review Dashboard não podem compartilhar a conta E2E usada por
+# auth-logout.spec.ts: logout_all revoga os JWTs de todos os dispositivos do
+# usuário. Um reviewer independente elimina a interferência entre workers,
+# preservando login, cookies e autorização Rails reais.
+reviewer_email = ENV.fetch('E2E_REVIEWER_EMAIL', 'reviewer-ci@avaliasolar.test')
+raise 'E2E reviewer must be isolated from the shared auth fixture' if reviewer_email == email
+
+reviewer = User.find_or_initialize_by(email: reviewer_email)
+reviewer.assign_attributes(
+  name: 'Avaliador E2E Avalia Solar',
+  city: 'Florianópolis',
+  state: 'SC',
+  role: 'review',
+  status: :active,
+  terms_accepted: true,
+  terms_accepted_at: Time.current,
+  public_name_consent: true,
+  display_full_name_consent: true,
+  review_name_consent: true,
+  lgpd_name_consent: true,
+  confirmed_at: reviewer.confirmed_at || Time.current,
+  password: password,
+  password_confirmation: password
+)
+reviewer.skip_confirmation_notification!
+reviewer.save!
+puts "Revisor E2E isolado pronto: #{reviewer.email}"
