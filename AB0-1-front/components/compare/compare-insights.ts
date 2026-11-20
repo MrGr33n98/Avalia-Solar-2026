@@ -1,5 +1,6 @@
 import type { Company } from '@/lib/api';
 import { CompareCompany, mapCompanyToCompareCompany } from './mapCompanyToCompareCompany';
+import { COMPARE_RECOMMENDATION_LIMIT } from '@/lib/comparison/config';
 
 const normalizedText = (value?: string | null) =>
   (value || '')
@@ -61,9 +62,10 @@ export function getRecommendedCompanies({
   allCompanies,
   city,
   categoryIds,
-  limit = 3,
+  limit = COMPARE_RECOMMENDATION_LIMIT,
 }: RecommendationOptions): CompareCompany[] {
   const selectedIds = new Set(selectedCompanies.map((company) => company.id));
+  const candidateIds = new Set<number>();
   const contextCity = normalizedText(city || selectedCompanies[0]?.city);
   const selectedCategoryIds = categoryIds?.length
     ? categoryIds
@@ -76,7 +78,8 @@ export function getRecommendedCompanies({
   return allCompanies
     .map(mapCompanyToCompareCompany)
     .filter((company) => {
-      if (company.id <= 0 || selectedIds.has(company.id)) return false;
+      if (company.id <= 0 || selectedIds.has(company.id) || candidateIds.has(company.id)) return false;
+      candidateIds.add(company.id);
       // Não recomendar bancos ou financeiras se o usuário está comparando empresas do setor solar
       if (!hasFinanceSelected && isFinanceCompany(company)) return false;
       return true;
