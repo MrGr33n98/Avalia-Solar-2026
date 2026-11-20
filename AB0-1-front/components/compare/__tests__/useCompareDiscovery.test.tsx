@@ -10,9 +10,9 @@ const requestMock = api.request as jest.Mock;
 const company = (id: number) => ({ id, name: `Empresa Solar ${id}`, status: 'active', city: 'Florianópolis', state: 'SC' });
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  const client = new QueryClient({
+  const [client] = React.useState(() => new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
