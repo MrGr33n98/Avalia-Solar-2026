@@ -71,27 +71,42 @@ raise 'E2E banner fixture must have no custom banner' if free_banner_company.ban
 
 puts "Empresa E2E Free pronta: #{free_banner_company.slug}"
 
+def prepare_e2e_user(email:, password:, name:)
+  user = User.find_or_initialize_by(email: email)
+  user.assign_attributes(
+    name: name,
+    city: 'São Paulo',
+    state: 'SP',
+    role: 'review',
+    status: :active,
+    terms_accepted: true,
+    terms_accepted_at: Time.current,
+    public_name_consent: true,
+    display_full_name_consent: true,
+    review_name_consent: true,
+    lgpd_name_consent: true,
+    confirmed_at: user.confirmed_at || Time.current,
+    password: password,
+    password_confirmation: password
+  )
+  user.skip_confirmation_notification!
+  user.save!
+  user
+end
+
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
 password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
+prepare_e2e_user(email: email, password: password, name: 'Usuário E2E Avalia Solar')
 
-user = User.find_or_initialize_by(email: email)
-user.assign_attributes(
-  name: 'Usuário E2E Avalia Solar',
-  city: 'São Paulo',
-  state: 'SP',
-  role: 'review',
-  status: :active,
-  terms_accepted: true,
-  terms_accepted_at: Time.current,
-  public_name_consent: true,
-  display_full_name_consent: true,
-  review_name_consent: true,
-  lgpd_name_consent: true,
-  confirmed_at: user.confirmed_at || Time.current,
-  password: password,
-  password_confirmation: password
-)
-user.skip_confirmation_notification!
-user.save!
+puts "Usuário E2E pronto: #{email}"
 
-puts "Usuário E2E pronto: #{user.email}"
+# A suíte de logout chama `logout_all`, que revoga todas as sessões do usuário.
+# Mantê-la em uma conta dedicada evita invalidar, em paralelo, as sessões dos
+# fluxos de reviewer e de propostas que usam E2E_USER_EMAIL.
+auth_email = ENV.fetch('E2E_AUTH_EMAIL', 'auth@avaliasolar.test')
+auth_password = auth_email == email ? password : ENV.fetch('E2E_AUTH_PASSWORD', password)
+
+unless auth_email == email
+  prepare_e2e_user(email: auth_email, password: auth_password, name: 'Usuário E2E de Autenticação')
+  puts "Usuário E2E de autenticação pronto: #{auth_email}"
+end

@@ -50,6 +50,8 @@ services:
       E2E_LOGIN_THROTTLE_LIMIT: "20"
       E2E_USER_EMAIL: ${E2E_USER_EMAIL:-test@avaliasolar.com.br}
       E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:-Password123}
+      E2E_AUTH_EMAIL: ${E2E_AUTH_EMAIL:-auth@avaliasolar.test}
+      E2E_AUTH_PASSWORD: ${E2E_AUTH_PASSWORD:-Password123}
     ports:
       - "3001:3001"
     command: >

@@ -1,17 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('JWT Revocation and Logout', () => {
-  // Os testes compartilham o usuário E2E e um deles chama POST /api/v1/auth/logout_all
-  // (que revoga globalmente todos os JWTs do usuário). Executar em série evita
-  // interferência cruzada sem enfraquecer a revogação JWT.
+  // A suíte usa uma conta dedicada porque POST /api/v1/auth/logout_all revoga
+  // globalmente todos os JWTs do usuário. O modo serial evita interferência
+  // entre os próprios casos desta suíte sem enfraquecer a revogação JWT.
   test.describe.configure({ mode: 'serial' });
 
   const loginForm = (page: import('@playwright/test').Page) =>
     page.locator('form').filter({ has: page.locator('#email') });
 
   const testUser = {
-    email: process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br',
-    password: process.env.E2E_USER_PASSWORD || 'Password123',
+    email: process.env.E2E_AUTH_EMAIL || 'auth@avaliasolar.test',
+    password: process.env.E2E_AUTH_PASSWORD || process.env.E2E_USER_PASSWORD || 'Password123',
   };
 
   test.beforeEach(async ({ page }) => {
@@ -177,23 +177,29 @@ test.describe('JWT Revocation and Logout', () => {
       .toBe(true);
 
     // Wait for post-login navigation to settle on the same origin (never bouncing to production)
-    await page.waitForURL((url) => url.origin === expectedOrigin && !url.pathname.startsWith('/login'), {
-      timeout: 15000,
-    });
+    await page.waitForURL(
+      (url) => url.origin === expectedOrigin && !url.pathname.startsWith('/login'),
+      {
+        timeout: 15000,
+      }
+    );
     expect(new URL(page.url()).origin).toBe(expectedOrigin);
 
     // Should be able to access protected resources
     await expect
-      .poll(async () => {
-        try {
-          return await page.evaluate(async () => {
-            const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
-            return res.status;
-          });
-        } catch {
-          return 0;
-        }
-      }, { timeout: 15000 })
+      .poll(
+        async () => {
+          try {
+            return await page.evaluate(async () => {
+              const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+              return res.status;
+            });
+          } catch {
+            return 0;
+          }
+        },
+        { timeout: 15000 }
+      )
       .toBe(200);
   });
 });

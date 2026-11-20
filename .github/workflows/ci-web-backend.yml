@@ -580,6 +580,8 @@ jobs:
         env:
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
+          E2E_AUTH_EMAIL: ${{ secrets.E2E_AUTH_EMAIL || 'auth@avaliasolar.test' }}
+          E2E_AUTH_PASSWORD: ${{ secrets.E2E_AUTH_PASSWORD || 'Password123' }}
         run: |
           set -Eeuo pipefail
           export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
@@ -631,6 +633,8 @@ jobs:
           E2E_PLACEMENT_SMOKE: true
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
+          E2E_AUTH_EMAIL: ${{ secrets.E2E_AUTH_EMAIL || 'auth@avaliasolar.test' }}
+          E2E_AUTH_PASSWORD: ${{ secrets.E2E_AUTH_PASSWORD || 'Password123' }}
         # Bloqueia regressões nos fluxos centrais com o conjunto E2E crítico.
         run: >-
           npx playwright test --project=chromium
@@ -652,6 +656,8 @@ jobs:
           E2E_PLACEMENT_SMOKE: true
           E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL || 'test@avaliasolar.com.br' }}
           E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD || 'Password123' }}
+          E2E_AUTH_EMAIL: ${{ secrets.E2E_AUTH_EMAIL || 'auth@avaliasolar.test' }}
+          E2E_AUTH_PASSWORD: ${{ secrets.E2E_AUTH_PASSWORD || 'Password123' }}
         run: npx playwright test
 
       - name: Collect frontend and backend logs on E2E failure
