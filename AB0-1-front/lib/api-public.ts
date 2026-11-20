@@ -1,16 +1,10 @@
-import { ApiError, toApiError } from './api-error';
+import { ApiError, isApiError, toApiError } from './api-error';
 import { buildApiUrl, getApiRequestHeaders } from './api-config';
 import type { Category, CategorySolutionType, Company, Review } from './api';
 import type { Banner } from './api-banner-types';
 import type { LocalSolarPageResponse } from './api-client';
 
-type QueryValue =
-  | string
-  | number
-  | boolean
-  | Array<string | number | boolean>
-  | null
-  | undefined;
+type QueryValue = string | number | boolean | Array<string | number | boolean> | null | undefined;
 
 type PublicFetchOptions<TFallback = undefined> = {
   params?: Record<string, QueryValue>;
@@ -303,9 +297,7 @@ export const publicCompaniesApi = {
     return unwrapArray<Company>(payload, 'companies');
   },
 
-  getFeatured: async (
-    options?: PublicFetchOptions<Company[]>
-  ): Promise<Company[]> => {
+  getFeatured: async (options?: PublicFetchOptions<Company[]>): Promise<Company[]> => {
     const payload = await fetchApiPublic<unknown, Company[]>('companies/featured', {
       revalidate: options?.revalidate,
       tags: options?.tags || ['companies', 'featured-companies'],
@@ -321,18 +313,18 @@ export const publicCompaniesApi = {
     params?: PublicCompanyListParams,
     options?: PublicFetchOptions<{ data: Company[]; meta?: { pagination?: unknown } }>
   ): Promise<{ data: Company[]; meta?: { pagination?: unknown } }> => {
-    const payload = await fetchApiPublic<unknown, { data: Company[]; meta?: { pagination?: unknown } }>(
-      'companies',
-      {
-        params,
-        revalidate: options?.revalidate,
-        tags: options?.tags || ['companies'],
-        fallback: options?.fallback,
-        silent: options?.silent,
-        signal: options?.signal,
-        timeoutMs: options?.timeoutMs,
-      }
-    );
+    const payload = await fetchApiPublic<
+      unknown,
+      { data: Company[]; meta?: { pagination?: unknown } }
+    >('companies', {
+      params,
+      revalidate: options?.revalidate,
+      tags: options?.tags || ['companies'],
+      fallback: options?.fallback,
+      silent: options?.silent,
+      signal: options?.signal,
+      timeoutMs: options?.timeoutMs,
+    });
 
     const record = toRecord(payload);
     const data = record ? getRecordArray<Company>(record, 'data') : null;
@@ -402,12 +394,18 @@ export const publicCompaniesApi = {
     const encoded = encodeURIComponent(String(id));
     const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
 
-    const payload = await fetchApiPublic<unknown, null>(`companies/${encoded}`, {
-      revalidate: options?.revalidate,
-      tags: options?.tags || [`company-${encoded}`, 'companies'],
-      fallback: null,
-      silent: true,
-    });
+    let payload: unknown;
+    try {
+      payload = await fetchApiPublic<unknown>(`companies/${encoded}`, {
+        revalidate: options?.revalidate,
+        tags: options?.tags || [`company-${encoded}`, 'companies'],
+        silent: options?.silent ?? true,
+      });
+    } catch (error) {
+      if (!isApiError(error) || error.status !== 404) throw error;
+      if (!slugCandidate) return options?.fallback ?? null;
+      return publicCompaniesApi.getBySlug(String(id), options);
+    }
 
     const record = toRecord(payload);
     if (record) {
@@ -422,12 +420,17 @@ export const publicCompaniesApi = {
 
   getBySlug: async (slug: string, options?: PublicFetchOptions<Company | null>) => {
     const encoded = encodeURIComponent(slug);
-    const payload = await fetchApiPublic<unknown, null>(`companies/by_slug/${encoded}`, {
-      revalidate: options?.revalidate,
-      tags: options?.tags || [`company-${encoded}`, 'companies'],
-      fallback: null,
-      silent: options?.silent ?? true,
-    });
+    let payload: unknown;
+    try {
+      payload = await fetchApiPublic<unknown>(`companies/by_slug/${encoded}`, {
+        revalidate: options?.revalidate,
+        tags: options?.tags || [`company-${encoded}`, 'companies'],
+        silent: options?.silent ?? true,
+      });
+    } catch (error) {
+      if (!isApiError(error) || error.status !== 404) throw error;
+      return options?.fallback ?? null;
+    }
 
     const record = toRecord(payload);
     if (record) {
@@ -458,7 +461,13 @@ export const publicReviewsApi = {
 
 export const publicCategoriesApi = {
   getAll: async (
-    params?: { status?: string; featured?: boolean; category_id?: number; limit?: number; include_subcategories?: boolean },
+    params?: {
+      status?: string;
+      featured?: boolean;
+      category_id?: number;
+      limit?: number;
+      include_subcategories?: boolean;
+    },
     options?: PublicFetchOptions<Category[]>
   ): Promise<Category[]> => {
     const payload = await fetchApiPublic<unknown, Category[]>('categories', {
@@ -561,12 +570,15 @@ export const publicCategoriesApi = {
       disclaimer: string;
     }>
   ) => {
-    const payload = await fetchApiPublic<unknown, {
-      category: { id: number; name: string; slug: string };
-      solutions: CategorySolutionType[];
-      comparison_schema: Array<{ key: string; label: string }>;
-      disclaimer: string;
-    }>(`categories/${id}/solution_types/compare`, {
+    const payload = await fetchApiPublic<
+      unknown,
+      {
+        category: { id: number; name: string; slug: string };
+        solutions: CategorySolutionType[];
+        comparison_schema: Array<{ key: string; label: string }>;
+        disclaimer: string;
+      }
+    >(`categories/${id}/solution_types/compare`, {
       params: { slugs: slugs.slice(0, 3) },
       revalidate: options?.revalidate ?? 1800,
       tags: options?.tags || [`category-${id}`, 'category-solution-types'],
@@ -598,8 +610,18 @@ export const publicCategoriesApi = {
       body: JSON.stringify(context),
       cache: 'no-store',
     });
-    if (!response.ok) throw new ApiError('Não foi possível calcular o matching', { status: response.status, url: response.url, method: 'POST' });
-    return response.json() as Promise<{ query_id: string; matches: unknown[]; sponsored: unknown[]; meta: Record<string, unknown> }>;
+    if (!response.ok)
+      throw new ApiError('Não foi possível calcular o matching', {
+        status: response.status,
+        url: response.url,
+        method: 'POST',
+      });
+    return response.json() as Promise<{
+      query_id: string;
+      matches: unknown[];
+      sponsored: unknown[];
+      meta: Record<string, unknown>;
+    }>;
   },
 };
 
@@ -683,13 +705,18 @@ export const publicBadgesApi = {
     slug: string,
     options?: PublicFetchOptions<PublicBadgeResponse | null> & { companyId?: number | string }
   ): Promise<PublicBadgeResponse | null> => {
-    const companyQuery = options?.companyId ? '?company_id=' + encodeURIComponent(String(options.companyId)) : '';
-    return fetchApiPublic<PublicBadgeResponse, null>(`badges/${encodeURIComponent(slug)}` + companyQuery, {
-      // Concessões revogadas não devem continuar públicas em cache.
-      revalidate: options?.companyId ? 0 : (options?.revalidate ?? 3600),
-      tags: options?.tags || [`badge-${slug}`, 'badges'],
-      fallback: null,
-      silent: options?.silent ?? true,
-    });
+    const companyQuery = options?.companyId
+      ? '?company_id=' + encodeURIComponent(String(options.companyId))
+      : '';
+    return fetchApiPublic<PublicBadgeResponse, null>(
+      `badges/${encodeURIComponent(slug)}` + companyQuery,
+      {
+        // Concessões revogadas não devem continuar públicas em cache.
+        revalidate: options?.companyId ? 0 : (options?.revalidate ?? 3600),
+        tags: options?.tags || [`badge-${slug}`, 'badges'],
+        fallback: null,
+        silent: options?.silent ?? true,
+      }
+    );
   },
 };

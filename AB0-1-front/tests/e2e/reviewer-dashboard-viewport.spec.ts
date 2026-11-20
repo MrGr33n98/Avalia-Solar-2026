@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
+  // Use a dedicated reviewer account. Auth E2E has a logout_all test which
+  // revokes every session of its own account; the two suites run concurrently.
+  test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ page }) => {
     // Existing browser sessions carry this client-side hint. The actual JWT remains
     // an httpOnly cookie and is issued/validated by Rails; this flag is not an auth bypass.
@@ -14,11 +17,14 @@ test.describe('Reviewer Dashboard Layout and Viewport Integrity', () => {
     // session before the dashboard shell is rendered (false E2E failures).
     const loginResponse = await page.request.post('/api/v1/auth/login', {
       data: {
-        email: process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br',
+        email: process.env.E2E_REVIEWER_EMAIL || 'reviewer-ci@avaliasolar.test',
         password: process.env.E2E_USER_PASSWORD || 'Password123',
       },
     });
-    expect(loginResponse.ok(), 'E2E reviewer fixture must authenticate successfully').toBe(true);
+    expect(
+      loginResponse.ok(),
+      `E2E reviewer fixture login HTTP ${loginResponse.status()} (isolated account)`
+    ).toBe(true);
     const cookies = await page.context().cookies();
     expect(cookies.some((cookie) => cookie.name === 'jwt_token'))
       .toBe(true);

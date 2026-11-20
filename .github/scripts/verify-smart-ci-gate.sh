@@ -30,6 +30,7 @@ if [[ ( "${GITHUB_EVENT_NAME:-}" == "pull_request" || ( "${GITHUB_EVENT_NAME:-}"
         "${BACKEND_RESULT:-missing}" == "skipped" &&
         "${RANKING_FRONTEND_RESULT:-missing}" == "skipped" &&
         "${CATEGORY_RESULT:-missing}" == "skipped" &&
+        "${SEO_W0_RESULT:-missing}" == "skipped" &&
         "${E2E_RESULT:-missing}" == "skipped" ]]; then
     echo "Documentation-only PR: all documentation validations passed. Code tests safely skipped."
     exit 0
@@ -44,6 +45,7 @@ required_success "fast-feedback" "${FAST_RESULT:-missing}"
 required_success "backend-tests" "${BACKEND_RESULT:-missing}"
 required_success "ranking-frontend-gate" "${RANKING_FRONTEND_RESULT:-missing}"
 required_success "category-seo-contract-gate" "${CATEGORY_RESULT:-missing}"
+required_success "seo-w0-regression-gate" "${SEO_W0_RESULT:-missing}"
 
 if [[ "${RANKING_GATE_RESULT:-missing}" != "success" && "${RANKING_GATE_RESULT:-missing}" != "skipped" ]]; then
   echo "::error::Ranking Performance gate must be success or intentionally skipped."

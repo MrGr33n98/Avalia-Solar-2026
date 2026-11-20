@@ -2,7 +2,7 @@
  * Structural guardrails only. Actual first-paint, SEO parity and interactivity
  * remain Playwright/Lighthouse acceptance requirements.
  */
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 function source(path: string) {
@@ -15,10 +15,28 @@ describe('Spec 014 — public routes should preserve server/client split', () =>
     ['companies', 'getInitialCompaniesPage'],
     ['products', 'getInitialProducts'],
   ])('%s uses server-first initial loading', (route, loader) => {
-    const page = source(`app/${route}/page.tsx`);
+    const page = source(route === 'companies' ? 'app/companies/(directory)/page.tsx' : `app/${route}/page.tsx`);
     expect(page.trimStart().startsWith("'use client'")).toBe(false);
     expect(page).toContain(loader);
     expect(page).toContain(route === 'companies' ? 'initialCompanies' : 'initialData');
+  });
+
+  it('keeps the catalogue skeleton without streaming unknown Brand Pages as HTTP 200', () => {
+    // A loading.tsx in /companies creates an ancestor Suspense boundary for [id].
+    // Next.js 14 may stream a 200 before notFound() can set the true HTTP 404.
+    expect(existsSync(join(process.cwd(), 'app/companies/loading.tsx'))).toBe(false);
+    expect(existsSync(join(process.cwd(), 'app/companies/(directory)/loading.tsx'))).toBe(true);
+    expect(source('app/companies/(directory)/loading.tsx')).toContain('CompaniesDirectoryLoading');
+    expect(source('app/companies/[id]/page.tsx')).toContain('notFound()');
+  });
+
+  it('declares home-only canonical at the home route, never in the root layout', () => {
+    const root = source('app/layout.tsx');
+    const homepage = source('app/page.tsx');
+    expect(root).not.toContain("canonical: '/'");
+    expect(root).not.toContain('index: true');
+    expect(homepage).toContain("canonical: '/'");
+    expect(homepage).toContain('index: true');
   });
 
   it('keeps review SEO asynchronous and company identity ahead of reviews', () => {

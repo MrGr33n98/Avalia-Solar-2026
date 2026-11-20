@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
-import CompaniesPageClient from './CompaniesPageClient';
+import CompaniesPageClient from '../CompaniesPageClient';
 import { BreadcrumbSchema } from '@/components/seo/BreadcrumbSchema';
 import {
   buildCompaniesCategoriesPath,
