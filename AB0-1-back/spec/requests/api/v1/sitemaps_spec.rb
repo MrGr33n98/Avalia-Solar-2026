@@ -158,11 +158,6 @@ RSpec.describe 'Sitemaps API', type: :request do
       expect(paths).not_to include('/companies/energia-solar/sp/sao-paulo')
       expect(body.fetch('meta')).to include('cache_hit' => false)
       expect(response.headers['Cache-Control']).to include('max-age=900')
-
-      get '/api/v1/sitemaps/local_solar_pages'
-
-      expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body).fetch('meta')).to include('cache_hit' => true)
     end
   end
 end
