@@ -1,3 +1,4 @@
+import { setConsent } from '../../lib/analytics/consent';
 import {
   clearUTMs,
   getAttribution,
@@ -7,6 +8,9 @@ import {
 
 describe('UTM attribution persistence', () => {
   beforeEach(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    setConsent({ analytics: true, marketing: false });
     clearUTMs();
   });
 
@@ -44,4 +48,22 @@ describe('UTM attribution persistence', () => {
     expect(attribution?.last_touch?.values?.utm_source).toBe('meta');
     expect(attribution?.last_touch?.values?.utm_medium).toBe('paid_social');
   });
+  it('não sobrescreve a aquisição externa com banner first-party', () => {
+    updateAttribution(
+      '/landing',
+      new URLSearchParams('utm_source=google&utm_medium=organic'),
+      'https://www.google.com'
+    );
+    updateAttribution(
+      '/companies/weg',
+      new URLSearchParams('utm_source=avaliasolar_ads&utm_medium=banner&utm_campaign=banner_1'),
+      'https://www.avaliasolar.com.br/'
+    );
+
+    const attribution = getAttribution();
+    expect(getCurrentUTMs().utm_source).toBe('google');
+    expect(attribution?.last_external_touch?.values?.utm_source).toBe('google');
+    expect(attribution?.last_internal_interaction?.values?.utm_source).toBe('avaliasolar_ads');
+  });
+
 });
