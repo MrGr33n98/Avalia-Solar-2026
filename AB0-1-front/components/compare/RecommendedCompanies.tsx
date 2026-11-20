@@ -160,7 +160,7 @@ export default function RecommendedCompanies({
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-2 h-11 w-full rounded-lg border-blue-200 px-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                className="mt-2 h-11 min-h-11 shrink-0 w-full rounded-lg border-blue-200 px-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
                 onClick={() => (isFull ? setReplacement(company) : onAdd(company))}
                 aria-label={`${isFull ? 'Substituir por' : 'Adicionar'} ${company.name}`}
               >
