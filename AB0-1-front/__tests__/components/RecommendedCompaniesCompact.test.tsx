@@ -55,7 +55,10 @@ describe('RecommendedCompanies compact grid — PWA contract', () => {
     expect(within(cards[0]).getByText('Florianópolis, SC')).toBeInTheDocument();
     expect(within(cards[0]).getByText('4,7')).toBeInTheDocument();
     expect(within(cards[7]).queryByText('0,0')).not.toBeInTheDocument();
-    expect(within(cards[0]).getByRole('button', { name: `Adicionar ${companies[0].name}` })).toHaveClass('h-11');
+    const button = within(cards[0]).getByRole('button', { name: `Adicionar ${companies[0].name}` });
+    expect(button).toHaveClass('h-11');
+    expect(button).toHaveClass('min-h-11');
+    expect(button).toHaveClass('shrink-0');
   });
 
   it('does not change the selection limit or the add action', () => {
