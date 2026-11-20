@@ -18,12 +18,19 @@ export default function CategoryAdsRail({
   initialRightRailBanners,
   onHasBannersChange,
 }: CategoryAdsRailProps) {
+  // Um array vazio vindo do Server Component não representa um resultado
+  // definitivo: o backend pode não ter respondido com banners durante o SSR.
+  // Não passá-lo como initialData permite que o React Query execute a busca
+  // client-side e evita suprimir o rail por todo o staleTime.
+  const filterInitialData = initialFilterBanners?.length ? initialFilterBanners : undefined;
+  const rightRailInitialData = initialRightRailBanners?.length ? initialRightRailBanners : undefined;
+
   // Query 1: Filter sidebar banner (NO fallback to sidebar!)
   const { data: filterBanners } = useBannersQuery({
     position: 'categories_filter_sidebar',
     category_id: categoryId,
     limit: 1,
-    initialData: initialFilterBanners,
+    initialData: filterInitialData,
   });
 
   // Query 2: Right rail banner (with fallback to sidebar)
@@ -32,7 +39,7 @@ export default function CategoryAdsRail({
     fallbackPositions: ['sidebar'],
     category_id: categoryId,
     limit: 1,
-    initialData: initialRightRailBanners,
+    initialData: rightRailInitialData,
   });
 
   // Resolve banners (use query data or fallback to initial data)
