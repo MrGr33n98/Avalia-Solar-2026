@@ -25,6 +25,17 @@ module CategoryDiscovery
                          0
                        end
 
+      evaluate_counts(
+        total_count: total_count,
+        verified_count: verified_count,
+        state: state,
+        city: city
+      )
+    end
+
+    def self.evaluate_counts(total_count:, verified_count:, state:, city: nil)
+      return non_indexable('INVALID_STATE', 0, 0) if state.blank?
+
       reason_codes = []
 
       if total_count.zero?
