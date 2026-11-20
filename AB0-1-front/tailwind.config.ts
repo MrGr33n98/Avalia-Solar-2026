@@ -10,6 +10,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      minHeight: {
+        '11': '44px',
+      },
       screens: {
         dashboard: '1180px',
       },
