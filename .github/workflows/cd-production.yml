@@ -187,7 +187,7 @@ jobs:
             NEXT_PUBLIC_ENABLE_ANALYTICS=${{ vars.NEXT_PUBLIC_ENABLE_ANALYTICS || 'true' }}
             NEXT_PUBLIC_ENABLE_REALTIME=${{ vars.NEXT_PUBLIC_ENABLE_REALTIME || 'false' }}
             NEXT_PUBLIC_GTM_ID=${{ vars.NEXT_PUBLIC_GTM_ID || 'GTM-5RV76ZKR' }}
-            NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://avaliasolar.com.br' }}
+            NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.NEXT_PUBLIC_BETTER_AUTH_URL || 'https://www.avaliasolar.com.br' }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '' }}
             NEXT_PUBLIC_LINKEDIN_CLIENT_ID=${{ vars.NEXT_PUBLIC_LINKEDIN_CLIENT_ID || '' }}
             NEXT_PUBLIC_POSTHOG_KEY=${{ vars.NEXT_PUBLIC_POSTHOG_KEY || 'phc_oo5u9eWrjVdqdLRg1UbuiHnh5AZCp8SUxdgi68fGARd' }}
@@ -601,6 +601,30 @@ jobs:
             deploy_vhost "$APP_VHOST_SRC" "$APP_VHOST_DST" "app"
             deploy_vhost "$CRM_VHOST_SRC" "$CRM_VHOST_DST" "crm"
             deploy_vhost "$NPM_VHOST_SRC" "$NPM_VHOST_DST" "npm"
+
+            # Apex: somente instalar o redirect HTTPS quando o certificado do apex
+            # já existir. Sem certificado, manter a configuração atual e registrar
+            # o bloqueio para não quebrar o Nginx nem servir um vhost incompleto.
+            APEX_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/avaliasolar.com.br.redirect.conf"
+            APEX_VHOST_DST="/etc/nginx/conf.d/avaliasolar.com.br.redirect.conf"
+            APEX_CERT="/etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem"
+            APEX_KEY="/etc/letsencrypt/live/avaliasolar.com.br/privkey.pem"
+            if [ -f "$APEX_VHOST_SRC" ] && [ -f "$APEX_CERT" ] && [ -f "$APEX_KEY" ]; then
+              if command -v sudo >/dev/null 2>&1; then
+                sudo sed \
+                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
+                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
+                  "$APEX_VHOST_SRC" | sudo tee "$APEX_VHOST_DST" >/dev/null
+              else
+                sed \
+                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
+                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
+                  "$APEX_VHOST_SRC" > "$APEX_VHOST_DST"
+              fi
+              echo "?? Vhost apex instalado com redirect 308 e certificado existente."
+            else
+              echo "!! Bloqueio externo: certificado do apex ausente em ${APEX_CERT}; vhost apex não foi alterado."
+            fi
 
             # Reload Nginx se houver arquivos novos
             if command -v sudo >/dev/null 2>&1; then

@@ -413,6 +413,7 @@ Rails.application.routes.draw do
       get 'sitemaps/local_rankings', to: 'sitemaps#local_rankings'
       get 'sitemaps/group_posts', to: 'sitemaps#group_posts'
       get 'sitemaps/services', to: 'sitemaps#services'
+      get 'sitemaps/local_solar_pages', to: 'sitemaps#local_solar_pages'
 
       resources :articles do
         collection do

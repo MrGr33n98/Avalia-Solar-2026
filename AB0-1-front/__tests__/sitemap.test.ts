@@ -159,33 +159,16 @@ describe('sitemap', () => {
   });
 
   it('keeps weak local SEO pages out of the local sitemap segment', async () => {
-    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
-      const url = String(input);
-      const isStrongCity = url.includes('local_solar_pages/sc/florianopolis');
-
+    jest.spyOn(global, 'fetch').mockImplementation(async () => {
       return {
         ok: true,
         json: async () => ({
-          location: isStrongCity
-            ? {
-                scope: 'city',
-                city: 'Florianópolis',
-                state: 'SC',
-                canonical_path: '/companies/energia-solar/sc/florianopolis',
-              }
-            : {
-                scope: 'state',
-                state: 'AC',
-                canonical_path: '/companies/energia-solar/ac',
-              },
-          seo: {
-            title: 'Empresas de energia solar em Florianópolis',
-            description: 'Compare empresas locais de energia solar.',
-            indexable: isStrongCity,
-          },
-          stats: {
-            total_companies: isStrongCity ? 3 : 1,
-          },
+          data: [
+            {
+              path: '/companies/energia-solar/sc/florianopolis',
+              priority: 0.72,
+            },
+          ],
         }),
       } as Response;
     });

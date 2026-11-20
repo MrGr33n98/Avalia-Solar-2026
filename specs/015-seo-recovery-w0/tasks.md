@@ -9,6 +9,6 @@
 - [x] T007 Remover o limite frontend divergente da decisão local por padrão.
 - [x] T008 Normalizar caracteres de controle em novos `project_types`.
 - [x] T009 Adicionar testes frontend e backend de regressão.
-- [ ] T010 Executar Jest após corrigir o ambiente de dependências SWC/lockfile.
-- [ ] T011 Executar RSpec em ambiente de teste disponível.
-- [ ] T012 Validar build, XML, HTTP e GSC após publicação.
+- [x] T010 Executar Jest após corrigir o ambiente de dependências SWC/lockfile (evidência CI run `44811135815`, SHA `cbbb7597a892e60d3e746f8b3185faeabf1135b7`: 3 testes W0 + 17 testes de sitemap, todos passando).
+- [x] T011 Executar RSpec em ambiente de teste disponível (evidência CI run `44811135815`, SHA `cbbb7597a892e60d3e746f8b3185faeabf1135b7`: 17 exemplos, 0 falhas).
+- [~] T012 Validar build, XML, HTTP e GSC após publicação (XML/HTTP parcial; auditor pós-deploy criado, mas apex TLS, metas de performance e GSC continuam pendentes).

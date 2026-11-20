@@ -73,6 +73,16 @@ module Api
         render json: { data: [] }, status: :service_unavailable
       end
 
+      def local_solar_pages
+        result = ::CategoryDiscovery::LocalSolarSitemapExporter.call
+        response.headers['Cache-Control'] = 'public, max-age=900, stale-while-revalidate=3600'
+        render json: result, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[SitemapsController#local_solar_pages] #{e.class}: #{e.message}")
+        response.headers['Cache-Control'] = 'no-store'
+        render json: { error: 'Local solar sitemap temporarily unavailable' }, status: :service_unavailable
+      end
+
       private
 
       def fetch_local_rankings

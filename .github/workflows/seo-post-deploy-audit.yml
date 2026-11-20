@@ -1,0 +1,64 @@
+name: SEO — Post-deploy Production Audit
+
+on:
+  workflow_run:
+    workflows:
+      - "CD — Production Deploy (DigitalOcean)"
+      - "CD — Frontend Production Release"
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Origem pública a auditar"
+        required: true
+        default: "https://www.avaliasolar.com.br"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit public SEO contracts
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Run public SEO audit
+        id: audit
+        continue-on-error: true
+        env:
+          BASE_URL: ${{ inputs.base_url || 'https://www.avaliasolar.com.br' }}
+        run: |
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/seo-post-deploy-audit"
+          python3 scripts/seo/post-deploy-audit.py \
+            --base-url "$BASE_URL" \
+            --output-dir "$RUNNER_TEMP/seo-post-deploy-audit" \
+            | tee "$RUNNER_TEMP/seo-post-deploy-audit/summary.json"
+
+      - name: Publish audit summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/seo-post-deploy-audit/seo-post-deploy-audit.md" ]; then
+            cat "$RUNNER_TEMP/seo-post-deploy-audit/seo-post-deploy-audit.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload JSON and Markdown artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-post-deploy-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/seo-post-deploy-audit/
+          if-no-files-found: error
+
+      - name: Fail when a public contract is broken
+        if: steps.audit.outcome == 'failure'
+        run: exit 1

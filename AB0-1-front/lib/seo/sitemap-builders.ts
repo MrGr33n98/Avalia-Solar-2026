@@ -7,7 +7,6 @@ import {
   BRAZIL_STATE_SOLAR_PAGES,
 } from '@/lib/locations/local-page-slugs';
 import { buildCategorySegment } from '@/lib/seo/companies-category-url';
-import { isLocalPageIndexable } from '@/lib/seo/local-page-quality';
 import { CAPITAL_COVERAGE_REPORT } from '@/lib/seo/sector-reports';
 import { TRUST_PAGES } from '@/lib/seo/trust-pages';
 import { SITE, STATIC_SITEMAP_LAST_MODIFIED, absoluteUrl } from '@/lib/site';
@@ -535,66 +534,32 @@ export async function getLocalSolarSitemapEntries(): Promise<MetadataRoute.Sitem
   const localPages = [
     ...BRAZIL_STATE_SOLAR_PAGES.map((page) => ({
       href: page.href,
-      endpoint: `local_solar_pages/${page.state.toLowerCase()}`,
       priority: 0.7,
     })),
     ...BRAZIL_CAPITAL_SOLAR_PAGES.map((page) => ({
       href: page.href,
-      endpoint: `local_solar_pages/${page.state.toLowerCase()}/${page.citySlug}`,
       priority: 0.72,
     })),
   ];
 
-  const checks: Array<SitemapEntry | null> = [];
-  for (let i = 0; i < localPages.length; i += 5) {
-    const batch = localPages.slice(i, i + 5);
-    const batchResults = await Promise.all(
-      batch.map(async (page) => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), SITEMAP_FETCH_TIMEOUT_MS);
+  const records = await fetchRecords('sitemaps/local_solar_pages', 900);
+  const pagesByHref = new Map(localPages.map((page) => [page.href, page]));
+  const entries = records.flatMap((record) => {
+    const path = getString(record, 'path');
+    const page = path ? pagesByHref.get(path) : undefined;
+    if (!page) return [];
 
-        try {
-          const response = await fetch(buildApiUrl(`${page.endpoint}?page=1&per_page=1`), {
-            next: { revalidate: 3600 },
-            signal: controller.signal,
-          });
-          if (!response.ok) {
-            throw new SitemapUpstreamError(
-              'local-solar',
-              `Falha ao verificar página local (HTTP ${response.status})`,
-              response.status || 503
-            );
-          }
+    return [
+      {
+        url: absoluteUrl(page.href),
+        lastModified: STATIC_SITEMAP_LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: getNumber(record, 'priority') ?? page.priority,
+      },
+    ];
+  });
 
-          const payload = await response.json();
-          if (!isLocalPageIndexable(payload)) {
-            return null;
-          }
-
-          return {
-            url: absoluteUrl(page.href),
-            lastModified: STATIC_SITEMAP_LAST_MODIFIED,
-            changeFrequency: 'weekly' as const,
-            priority: page.priority,
-          };
-        } catch (error) {
-          if (error instanceof SitemapUpstreamError) throw error;
-
-          console.error('[Sitemap][local-solar] Network/timeout failure:', error);
-          throw new SitemapUpstreamError(
-            'local-solar',
-            'Falha de comunicação ou timeout ao verificar páginas locais',
-            503
-          );
-        } finally {
-          clearTimeout(timeout);
-        }
-      })
-    );
-    checks.push(...batchResults);
-  }
-
-  return normalizeSitemapEntries(checks.filter((entry): entry is SitemapEntry => Boolean(entry)));
+  return normalizeSitemapEntries(entries);
 }
 
 export async function getCreatorSitemapEntries(): Promise<MetadataRoute.Sitemap> {
