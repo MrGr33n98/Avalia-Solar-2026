@@ -20,7 +20,19 @@ test('comparison compact grid: 8 recommendations, touch geometry, responsive PWA
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Run responsive geometry once in Chromium.');
   await page.route(/\/companies\?.*/, async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(companies) });
+    // Docker test frontend can call a cross-origin backend; mock CORS preflight as well.
+    const origin = route.request().headers().origin || 'http://localhost:3000';
+    const headers = {
+      'access-control-allow-origin': origin,
+      'access-control-allow-credentials': 'true',
+      'access-control-allow-methods': 'GET, OPTIONS',
+      'access-control-allow-headers': 'content-type, authorization',
+    };
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers });
+      return;
+    }
+    await route.fulfill({ status: 200, headers, contentType: 'application/json', body: JSON.stringify(companies) });
   });
 
   await page.goto('/compare', { waitUntil: 'domcontentloaded' });
