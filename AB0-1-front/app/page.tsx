@@ -1,4 +1,6 @@
 import dynamic from 'next/dynamic';
+import type { Metadata } from 'next';
+import { SITE } from '@/lib/site-core';
 import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 import { ArrowRight, BadgeCheck, Info, ShieldCheck, Sparkles } from 'lucide-react';
@@ -60,6 +62,36 @@ const homeFaqs = [
       'Não. O Avalia Solar é uma plataforma independente de descoberta, reputação e comparação. A contratação e a execução do projeto são realizadas diretamente com a empresa escolhida.',
   },
 ];
+
+// SEO específico da página inicial: não herdar canonical / index-follows
+// no HTML de páginas inexistentes, erros ou rotas públicas.
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+    languages: { 'pt-BR': '/' },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: SITE.url,
+    siteName: SITE.name,
+    title: 'Avalia Solar | Compare Empresas de Energia Solar',
+    description: SITE.description,
+    images: [
+      { url: SITE.ogImagePath, width: 1200, height: 630, alt: 'Avalia Solar' },
+    ],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+};
 
 export const revalidate = 300;
 const FALLBACK_CATEGORY_MIN_ID = 9000;

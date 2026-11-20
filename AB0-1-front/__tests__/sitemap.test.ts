@@ -108,17 +108,18 @@ describe('sitemap', () => {
     }));
     const secondPage = [{ id: 101, name: 'Empresa 101', slug: 'empresa-101' }];
 
-    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(
-      async (input) =>
-        ({
-          ok: true,
-          status: 200,
-          json: async () =>
-            String(input).includes('page=1')
-              ? { data: firstPage, meta: { pagination: { total_pages: 2, next_page: 2 } } }
-              : { data: secondPage, meta: { pagination: { total_pages: 2, next_page: null } } },
-        }) as Response
-    );
+    const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const page = new URL(String(input), 'http://localhost').searchParams.get('page');
+      return {
+        ok: true,
+        status: 200,
+        json: async () =>
+          page === '1'
+            ? { data: firstPage, meta: { pagination: { total_pages: 2, next_page: 2 } } }
+            : { data: secondPage, meta: { pagination: { total_pages: 2, next_page: null } } },
+      } as Response;
+    });
+    fetchMock.mockClear();
 
     const entries = await getCompanySitemapEntries();
 
@@ -180,7 +181,7 @@ describe('sitemap', () => {
           seo: {
             title: 'Empresas de energia solar em Florianópolis',
             description: 'Compare empresas locais de energia solar.',
-            indexable: true,
+            indexable: isStrongCity,
           },
           stats: {
             total_companies: isStrongCity ? 3 : 1,

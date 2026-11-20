@@ -20,7 +20,7 @@ import Image from 'next/image';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import CompanyCard from '@/components/CompanyCard';
 import { CompanyDirectoryRow } from '@/components/companies/CompanyDirectoryRow';
-import CompaniesLoading from './loading';
+import CompaniesLoading from './CompaniesDirectoryLoading';
 import type { MapCompany } from '@/components/search/MapProvider';
 import { companiesApiSafe } from '@/lib/api-client';
 import { isAbortError } from '@/lib/api-error';

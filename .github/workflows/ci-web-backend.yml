@@ -2,22 +2,22 @@ name: CI — Web & Backend (Quality & Tests)
 
 on:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       test_suite:
-        description: 'Suite de testes para executar'
+        description: "Suite de testes para executar"
         required: true
-        default: 'full'
+        default: "full"
         type: choice
         options:
-          - 'full'
-          - 'critical'
-          - 'docs_only'
+          - "full"
+          - "critical"
+          - "docs_only"
   push:
-    branches: [ "main", "develop", "staging" ]
+    branches: ["main", "develop", "staging"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
 
 concurrency:
   group: enterprise-ci-${{ github.ref }}
@@ -29,8 +29,8 @@ permissions:
   actions: read
 
 env:
-  RUBY_VERSION: '3.2.2'
-  NODE_VERSION: '20.x'
+  RUBY_VERSION: "3.2.2"
+  NODE_VERSION: "20.x"
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
@@ -121,7 +121,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: AB0-1-front/package-lock.json
 
       # Backend Checks
@@ -234,6 +234,15 @@ jobs:
             read -r -a spec_files <<< "$RSPEC_FILES"
             bundle exec rspec "${spec_files[@]}"
           fi
+
+      - name: Run W0 SEO backend contracts
+        if: steps.rspec-scope.outputs.scope != 'none'
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: bundle exec rspec spec/models/company_spec.rb spec/requests/api/v1/sitemaps_spec.rb
 
       - name: Report RSpec skipped for unrelated changes
         if: steps.rspec-scope.outputs.scope == 'none'
@@ -431,6 +440,9 @@ jobs:
             lib/seo/__tests__/local-and-locale-policy.test.ts \
             lib/seo/__tests__/revalidate-route.test.ts \
             __tests__/categories/CategoryEditorialAndSchema.test.tsx \
+            __tests__/sitemap.test.ts \
+            __tests__/local-page-quality.test.ts \
+            __tests__/company-api-error-semantics.spec.ts \
             --runInBand --no-coverage
       - name: Typecheck Frontend
         run: npm run typecheck
@@ -454,9 +466,89 @@ jobs:
             components/categories/CategoryNichesCarousel.tsx \
             components/categories/CategoryCompaniesTable.tsx
 
+  seo-w0-regression-gate:
+    name: SEO W0 Regression Gate
+    needs: [change-impact-shadow, fast-feedback]
+    if: >-
+      ${{ !cancelled() &&
+          needs.fast-feedback.result == 'success' &&
+          !(github.event_name == 'pull_request' && needs.change-impact-shadow.outputs.docs_only == 'true') &&
+          !(github.event_name == 'workflow_dispatch' && inputs.test_suite == 'docs_only') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./AB0-1-front
+        run: npm ci
+
+      - name: Run W0 frontend contracts
+        working-directory: ./AB0-1-front
+        run: >-
+          npx jest --runInBand --no-coverage
+          __tests__/sitemap.test.ts
+          __tests__/local-page-quality.test.ts
+          __tests__/company-api-error-semantics.spec.ts
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+
+      - name: Run W0 backend contracts
+        working-directory: ./AB0-1-back
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+          RAILS_ENV: test
+          SECRET_KEY_BASE: ci-only-secret-key-base-not-for-production
+        run: |
+          bundle exec rails db:create db:schema:load db:migrate
+          bundle exec rspec spec/models/company_spec.rb spec/requests/api/v1/sitemaps_spec.rb
+
   e2e-tests:
     name: E2E Playwright Tests
-    needs: [change-impact-shadow, fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate]
+    needs:
+      [
+        change-impact-shadow,
+        fast-feedback,
+        backend-tests,
+        ranking-performance-gate,
+        ranking-frontend-gate,
+        category-seo-contract-gate,
+      ]
     if: >-
       ${{ !cancelled() &&
           needs.fast-feedback.result == 'success' &&
@@ -507,7 +599,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: AB0-1-front/package-lock.json
 
       - name: Install Playwright Browsers
@@ -580,7 +672,18 @@ jobs:
 
   build:
     name: build
-    needs: [change-impact-shadow, docs-validation, fast-feedback, backend-tests, ranking-performance-gate, ranking-frontend-gate, category-seo-contract-gate, e2e-tests]
+    needs:
+      [
+        change-impact-shadow,
+        docs-validation,
+        fast-feedback,
+        backend-tests,
+        ranking-performance-gate,
+        ranking-frontend-gate,
+        category-seo-contract-gate,
+        seo-w0-regression-gate,
+        e2e-tests,
+      ]
     if: always()
     runs-on: ubuntu-24.04
     steps:
@@ -595,6 +698,7 @@ jobs:
           RANKING_GATE_RESULT: ${{ needs.ranking-performance-gate.result }}
           RANKING_FRONTEND_RESULT: ${{ needs.ranking-frontend-gate.result }}
           CATEGORY_RESULT: ${{ needs.category-seo-contract-gate.result }}
+          SEO_W0_RESULT: ${{ needs.seo-w0-regression-gate.result }}
           E2E_RESULT: ${{ needs.e2e-tests.result }}
           CSS_CANARY_ELIGIBLE: ${{ needs.change-impact-shadow.outputs.css_canary_eligible }}
           SMART_CI_ENABLED: ${{ vars.SMART_CI_ENABLED || 'false' }}
