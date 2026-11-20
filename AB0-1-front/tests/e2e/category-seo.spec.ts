@@ -138,6 +138,15 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
     expect(body).not.toMatch(/^Sitemap: .*\/sitemap\.xml$/m);
   });
 
+  test('@critical W0.1: página inicial mantém canonical própria', async ({ request }) => {
+    const response = await request.get('/');
+    expect(response.status()).toBe(200);
+    const body = await response.text();
+    expect(body).toMatch(
+      /<link[^>]+rel=["']canonical["'][^>]+href=["']https:\/\/www\.avaliasolar\.com\.br\/?["']/i
+    );
+  });
+
   test('@critical W0.1: empresa inexistente retorna 404 sem canonical da home', async ({
     request,
   }) => {
@@ -146,6 +155,7 @@ test.describe('CDSI-019: Category HTTP & SSR SEO Semantics (E01-E06, E18)', () =
 
     const body = await response.text();
     expect(body).toMatch(/noindex/i);
+    expect(body).not.toMatch(/<meta[^>]+name=["']robots["'][^>]+content=["']index,?\s*follow/i);
     expect(body).not.toMatch(
       /<link[^>]+rel=["']canonical["'][^>]+href=["']https:\/\/www\.avaliasolar\.com\.br\/?["']/i
     );

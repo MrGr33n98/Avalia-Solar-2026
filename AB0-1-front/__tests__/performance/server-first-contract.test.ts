@@ -30,6 +30,15 @@ describe('Spec 014 — public routes should preserve server/client split', () =>
     expect(source('app/companies/[id]/page.tsx')).toContain('notFound()');
   });
 
+  it('declares home-only canonical at the home route, never in the root layout', () => {
+    const root = source('app/layout.tsx');
+    const homepage = source('app/page.tsx');
+    expect(root).not.toContain("canonical: '/'");
+    expect(root).not.toContain('index: true');
+    expect(homepage).toContain("canonical: '/'");
+    expect(homepage).toContain('index: true');
+  });
+
   it('keeps review SEO asynchronous and company identity ahead of reviews', () => {
     const page = source('app/companies/[id]/page.tsx');
     expect(page).toContain('CompanyReviewsSection');
