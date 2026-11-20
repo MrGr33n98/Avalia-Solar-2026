@@ -640,6 +640,7 @@ jobs:
           tests/e2e/company-registration-ticker-responsive.spec.ts
           tests/e2e/company-free-placeholder-responsive.spec.ts
           tests/e2e/reviewer-dashboard-viewport.spec.ts
+          tests/e2e/compare-recommendations-compact.spec.ts
           && npx playwright test --project=chromium
           tests/e2e/category-seo.spec.ts --grep @critical
 
