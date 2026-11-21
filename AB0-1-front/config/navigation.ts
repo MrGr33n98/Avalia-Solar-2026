@@ -161,6 +161,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         badge: true,
         description: 'Atender leads em tempo real',
       },
+      ...(process.env.NEXT_PUBLIC_COMPANY_AI_STUDIO_ENABLED === 'true' ? [{
+        id: 'ai-assistant',
+        label: 'Assistente IA',
+        icon: MessageCircle,
+        context: ['operational' as const],
+        description: 'Configurar atendimento com IA da Brand Page',
+      }] : []),
       {
         id: 'proposals',
         label: 'Propostas',

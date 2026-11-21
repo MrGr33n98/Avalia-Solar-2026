@@ -8,6 +8,18 @@
  */
 
 export interface EventPayloadMap {
+  // --- Assistente IA empresarial: produto, nunca fonte de faturamento ---
+  company_ai_config_saved: { company_id: string | number; surface: string; [key: string]: any; };
+  company_ai_workflow_draft_created: { company_id: string | number; version: number; [key: string]: any; };
+  company_ai_workflow_published_ui: { company_id: string | number; version: number; [key: string]: any; };
+  company_ai_widget_viewed: { company_id: string | number; surface_id: string; [key: string]: any; };
+  company_ai_widget_opened: { company_id: string | number; surface_id: string; [key: string]: any; };
+  company_ai_first_question_sent: { company_id: string | number; session_correlation_id: string; [key: string]: any; };
+  company_ai_answer_rendered: { company_id: string | number; session_correlation_id: string; request_id: string; [key: string]: any; };
+  company_ai_source_opened: { company_id: string | number; source_kind: string; source_id: string; [key: string]: any; };
+  company_ai_quote_started: { company_id: string | number; session_correlation_id: string; [key: string]: any; };
+  company_ai_handoff_requested: { company_id: string | number; session_correlation_id: string; [key: string]: any; };
+
   '$pageview': {
     pathname: string;
     normalized_path?: string;

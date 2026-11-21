@@ -19,6 +19,16 @@ type EventContract = {
 
 const CONTRACTS: Record<string, EventContract> = {
   $pageview: { owner: 'platform', kind: 'exposure', required: ['pathname'] },
+  company_ai_config_saved: { owner: 'product', kind: 'microconversion', required: ['company_id', 'surface'] },
+  company_ai_workflow_draft_created: { owner: 'product', kind: 'microconversion', required: ['company_id', 'version'] },
+  company_ai_workflow_published_ui: { owner: 'product', kind: 'microconversion', required: ['company_id', 'version'] },
+  company_ai_widget_viewed: { owner: 'product', kind: 'exposure', required: ['company_id', 'surface_id'] },
+  company_ai_widget_opened: { owner: 'product', kind: 'microconversion', required: ['company_id', 'surface_id'] },
+  company_ai_first_question_sent: { owner: 'product', kind: 'microconversion', required: ['company_id', 'session_correlation_id'] },
+  company_ai_answer_rendered: { owner: 'product', kind: 'microconversion', required: ['company_id', 'session_correlation_id', 'request_id'] },
+  company_ai_source_opened: { owner: 'product', kind: 'microconversion', required: ['company_id', 'source_kind', 'source_id'] },
+  company_ai_quote_started: { owner: 'lead_lifecycle', kind: 'microconversion', required: ['company_id', 'session_correlation_id'] },
+  company_ai_handoff_requested: { owner: 'lead_lifecycle', kind: 'microconversion', required: ['company_id', 'session_correlation_id'] },
   company_profile_viewed: { owner: 'product', kind: 'exposure', required: ['company_id'] },
   company_cta_clicked: {
     owner: 'growth',

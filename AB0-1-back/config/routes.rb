@@ -460,6 +460,8 @@ Rails.application.routes.draw do
           get :widget_data, to: 'widget_data#show'
           get :badges, to: 'badges#index'
           get :feature_access
+          get :ai_capability, to: 'company_ai/capabilities#show'
+          post :ai_sessions, to: 'company_ai/sessions#create'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :catalog
@@ -949,6 +951,10 @@ Rails.application.routes.draw do
       post 'company_invitations/accept', to: 'company_invitations#accept'
 
       namespace :company_admin do
+        resource :ai_assistant, controller: 'ai_assistants', only: %i[show update] do
+          post :draft, on: :member, action: :create_draft
+          post 'versions/:version_id/publish', on: :member, action: :publish
+        end
         resources :voice_review_invites, only: [:create], controller: 'voice_review_invites' do
           collection { get ':code/public', action: :public }
         end

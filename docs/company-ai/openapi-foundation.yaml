@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Avalia Solar Company AI — protected foundation
+  version: 0.1.0
+  description: >
+    Foundation endpoints only. Public company AI message processing and document
+    ingestion are NOT declared ready in this contract. Feature stays OFF by default.
+servers:
+  - url: /
+paths:
+  /api/v1/companies/{id}/ai_capability:
+    get:
+      summary: Query public company AI capability without exposing private entitlements
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Capability result
+          headers:
+            Cache-Control:
+              schema: { type: string, example: 'private, no-store' }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [enabled, mode, schema_version]
+                properties:
+                  enabled: { type: boolean }
+                  mode: { type: string, enum: [company, general] }
+                  schema_version: { type: integer, enum: [1] }
+
+  /api/v1/company_admin/ai_assistant:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Read current assistant configuration for the authorized tenant
+      parameters:
+        - $ref: '#/components/parameters/companyId'
+      responses:
+        '200': { description: Tenant configuration }
+        '401': { description: Authentication required }
+        '403': { description: Tenant or entitlement denied }
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Update greeting and calendar (not public enablement)
+      parameters:
+        - $ref: '#/components/parameters/companyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assistant]
+              properties:
+                assistant:
+                  type: object
+                  properties:
+                    greeting: { type: string, maxLength: 160 }
+                    timezone: { type: string, example: America/Sao_Paulo }
+                    weekly_hours: { type: object, additionalProperties: true }
+                    exceptions: { type: object, additionalProperties: true }
+      responses:
+        '200': { description: Configuration saved }
+        '403': { description: Company scope or entitlement denied }
+        '422': { description: Invalid configuration }
+
+  /api/v1/company_admin/ai_assistant/draft:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Create an immutable-numbered draft workflow for the authorized company
+      parameters:
+        - $ref: '#/components/parameters/companyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [definition]
+              properties:
+                definition:
+                  type: object
+                  required: [start_node_id, nodes, edges]
+                  properties:
+                    start_node_id: { type: string }
+                    nodes: { type: array, items: { type: object } }
+                    edges: { type: array, items: { type: object } }
+      responses:
+        '201': { description: Draft created and validation status returned }
+        '403': { description: Denied }
+        '422': { description: Payload too large or invalid }
+
+  /api/v1/company_admin/ai_assistant/versions/{version_id}/publish:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Publish a validated graph, owner/manager role required
+      parameters:
+        - $ref: '#/components/parameters/companyId'
+        - name: version_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: Published with audit event }
+        '403': { description: Insufficient privileges }
+        '404': { description: Version not found for this company }
+        '422': { description: Invalid graph or non-draft version }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    companyId:
+      name: company_id
+      in: query
+      required: true
+      schema: { type: integer, minimum: 1 }
+      description: >
+        Requested tenant must match authenticated active company membership.
+        Not a grant of access in itself.

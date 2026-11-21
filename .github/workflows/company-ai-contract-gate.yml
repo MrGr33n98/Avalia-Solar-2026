@@ -1,0 +1,102 @@
+name: Company AI Assistant — Domain, API and PWA Contracts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'AB0-1-back/app/services/company_ai/**'
+      - 'AB0-1-back/app/models/company_ai_*.rb'
+      - 'AB0-1-back/app/controllers/api/v1/company_ai/**'
+      - 'AB0-1-back/app/controllers/api/v1/company_admin/ai_assistants_controller.rb'
+      - 'AB0-1-back/app/models/plan_feature_catalog.rb'
+      - 'AB0-1-back/db/migrate/*company_ai*'
+      - 'AB0-1-back/spec/services/company_ai/**'
+      - 'AB0-1-back/spec/requests/api/v1/company_ai/**'
+      - 'AB0-1-front/app/dashboard/components/company-ai/**'
+      - 'AB0-1-front/app/dashboard/components/EnterpriseDashboard.tsx'
+      - 'AB0-1-front/config/navigation.ts'
+      - 'AB0-1-front/lib/analytics/schema.ts'
+      - 'AB0-1-front/lib/analytics/contract.ts'
+      - '.github/workflows/company-ai-contract-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: company-ai-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-domain:
+    name: Rails DDD/RSpec + migration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: avaliasolar_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: AB0-1-back
+    env:
+      RAILS_ENV: test
+      COMPANY_AI_ENABLED: 'false'
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/avaliasolar_test
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY_BASE: ci-only-company-ai-not-production-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.2'
+          bundler-cache: true
+          working-directory: ./AB0-1-back
+      - name: Ruby syntax for bounded context
+        run: |
+          find app/services/company_ai -name '*.rb' -print0 | xargs -0 -n 1 ruby -c
+          find app/models -maxdepth 1 -name 'company_ai_*.rb' -print0 | xargs -0 -n 1 ruby -c
+          ruby -c app/controllers/api/v1/company_admin/ai_assistants_controller.rb
+          ruby -c app/controllers/api/v1/company_ai/capabilities_controller.rb
+          ruby -c db/migrate/20261121180000_create_company_ai_assistants.rb
+          ruby -c config/routes.rb
+      - name: Prepare isolated test schema
+        run: bundle exec rails db:create db:schema:load db:migrate
+      - name: RSpec isolated company AI contracts
+        run: |
+          bundle exec rspec spec/services/company_ai spec/requests/api/v1/company_ai
+
+  frontend-studio:
+    name: React Jest + TypeScript
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: AB0-1-front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: AB0-1-front/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Company AI UI component tests
+        run: npx jest --runInBand --runTestsByPath app/dashboard/components/company-ai/CompanyAiStudio.spec.tsx app/dashboard/components/company-ai/CompanyAiTelemetry.spec.ts
