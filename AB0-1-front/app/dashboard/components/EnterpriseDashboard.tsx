@@ -120,6 +120,9 @@ const TrackingAttributionWorkspace = dynamic(
     loading: () => <DashboardTabSkeleton />,
   }
 );
+const CompanyAiStudio = dynamic(() => import('./company-ai/CompanyAiStudio'), {
+  loading: () => <DashboardTabSkeleton />,
+});
 const WebhooksManagement = dynamic(() => import('./WebhooksManagement'), {
   loading: () => <DashboardTabSkeleton />,
 });
@@ -178,12 +181,13 @@ const DASHBOARD_TAB_FEATURE_KEYS: Record<string, string> = {
   media: 'media_gallery',
   chat: 'p2p_chat',
   'live-inbox': 'ai_live_inbox',
+  'ai-assistant': 'company_ai_assistant',
 };
 
 // A galeria deve continuar descoberta no menu mesmo quando o plano não a inclui:
 // FeatureGuard informa o motivo e disponibiliza o caminho de upgrade, em vez de
 // fazer fotos e vídeos aparentemente “sumirem” do produto.
-const ALWAYS_VISIBLE_TABS = new Set<string>(['media']);
+const ALWAYS_VISIBLE_TABS = new Set<string>(['media', 'ai-assistant']);
 
 const DASHBOARD_TAB_GUARD_COPY: Record<
   string,
@@ -253,6 +257,12 @@ const DASHBOARD_TAB_GUARD_COPY: Record<
     description: 'Seu plano atual não inclui upload e gestão completos de mídia.',
     targetPlanName: 'Plano Essencial',
     targetPlanSlug: 'essential',
+  },
+  'ai-assistant': {
+    title: 'Assistente IA bloqueado',
+    description: 'Atendimento contextual disponível em planos elegíveis e mediante ativação do piloto.',
+    targetPlanName: 'Plano Pro',
+    targetPlanSlug: 'pro',
   },
   'live-inbox': {
     title: 'Live Inbox de Leads bloqueado',
@@ -720,6 +730,10 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompetitorBenchmark companyId={companyId} themeMode={themeMode} />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="ai-assistant" className="mt-0 focus-visible:outline-none">
+                {renderGuardedTab('ai-assistant', <CompanyAiStudio companyId={companyId} />)}
               </TabsContent>
 
               <TabsContent value="product-general" className="mt-0 focus-visible:outline-none">

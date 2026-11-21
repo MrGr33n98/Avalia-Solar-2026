@@ -162,6 +162,13 @@ export const DASHBOARD_NAVIGATION: NavigationItem[] = [
         description: 'Atender leads em tempo real',
       },
       {
+        id: 'ai-assistant',
+        label: 'Assistente IA',
+        icon: MessageCircle,
+        context: ['operational'],
+        description: 'Configurar atendimento com IA da Brand Page',
+      },
+      {
         id: 'proposals',
         label: 'Propostas',
         icon: FileText,
