@@ -59,6 +59,8 @@ RSpec.describe 'Company AI admin API authorization and publication', type: :requ
   it 'does not let an editor publish a workflow' do
     assistant = CompanyAiAssistant.create!(company: company)
     version = assistant.workflow_versions.create!(version_number: 1, status: 'draft', definition: definition.as_json)
+    second_owner = create(:user, status: :active, role: :company)
+    create(:company_member, user: second_owner, company: company, role: 'owner')
     membership.update!(role: 'editor')
 
     post "#{path}/versions/#{version.id}/publish?company_id=#{company.id}", headers: headers
