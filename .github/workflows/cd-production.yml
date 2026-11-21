@@ -6,6 +6,11 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Commit SHA from main to deploy
+        required: false
+        type: string
 
 concurrency:
   group: deploy-production
@@ -16,7 +21,7 @@ permissions:
   contents: read
 
 env:
-  RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+  RELEASE_SHA: ${{ github.event.inputs.release_sha || github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   verify-release:
@@ -681,48 +686,41 @@ jobs:
               fi
 
               echo "?? Ativando redirect apex no proxy público ${NPM_CONTAINER}..."
-              NPM_TMP="$(mktemp -d)"
-              if command -v sudo >/dev/null 2>&1; then
-                sudo cat "${APEX_CERT}" > "${NPM_TMP}/fullchain.pem"
-                sudo cat "${APEX_KEY}" > "${NPM_TMP}/privkey.pem"
-              else
-                cp -L "${APEX_CERT}" "${NPM_TMP}/fullchain.pem"
-                cp -L "${APEX_KEY}" "${NPM_TMP}/privkey.pem"
+              docker exec "${NPM_CONTAINER}" sh -c 'mkdir -p /data/custom_ssl/avaliasolar.com.br /data/nginx/custom /data/certbot'
+
+              # 1. Copiar cert do host se existir e for válido para avaliasolar.com.br
+              if [ -f "${APEX_CERT}" ] && [ -f "${APEX_KEY}" ]; then
+                NPM_TMP="$(mktemp -d)"
+                if command -v sudo >/dev/null 2>&1; then
+                  sudo cat "${APEX_CERT}" > "${NPM_TMP}/fullchain.pem"
+                  sudo cat "${APEX_KEY}" > "${NPM_TMP}/privkey.pem"
+                else
+                  cp -L "${APEX_CERT}" "${NPM_TMP}/fullchain.pem"
+                  cp -L "${APEX_KEY}" "${NPM_TMP}/privkey.pem"
+                fi
+                docker cp "${NPM_TMP}/fullchain.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/fullchain.pem"
+                docker cp "${NPM_TMP}/privkey.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/privkey.pem"
+                rm -rf "${NPM_TMP}"
               fi
 
-              docker exec "${NPM_CONTAINER}" sh -c 'mkdir -p /data/custom_ssl/avaliasolar.com.br /data/nginx/custom'
-              docker cp "${NPM_TMP}/fullchain.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/fullchain.pem"
-              docker cp "${NPM_TMP}/privkey.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/privkey.pem"
+              # 2. Configura bloco HTTP (porta 80) com acme-challenge e redirect 308
+              NPM_APEX_HTTP='
+                # AVALIA_SOLAR_APEX_REDIRECT_BEGIN
+                server {
+                    listen 80;
+                    listen [::]:80;
+                    server_name avaliasolar.com.br;
 
-              NPM_APEX_CONFIG=$(cat <<'NGINX_APEX'
-# AVALIA_SOLAR_APEX_REDIRECT_BEGIN
-server {
-    listen 80;
-    listen [::]:80;
-    server_name avaliasolar.com.br;
+                    location /.well-known/acme-challenge/ {
+                        root /data/certbot;
+                    }
 
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    location / {
-        return 308 https://www.avaliasolar.com.br$request_uri;
-    }
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name avaliasolar.com.br;
-
-    ssl_certificate /data/custom_ssl/avaliasolar.com.br/fullchain.pem;
-    ssl_certificate_key /data/custom_ssl/avaliasolar.com.br/privkey.pem;
-
-    return 308 https://www.avaliasolar.com.br$request_uri;
-}
-# AVALIA_SOLAR_APEX_REDIRECT_END
-NGINX_APEX
-              )
+                    location / {
+                        return 308 https://www.avaliasolar.com.br$request_uri;
+                    }
+                }
+                # AVALIA_SOLAR_APEX_REDIRECT_END
+              '
 
               docker exec "${NPM_CONTAINER}" sh -c '
                 file=/data/nginx/custom/http_top.conf
@@ -732,20 +730,86 @@ NGINX_APEX
                 awk "/# AVALIA_SOLAR_APEX_REDIRECT_BEGIN/{skip=1} !skip{print} /# AVALIA_SOLAR_APEX_REDIRECT_END/{skip=0}" "$file" > "${file}.tmp"
                 mv "${file}.tmp" "$file"
               '
-              printf '%s\n' "${NPM_APEX_CONFIG}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
+              printf '%s\n' "${NPM_APEX_HTTP}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
+              docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
 
-              if docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1; then
-                docker exec "${NPM_CONTAINER}" nginx -s reload
-                echo "?? Redirect apex 308 e certificado válido ativados no NPM/OpenResty."
-                rm -rf "${NPM_TMP}"
-                return 0
+              # 3. Verifica se o container tem certificado válido com SAN para avaliasolar.com.br
+              CERT_VALID=false
+              if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
+                CERT_VALID=true
+              elif docker exec "${NPM_CONTAINER}" test -f /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem 2>/dev/null; then
+                docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem /data/custom_ssl/avaliasolar.com.br/fullchain.pem
+                docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem /data/custom_ssl/avaliasolar.com.br/privkey.pem
+                if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
+                  CERT_VALID=true
+                fi
               fi
 
-              echo "!! Nginx do NPM rejeitou a configuração; restaurando backup."
-              docker exec "${NPM_CONTAINER}" sh -c 'cp /data/nginx/custom/http_top.conf.avalia-backup /data/nginx/custom/http_top.conf'
-              docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
-              rm -rf "${NPM_TMP}"
-              return 1
+              # Se ainda não for válido, tenta emissão via certbot dentro do container usando o webroot HTTP ativo
+              if [ "$CERT_VALID" != "true" ]; then
+                echo "Emitindo certificado para avaliasolar.com.br via certbot no NPM..."
+                docker exec "${NPM_CONTAINER}" certbot certonly --webroot -w /data/certbot \
+                  --cert-name avaliasolar.com.br -d avaliasolar.com.br \
+                  --agree-tos --register-unsafely-without-email --non-interactive || true
+                if docker exec "${NPM_CONTAINER}" test -f /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem 2>/dev/null; then
+                  docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem /data/custom_ssl/avaliasolar.com.br/fullchain.pem
+                  docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem /data/custom_ssl/avaliasolar.com.br/privkey.pem
+                  if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
+                    CERT_VALID=true
+                  fi
+                fi
+              fi
+
+              # 4. Se o certificado for válido, ativa o bloco HTTPS (443) com redirect 308
+              if [ "$CERT_VALID" = "true" ]; then
+                NPM_APEX_FULL='
+                  # AVALIA_SOLAR_APEX_REDIRECT_BEGIN
+                  server {
+                      listen 80;
+                      listen [::]:80;
+                      server_name avaliasolar.com.br;
+
+                      location /.well-known/acme-challenge/ {
+                          root /data/certbot;
+                      }
+
+                      location / {
+                          return 308 https://www.avaliasolar.com.br$request_uri;
+                      }
+                  }
+
+                  server {
+                      listen 443 ssl http2;
+                      listen [::]:443 ssl http2;
+                      server_name avaliasolar.com.br;
+
+                      ssl_certificate /data/custom_ssl/avaliasolar.com.br/fullchain.pem;
+                      ssl_certificate_key /data/custom_ssl/avaliasolar.com.br/privkey.pem;
+
+                      return 308 https://www.avaliasolar.com.br$request_uri;
+                  }
+                  # AVALIA_SOLAR_APEX_REDIRECT_END
+                '
+                docker exec "${NPM_CONTAINER}" sh -c '
+                  file=/data/nginx/custom/http_top.conf
+                  awk "/# AVALIA_SOLAR_APEX_REDIRECT_BEGIN/{skip=1} !skip{print} /# AVALIA_SOLAR_APEX_REDIRECT_END/{skip=0}" "$file" > "${file}.tmp"
+                  mv "${file}.tmp" "$file"
+                '
+                printf '%s\n' "${NPM_APEX_FULL}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
+
+                if docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1; then
+                  docker exec "${NPM_CONTAINER}" nginx -s reload
+                  echo "?? Redirect apex 308 e certificado válido ativados no NPM/OpenResty."
+                  return 0
+                fi
+                echo "!! Nginx do NPM rejeitou a configuração com TLS; restaurando backup."
+                docker exec "${NPM_CONTAINER}" sh -c 'cp /data/nginx/custom/http_top.conf.avalia-backup /data/nginx/custom/http_top.conf'
+                docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
+                return 1
+              fi
+
+              echo "!! Certificado para avaliasolar.com.br não disponível ainda; mantendo apenas redirect HTTP (80)."
+              return 0
             }
 
             activate_npm_apex_redirect || echo "!! Bloqueio externo: proxy NPM não aceitou o vhost apex."
