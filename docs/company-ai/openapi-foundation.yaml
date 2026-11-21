@@ -6,7 +6,7 @@ info:
     Foundation endpoints only. Public company AI message processing and document
     ingestion are NOT declared ready in this contract. Feature stays OFF by default.
 servers:
-  - url: https://api.avaliasolar.com.br
+  - url: /
 paths:
   /api/v1/companies/{id}/ai_capability:
     get:
