@@ -76,7 +76,7 @@ export default function RecommendedCompanies({
 
   return (
     <section
-      className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-sm"
+      className="rounded-xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-sm"
       aria-labelledby="recommended-companies-title"
     >
       <div className="flex items-center justify-between gap-2">
@@ -94,11 +94,13 @@ export default function RecommendedCompanies({
         Baseadas na sua cidade, categoria e empresas selecionadas.
       </p>
 
-      <div className="mt-3.5 space-y-2.5" aria-live="polite">
-        {loading && [1, 2].map((item) => <Skeleton key={item} className="h-24 rounded-lg" />)}
+      <div data-testid="compare-recommendations-grid" className="mt-3 grid grid-cols-2 items-stretch gap-2 xl:grid-cols-1" aria-live="polite" aria-busy={loading}>
+        {loading && Array.from({ length: 8 }, (_, index) => (
+          <Skeleton key={index} data-testid="compare-recommendation-skeleton" className="h-[168px] rounded-lg xl:h-[160px]" />
+        ))}
 
         {!loading && error && (
-          <div className="rounded-lg bg-red-50 p-4 text-center">
+          <div className="col-span-full rounded-lg bg-red-50 p-4 text-center">
             <p className="text-sm font-semibold text-red-800">
               Não foi possível carregar recomendações.
             </p>
@@ -109,7 +111,7 @@ export default function RecommendedCompanies({
         )}
 
         {!loading && !error && companies.length === 0 && (
-          <p className="rounded-lg bg-slate-50 p-4 text-center text-xs text-slate-500">
+          <p className="col-span-full rounded-lg bg-slate-50 p-4 text-center text-xs text-slate-500">
             Nenhuma recomendação disponível agora.
           </p>
         )}
@@ -119,20 +121,28 @@ export default function RecommendedCompanies({
           companies.map((company) => (
             <article
               key={company.id}
-              className="flex flex-col justify-between rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 shadow-2xs transition-all hover:bg-white hover:border-slate-300 hover:shadow-xs"
+              data-testid="compare-recommendation-card"
+              className="flex min-w-0 min-h-[168px] flex-col justify-between rounded-lg border border-slate-200/90 bg-slate-50/40 p-2 shadow-2xs transition-colors hover:bg-white hover:border-slate-300 hover:shadow-xs sm:p-2.5 xl:min-h-[160px]"
             >
               <div>
-                <div className="flex items-start gap-2.5">
-                  <CompanyLogo logoUrl={company.logoUrl} name={company.name} size="sm" badges={company.badges} />
+                <div className="flex min-w-0 items-start gap-1.5 sm:gap-2">
+                  <CompanyLogo
+                    logoUrl={company.logoUrl}
+                    name={company.name}
+                    size="custom"
+                    className="h-8 w-8 sm:h-9 sm:w-9 xl:h-10 xl:w-10"
+                    imageClassName="p-0.5"
+                    badges={company.badges}
+                  />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1 min-w-0">
-                      <h3 className="truncate text-xs sm:text-[13px] font-bold text-slate-950">{company.name}</h3>
+                    <div className="flex min-w-0 items-start gap-1">
+                      <h3 title={company.name} className="min-w-0 flex-1 line-clamp-2 break-words text-[12px] leading-4 font-semibold text-slate-950">{company.name}</h3>
                       {company.verified && <CompanyVerifiedBadge size="sm" />}
                     </div>
-                    <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                    <p title={company.categoryNames[0] || 'Energia Solar'} className="mt-0.5 truncate text-[11px] leading-4 text-slate-500">
                       {company.categoryNames[0] || 'Energia Solar'}
                     </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] leading-4 text-slate-500">
                       <MapPin className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
                       <span className="truncate">
                         {[company.city, company.state].filter(Boolean).join(', ') || 'Local não informado'}
@@ -141,7 +151,7 @@ export default function RecommendedCompanies({
                   </div>
                 </div>
                 {company.rating > 0 && (
-                  <div className="mt-2 flex items-center gap-1 text-xs font-bold text-slate-800">
+                  <div className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-slate-800">
                     <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" aria-hidden="true" />
                     <span>{company.rating.toFixed(1).replace('.', ',')}</span>
                   </div>
@@ -150,7 +160,7 @@ export default function RecommendedCompanies({
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-2.5 h-8 w-full rounded-lg text-xs font-semibold border-blue-200 text-blue-700 hover:bg-blue-50"
+                className="mt-2 h-11 min-h-11 shrink-0 w-full rounded-lg border-blue-200 px-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
                 onClick={() => (isFull ? setReplacement(company) : onAdd(company))}
                 aria-label={`${isFull ? 'Substituir por' : 'Adicionar'} ${company.name}`}
               >

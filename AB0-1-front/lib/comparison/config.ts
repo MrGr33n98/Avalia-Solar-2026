@@ -9,6 +9,11 @@
  * importar daqui — proibido repetir literais 2/3/4 no domínio de comparação.
  */
 
+/** Number of recommendations to display, distinct from the selection limit. */
+export const COMPARE_RECOMMENDATION_LIMIT = 8;
+/** Extra candidates before eligibility, deduplication and scoring. */
+export const COMPARE_CANDIDATE_POOL_LIMIT = 24;
+
 export const COMPARISON_LIMITS = {
   /** PWA/mobile: viewport < 768px */
   mobile: 2,
