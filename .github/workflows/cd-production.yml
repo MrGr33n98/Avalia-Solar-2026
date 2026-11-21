@@ -674,7 +674,7 @@ jobs:
             # O host pode usar Nginx Proxy Manager/OpenResty em container.
             # Nesse caso /etc/nginx/conf.d do host não é o proxy público.
             activate_npm_apex_redirect() {
-              NPM_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /nginx-proxy-manager|jc21\\/nginx-proxy-manager|openresty/ { print $1; exit }')"
+              NPM_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /nginx-proxy-manager|jc21\\/nginx-proxy-manager|openresty|(^|[-_])npm([-_]|$)/ { print $1; exit }')"
               if [ -z "${NPM_CONTAINER}" ]; then
                 echo "?? Nenhum container NPM/OpenResty detectado; mantendo configuração do host."
                 return 0
