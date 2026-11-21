@@ -692,15 +692,24 @@ jobs:
               [ -f "$OTHER_CONF" ] || continue
               [ "$OTHER_CONF" = "$APEX_VHOST_DST" ] && continue
               [ "$OTHER_CONF" = "/etc/nginx/conf.d/avaliasolar.com.br.redirect.conf" ] && continue
+              case "$OTHER_CONF" in
+                *.bak) continue ;;
+              esac
               if grep -Eq '\bavaliasolar\.com\.br\b' "$OTHER_CONF" 2>/dev/null; then
                 echo "?? Removendo server_name apex conflitante de $OTHER_CONF..."
                 if command -v sudo >/dev/null 2>&1; then
-                  sudo sed -i.bak -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
+                  sudo sed -i -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
                 else
-                  sed -i.bak -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
+                  sed -i -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
                 fi
               fi
             done
+            # Remove arquivos .bak para evitar duplicatas carregadas por include sites-enabled/*
+            if command -v sudo >/dev/null 2>&1; then
+              sudo rm -f /etc/nginx/sites-enabled/*.bak /etc/nginx/conf.d/*.bak 2>/dev/null || true
+            else
+              rm -f /etc/nginx/sites-enabled/*.bak /etc/nginx/conf.d/*.bak 2>/dev/null || true
+            fi
 
             if [ -f "${APEX_VHOST_SRC}" ] && ensure_apex_certificate; then
               if command -v sudo >/dev/null 2>&1; then
@@ -766,12 +775,11 @@ jobs:
                 rm -rf "${NPM_TMP}"
               fi
 
-              # 2. Configura bloco HTTP (porta 80) com acme-challenge e redirect 308
+              # 2. Configura bloco HTTP (porta 80) com acme-challenge e redirect 308 (IPv4 exclusivo para compatibilidade Docker)
               NPM_APEX_HTTP='
                 # AVALIA_SOLAR_APEX_REDIRECT_BEGIN
                 server {
                     listen 80;
-                    listen [::]:80;
                     server_name avaliasolar.com.br;
 
                     location /.well-known/acme-challenge/ {
@@ -823,13 +831,12 @@ jobs:
                 fi
               fi
 
-              # 4. Se o certificado for válido, ativa o bloco HTTPS (443) com redirect 308
+              # 4. Se o certificado for válido, ativa o bloco HTTPS (443) com redirect 308 (IPv4 limpo)
               if [ "$CERT_VALID" = "true" ]; then
                 NPM_APEX_FULL='
                   # AVALIA_SOLAR_APEX_REDIRECT_BEGIN
                   server {
                       listen 80;
-                      listen [::]:80;
                       server_name avaliasolar.com.br;
 
                       location /.well-known/acme-challenge/ {
@@ -842,8 +849,7 @@ jobs:
                   }
 
                   server {
-                      listen 443 ssl http2;
-                      listen [::]:443 ssl http2;
+                      listen 443 ssl;
                       server_name avaliasolar.com.br;
 
                       ssl_certificate /data/custom_ssl/avaliasolar.com.br/fullchain.pem;
@@ -860,14 +866,16 @@ jobs:
                 '
                 printf '%s\n' "${NPM_APEX_FULL}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
 
-                if docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1; then
+                NPM_TEST_OUTPUT="$(docker exec "${NPM_CONTAINER}" nginx -t 2>&1)"
+                if [ $? -eq 0 ]; then
                   docker exec "${NPM_CONTAINER}" nginx -s reload
                   echo "?? Redirect apex 308 e certificado válido ativados no NPM/OpenResty."
                   return 0
                 fi
-                echo "!! Nginx do NPM rejeitou a configuração com TLS; restaurando backup."
+                echo "!! Nginx do NPM rejeitou a configuração com TLS: ${NPM_TEST_OUTPUT}"
+                echo "!! Restaurando backup de http_top.conf..."
                 docker exec "${NPM_CONTAINER}" sh -c 'cp /data/nginx/custom/http_top.conf.avalia-backup /data/nginx/custom/http_top.conf'
-                docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
+                docker exec "${NPM_CONTAINER}" nginx -s reload || true
                 return 1
               fi
 
