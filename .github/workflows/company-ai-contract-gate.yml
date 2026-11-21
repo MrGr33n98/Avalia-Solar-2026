@@ -15,6 +15,8 @@ on:
       - 'AB0-1-front/app/dashboard/components/company-ai/**'
       - 'AB0-1-front/app/dashboard/components/EnterpriseDashboard.tsx'
       - 'AB0-1-front/config/navigation.ts'
+      - 'AB0-1-front/lib/analytics/schema.ts'
+      - 'AB0-1-front/lib/analytics/contract.ts'
       - '.github/workflows/company-ai-contract-gate.yml'
   workflow_dispatch:
 
@@ -97,4 +99,4 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Company AI UI component tests
-        run: npx jest --runInBand --runTestsByPath app/dashboard/components/company-ai/CompanyAiStudio.spec.tsx
+        run: npx jest --runInBand --runTestsByPath app/dashboard/components/company-ai/CompanyAiStudio.spec.tsx app/dashboard/components/company-ai/CompanyAiTelemetry.spec.ts
