@@ -16,7 +16,7 @@ module CompanyAi
       ChatSession.transaction do
         session = ChatSession.create!(
           company: company, user: user, source_page: 'company_brand_page',
-          vertical: 'company_ai', mode: 'bot_only',
+          vertical: 'company_ai', mode: 'bot_only', inbox_status: 'archived',
           metadata: { 'company_ai_assistant_id' => assistant.id,
                       'company_ai_workflow_version_id' => version.id }
         )

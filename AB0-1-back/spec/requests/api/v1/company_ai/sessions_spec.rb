@@ -34,6 +34,7 @@ RSpec.describe 'Company AI contextual session API', type: :request do
     result = response.parsed_body
     session = ChatSession.find(result.fetch('session_id'))
     expect(session.company_id).to eq(company.id)
+    expect(session.inbox_status).to eq('archived')
     expect(session.metadata.fetch('company_ai_workflow_version_id')).to eq(version.id)
     expect(Chat::SessionAccessToken.verify(result.fetch('access_token'), session: session)).to be_present
     expect(result.dig('initial_message', 'content')).to eq('Bem-vindo!')

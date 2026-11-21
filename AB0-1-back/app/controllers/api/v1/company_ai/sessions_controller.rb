@@ -8,6 +8,11 @@ module Api
         def create
           company = ::Company.find_by_slug_or_id(params[:id])
           company = nil unless company&.status == 'active'
+          if company && !::CompanyAi::SessionRateLimiter.allowed?(ip: request.remote_ip, company_id: company.id)
+            return render json: { code: 'COMPANY_AI_RATE_LIMITED' }, status: :too_many_requests,
+                          headers: { 'Retry-After' => '60' }
+          end
+
           session, greeting = ::CompanyAi::SessionStarter.call(company: company, user: current_user)
           response.headers['Cache-Control'] = 'private, no-store'
           render json: {
