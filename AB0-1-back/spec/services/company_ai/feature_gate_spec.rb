@@ -18,6 +18,12 @@ RSpec.describe CompanyAi::FeatureGate do
     expect(described_class.call(company: company).reason).to eq('FEATURE_DISABLED')
   end
 
+  it 'allows eligible dashboard configuration without exposing public runtime' do
+    allow(ENV).to receive(:fetch).with('COMPANY_AI_ENABLED', 'false').and_return('false')
+    expect(described_class.call(company: company, require_rollout: false).allowed?).to eq(true)
+    expect(described_class.call(company: company).allowed?).to eq(false)
+  end
+
   it 'denies unowned and inactive company contexts' do
     expect(described_class.call(company: nil).reason).to eq('COMPANY_NOT_FOUND')
     allow(company).to receive(:status).and_return('inactive')

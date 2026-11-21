@@ -65,7 +65,7 @@ module Api
         end
 
         def authorize_feature!
-          decision = ::CompanyAi::FeatureGate.call(company: @company)
+          decision = ::CompanyAi::FeatureGate.call(company: @company, require_rollout: false)
           return if decision.allowed?
 
           render json: { code: decision.reason }, status: :forbidden

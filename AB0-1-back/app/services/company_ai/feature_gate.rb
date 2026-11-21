@@ -10,8 +10,8 @@ module CompanyAi
       end
     end
 
-    def self.call(company:)
-      return deny('FEATURE_DISABLED') unless ENV.fetch('COMPANY_AI_ENABLED', 'false') == 'true'
+    def self.call(company:, require_rollout: true)
+      return deny('FEATURE_DISABLED') if require_rollout && ENV.fetch('COMPANY_AI_ENABLED', 'false') != 'true'
       return deny('COMPANY_NOT_FOUND') unless company
       return deny('COMPANY_INACTIVE') unless company.status.to_s == 'active'
       return deny('PAID_PLAN_REQUIRED') unless company.has_paid_plan?

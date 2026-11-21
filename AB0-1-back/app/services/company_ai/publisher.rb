@@ -10,7 +10,7 @@ module CompanyAi
         raise ArgumentError, 'PUBLISH_PERMISSION_REQUIRED' unless membership&.owner? || membership&.manager?
       end
 
-      gate = FeatureGate.call(company: assistant.company)
+      gate = FeatureGate.call(company: assistant.company, require_rollout: false)
       raise ArgumentError, gate.reason unless gate.allowed?
 
       result = WorkflowValidator.call(version.definition)
