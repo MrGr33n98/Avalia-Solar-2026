@@ -202,6 +202,15 @@ module PlanFeatureCatalog
       group: 'conversion',
       aliases: %w[p2p_chat_enabled direct_chat customer_chat marketplace_chat]
     },
+    'company_ai_assistant' => {
+      label: 'Assistente IA contextual da empresa',
+      description: 'Atendimento por IA com fontes aprovadas e limite de uso na Brand Page.',
+      type: :boolean,
+      default: false,
+      access_behavior: :entitlement,
+      teaser: :locked,
+      group: 'conversion'
+    },
     'ai_live_inbox' => {
       label: 'Live Inbox de Leads MobiVolt',
       description: 'Permite receber e atender oportunidades qualificadas em tempo real.',
@@ -513,6 +522,7 @@ module PlanFeatureCatalog
       'media_upload' => true,
       'p2p_chat' => true,
       'ai_live_inbox' => true,
+      'company_ai_assistant' => true,
       'company_categories_limit' => 12,
       'service_area_states_limit' => 3,
       'service_area_cities_limit' => 30,
@@ -553,6 +563,7 @@ module PlanFeatureCatalog
       'media_upload' => true,
       'p2p_chat' => true,
       'ai_live_inbox' => true,
+      'company_ai_assistant' => true,
       'company_categories_limit' => 999,
       'service_area_states_limit' => 999,
       'service_area_cities_limit' => 999,
