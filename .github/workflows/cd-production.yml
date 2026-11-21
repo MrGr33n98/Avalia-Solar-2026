@@ -602,28 +602,58 @@ jobs:
             deploy_vhost "$CRM_VHOST_SRC" "$CRM_VHOST_DST" "crm"
             deploy_vhost "$NPM_VHOST_SRC" "$NPM_VHOST_DST" "npm"
 
-            # Apex: somente instalar o redirect HTTPS quando o certificado do apex
-            # já existir. Sem certificado, manter a configuração atual e registrar
-            # o bloqueio para não quebrar o Nginx nem servir um vhost incompleto.
+            # Apex: validar o SAN antes de ativar o redirect HTTPS.
+            # Arquivo existente não é suficiente: o certificado pode ser de api.avaliasolar.com.br.
             APEX_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/avaliasolar.com.br.redirect.conf"
             APEX_VHOST_DST="/etc/nginx/conf.d/avaliasolar.com.br.redirect.conf"
             APEX_CERT="/etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem"
             APEX_KEY="/etc/letsencrypt/live/avaliasolar.com.br/privkey.pem"
-            if [ -f "$APEX_VHOST_SRC" ] && [ -f "$APEX_CERT" ] && [ -f "$APEX_KEY" ]; then
-              if command -v sudo >/dev/null 2>&1; then
-                sudo sed \
-                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
-                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
-                  "$APEX_VHOST_SRC" | sudo tee "$APEX_VHOST_DST" >/dev/null
-              else
-                sed \
-                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
-                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
-                  "$APEX_VHOST_SRC" > "$APEX_VHOST_DST"
+            APEX_WEBROOT="/var/www/certbot"
+
+            apex_certificate_valid() {
+              [ -f "${APEX_CERT}" ] && [ -f "${APEX_KEY}" ] || return 1
+              command -v openssl >/dev/null 2>&1 || return 1
+              openssl x509 -in "${APEX_CERT}" -checkhost avaliasolar.com.br -noout >/dev/null 2>&1
+            }
+
+            ensure_apex_certificate() {
+              if apex_certificate_valid; then
+                echo "?? Certificado do apex válido para avaliasolar.com.br."
+                return 0
               fi
-              echo "?? Vhost apex instalado com redirect 308 e certificado existente."
+
+              echo "!! Certificado do apex ausente ou SAN inválido; tentando emissão via Certbot HTTP-01."
+              if ! command -v certbot >/dev/null 2>&1; then
+                echo "!! Bloqueio externo: certbot não está instalado no host."
+                return 1
+              fi
+
+              if command -v sudo >/dev/null 2>&1; then
+                sudo mkdir -p "${APEX_WEBROOT}/.well-known/acme-challenge"
+                sudo certbot certonly --webroot --webroot-path "${APEX_WEBROOT}"                   --cert-name avaliasolar.com.br --domain avaliasolar.com.br                   --preferred-challenges http --force-renewal --non-interactive                   --agree-tos --register-unsafely-without-email
+              else
+                mkdir -p "${APEX_WEBROOT}/.well-known/acme-challenge"
+                certbot certonly --webroot --webroot-path "${APEX_WEBROOT}"                   --cert-name avaliasolar.com.br --domain avaliasolar.com.br                   --preferred-challenges http --force-renewal --non-interactive                   --agree-tos --register-unsafely-without-email
+              fi
+
+              if apex_certificate_valid; then
+                echo "?? Certificado do apex emitido e SAN validado."
+                return 0
+              fi
+
+              echo "!! Bloqueio externo: Certbot não entregou certificado válido para avaliasolar.com.br."
+              return 1
+            }
+
+            if [ -f "${APEX_VHOST_SRC}" ] && ensure_apex_certificate; then
+              if command -v sudo >/dev/null 2>&1; then
+                sudo sed                   -e 's|^    # ssl_certificate     |    ssl_certificate     |'                   -e 's|^    # ssl_certificate_key |    ssl_certificate_key |'                   "${APEX_VHOST_SRC}" | sudo tee "${APEX_VHOST_DST}" >/dev/null
+              else
+                sed                   -e 's|^    # ssl_certificate     |    ssl_certificate     |'                   -e 's|^    # ssl_certificate_key |    ssl_certificate_key |'                   "${APEX_VHOST_SRC}" > "${APEX_VHOST_DST}"
+              fi
+              echo "?? Vhost apex instalado com redirect 308 e certificado SAN válido."
             else
-              echo "!! Bloqueio externo: certificado do apex ausente em ${APEX_CERT}; vhost apex não foi alterado."
+              echo "!! Vhost apex não ativado; a auditoria pós-deploy continuará bloqueando TLS/308."
             fi
 
             # Reload Nginx se houver arquivos novos
