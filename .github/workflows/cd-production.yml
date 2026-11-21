@@ -671,7 +671,85 @@ jobs:
               fi
             fi
 
-            # Reativar modo estrito para o deploy principal
+            # O host pode usar Nginx Proxy Manager/OpenResty em container.
+            # Nesse caso /etc/nginx/conf.d do host não é o proxy público.
+            activate_npm_apex_redirect() {
+              NPM_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /nginx-proxy-manager|jc21\\/nginx-proxy-manager|openresty/ { print $1; exit }')"
+              if [ -z "${NPM_CONTAINER}" ]; then
+                echo "?? Nenhum container NPM/OpenResty detectado; mantendo configuração do host."
+                return 0
+              fi
+
+              echo "?? Ativando redirect apex no proxy público ${NPM_CONTAINER}..."
+              NPM_TMP="$(mktemp -d)"
+              if command -v sudo >/dev/null 2>&1; then
+                sudo cat "${APEX_CERT}" > "${NPM_TMP}/fullchain.pem"
+                sudo cat "${APEX_KEY}" > "${NPM_TMP}/privkey.pem"
+              else
+                cp -L "${APEX_CERT}" "${NPM_TMP}/fullchain.pem"
+                cp -L "${APEX_KEY}" "${NPM_TMP}/privkey.pem"
+              fi
+
+              docker exec "${NPM_CONTAINER}" sh -c 'mkdir -p /data/custom_ssl/avaliasolar.com.br /data/nginx/custom'
+              docker cp "${NPM_TMP}/fullchain.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/fullchain.pem"
+              docker cp "${NPM_TMP}/privkey.pem" "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/privkey.pem"
+
+              NPM_APEX_CONFIG=$(cat <<'NGINX_APEX'
+# AVALIA_SOLAR_APEX_REDIRECT_BEGIN
+server {
+    listen 80;
+    listen [::]:80;
+    server_name avaliasolar.com.br;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 308 https://www.avaliasolar.com.br$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name avaliasolar.com.br;
+
+    ssl_certificate /data/custom_ssl/avaliasolar.com.br/fullchain.pem;
+    ssl_certificate_key /data/custom_ssl/avaliasolar.com.br/privkey.pem;
+
+    return 308 https://www.avaliasolar.com.br$request_uri;
+}
+# AVALIA_SOLAR_APEX_REDIRECT_END
+NGINX_APEX
+              )
+
+              docker exec "${NPM_CONTAINER}" sh -c '
+                file=/data/nginx/custom/http_top.conf
+                backup=/data/nginx/custom/http_top.conf.avalia-backup
+                [ -f "$file" ] || : > "$file"
+                cp "$file" "$backup"
+                awk "/# AVALIA_SOLAR_APEX_REDIRECT_BEGIN/{skip=1} !skip{print} /# AVALIA_SOLAR_APEX_REDIRECT_END/{skip=0}" "$file" > "${file}.tmp"
+                mv "${file}.tmp" "$file"
+              '
+              printf '%s\n' "${NPM_APEX_CONFIG}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
+
+              if docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1; then
+                docker exec "${NPM_CONTAINER}" nginx -s reload
+                echo "?? Redirect apex 308 e certificado válido ativados no NPM/OpenResty."
+                rm -rf "${NPM_TMP}"
+                return 0
+              fi
+
+              echo "!! Nginx do NPM rejeitou a configuração; restaurando backup."
+              docker exec "${NPM_CONTAINER}" sh -c 'cp /data/nginx/custom/http_top.conf.avalia-backup /data/nginx/custom/http_top.conf'
+              docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
+              rm -rf "${NPM_TMP}"
+              return 1
+            }
+
+            activate_npm_apex_redirect || echo "!! Bloqueio externo: proxy NPM não aceitou o vhost apex."
+                        # Reativar modo estrito para o deploy principal
             set -e
             set -o pipefail
 
