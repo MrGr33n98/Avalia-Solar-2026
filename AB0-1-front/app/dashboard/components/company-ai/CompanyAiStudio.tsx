@@ -15,6 +15,17 @@ type AssistantConfig = {
   workflow_version?: number | null;
 };
 type DraftResponse = { id: number; status: string; version_number: number; validation_errors: string[] };
+type WorkflowOption = { key: string; label: string };
+type WorkflowNode = {
+  id: string;
+  type: string;
+  text?: string;
+  options?: WorkflowOption[];
+  action_key?: string;
+  source?: string;
+};
+type WorkflowEdge = { from: string; to: string; choice?: string };
+type WorkflowDefinition = { start_node_id: string; nodes: WorkflowNode[]; edges: WorkflowEdge[] };
 
 const DAYS = [
   ['monday', 'Seg'], ['tuesday', 'Ter'], ['wednesday', 'Qua'],
@@ -25,7 +36,7 @@ const defaultHours = (): WeekHours => Object.fromEntries(
   DAYS.map(([key]) => [key, ['saturday', 'sunday'].includes(key) ? [] : [{ start: '09:00', end: '18:00' }]])
 );
 
-export function buildStarterWorkflow(greeting: string, menu: 'all' | 'catalog' | 'contact') {
+export function buildStarterWorkflow(greeting: string, menu: 'all' | 'catalog' | 'contact'): WorkflowDefinition {
   const choices = [
     ...(menu === 'contact' ? [] : [
       { key: 'products', label: 'Produtos e serviços' },
@@ -34,7 +45,7 @@ export function buildStarterWorkflow(greeting: string, menu: 'all' | 'catalog' |
     ]),
     ...(menu === 'catalog' ? [] : [{ key: 'quote', label: 'Solicitar orçamento' }])
   ];
-  const contentNodes = choices.map((choice) => ({
+  const contentNodes: WorkflowNode[] = choices.map((choice) => ({
     id: choice.key,
     type: choice.key === 'quote' ? 'action' : 'knowledge',
     ...(choice.key === 'quote'
