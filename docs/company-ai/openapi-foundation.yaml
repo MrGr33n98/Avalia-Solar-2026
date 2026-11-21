@@ -3,8 +3,8 @@ info:
   title: Avalia Solar Company AI — protected foundation
   version: 0.1.0
   description: >
-    Foundation endpoints only. Public company AI message processing and document
-    ingestion are NOT declared ready in this contract. Feature stays OFF by default.
+    Public Company AI capability, signed sessions and bounded message runtime.
+    Document ingestion remains outside this contract. Feature stays OFF by default.
 servers:
   - url: /
 paths:
@@ -31,6 +31,44 @@ paths:
                   enabled: { type: boolean }
                   mode: { type: string, enum: [company, general] }
                   schema_version: { type: integer, enum: [1] }
+
+  /api/v1/companies/{id}/ai_sessions/{session_id}/messages:
+    post:
+      security: [{ companyAiSessionToken: [] }]
+      summary: Process one tenant-bound Company AI message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - name: X-Chat-Session-Token
+          in: header
+          required: true
+          schema: { type: string, minLength: 16 }
+        - name: X-Request-ID
+          in: header
+          required: false
+          schema: { type: string, minLength: 8, maxLength: 100 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, client_message_id]
+              properties:
+                content: { type: string, minLength: 1, maxLength: 2000 }
+                client_message_id: { type: string, minLength: 8, maxLength: 200 }
+                request_id: { type: string, minLength: 8, maxLength: 100 }
+      responses:
+        '200': { description: Message and bounded assistant response }
+        '403': { description: Invalid token, tenant mismatch or unavailable assistant }
+        '422': { description: Empty, unsafe or invalid message }
+        '429': { description: Rate or monthly usage limit }
 
   /api/v1/company_admin/ai_assistant:
     get:
@@ -114,6 +152,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    companyAiSessionToken:
+      type: apiKey
+      in: header
+      name: X-Chat-Session-Token
   parameters:
     companyId:
       name: company_id
