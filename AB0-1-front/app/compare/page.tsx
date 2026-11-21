@@ -62,6 +62,7 @@ import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import {
   COMPARISON_LIMITS,
   COMPARISON_LIMIT_MESSAGES,
+  COMPARE_RECOMMENDATION_LIMIT,
 } from '@/lib/comparison/config';
 
 const selectionFromParams = (params: URLSearchParams): string[] => {
@@ -151,7 +152,7 @@ function ComparePageContent() {
         selectedCompanies: companies,
         allCompanies: candidatesQuery.data || [],
         city: contextCity,
-        limit: 3,
+        limit: COMPARE_RECOMMENDATION_LIMIT,
       }),
     [candidatesQuery.data, companies, contextCity]
   );

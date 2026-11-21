@@ -41,7 +41,13 @@ jobs:
             components/CompanyComparisonModal.spec.tsx \
             components/home/HomeRails.spec.tsx \
             lib/comparison/field-normalizers.spec.ts \
-            lib/comparison/comparison-storage.spec.ts
+            lib/comparison/comparison-storage.spec.ts \
+            __tests__/components/RecommendedCompanies.test.tsx \
+            __tests__/components/RecommendedCompaniesCompact.test.tsx \
+            __tests__/components/ComparePwaCarbonLayout.test.tsx \
+            components/compare/__tests__/compare-insights.test.ts \
+            components/compare/__tests__/recommendations-grid-domain.test.ts \
+            components/compare/__tests__/useCompareDiscovery.test.tsx
 
   backend-contract:
     name: Comparison Rails request/model specs
