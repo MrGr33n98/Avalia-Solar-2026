@@ -20,7 +20,7 @@ on:
     branches: ["main", "develop"]
 
 concurrency:
-  group: enterprise-ci-${{ github.ref }}
+  group: enterprise-ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
