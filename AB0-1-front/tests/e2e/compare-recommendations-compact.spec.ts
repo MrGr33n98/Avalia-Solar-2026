@@ -81,5 +81,5 @@ test('comparison compact grid: 8 recommendations, touch geometry, responsive PWA
 
   await page.setViewportSize({ width: 390, height: 900 });
   await cards.first().getByRole('button', { name: /Adicionar Cooperativa Regional/i }).click();
-  await expect(page.getByText(/1 de 2/)).toBeVisible();
+  await expect(page.getByText('(1 de 2)')).toBeVisible();
 });
