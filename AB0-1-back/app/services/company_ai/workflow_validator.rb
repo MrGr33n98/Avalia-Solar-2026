@@ -91,6 +91,13 @@ module CompanyAi
         @errors << "DEAD_END:#{id}" if node['type'] != 'end' && outgoing.empty?
       end
 
+      node_by_id.each do |id, node|
+        next unless node['type'] == 'choice'
+        outgoing_choices = edges.filter_map { |edge| edge['choice'] if edge.is_a?(Hash) && edge['from'] == id }
+        declared_choices = Array(node['options']).filter_map { |option| option['key'] if option.is_a?(Hash) }
+        @errors << "CHOICE_BRANCH_MISSING:#{id}" unless outgoing_choices.sort == declared_choices.sort
+      end
+
       if node_by_id.key?(start)
         visited = Set.new
         visiting = Set.new

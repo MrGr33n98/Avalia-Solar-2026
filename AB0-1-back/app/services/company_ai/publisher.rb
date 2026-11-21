@@ -5,6 +5,10 @@ module CompanyAi
     def self.call(assistant:, version:, actor:)
       raise ArgumentError, 'VERSION_MISMATCH' unless version.company_ai_assistant_id == assistant.id
       raise ArgumentError, 'UNAUTHORIZED_ACTOR' unless actor
+      unless actor.respond_to?(:admin?) && actor.admin?
+        membership = assistant.company.company_members.active.find_by(user_id: actor.id)
+        raise ArgumentError, 'PUBLISH_PERMISSION_REQUIRED' unless membership&.owner? || membership&.manager?
+      end
 
       gate = FeatureGate.call(company: assistant.company)
       raise ArgumentError, gate.reason unless gate.allowed?

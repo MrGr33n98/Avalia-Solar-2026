@@ -18,7 +18,7 @@ module CompanyAi
 
       @weekly.each_value { |windows| validate_windows!(windows) }
       @exceptions.each do |date, windows|
-        raise ArgumentError, 'INVALID_DATE' unless date.match?(/\A\d{4}-\d{2}-\d{2}\z/) && Date.iso8601(date)
+        raise ArgumentError, 'INVALID_DATE' unless date.is_a?(String) && date.match?(/\A\d{4}-\d{2}-\d{2}\z/) && Date.iso8601(date)
         validate_windows!(windows)
       end
     rescue Date::Error

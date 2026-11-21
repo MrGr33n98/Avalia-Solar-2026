@@ -28,6 +28,9 @@ module Api
         def create_draft
           assistant = ::CompanyAiAssistant.find_or_create_by!(company: @company)
           definition = params.require(:definition).permit!.to_h
+          if definition.to_json.bytesize > 24_000
+            return render json: { code: 'WORKFLOW_TOO_LARGE' }, status: :unprocessable_entity
+          end
           version = assistant.with_lock do
             number = assistant.workflow_versions.maximum(:version_number).to_i + 1
             assistant.workflow_versions.create!(version_number: number, status: 'draft', definition: definition,
@@ -39,6 +42,7 @@ module Api
         end
 
         def publish
+          return render(json: { code: 'PUBLISH_PERMISSION_REQUIRED' }, status: :forbidden) unless can_publish?
           assistant = ::CompanyAiAssistant.find_by!(company: @company)
           version = assistant.workflow_versions.find(params[:version_id])
           published = ::CompanyAi::Publisher.call(assistant: assistant, version: version, actor: current_user)
@@ -62,6 +66,12 @@ module Api
           return if decision.allowed?
 
           render json: { code: decision.reason }, status: :forbidden
+        end
+
+        def can_publish?
+          return true if current_user&.admin?
+          membership = @company.company_members.active.find_by(user_id: current_user.id)
+          membership&.owner? || membership&.manager?
         end
 
         def audit!(assistant, action, workflow_version_id: nil)
