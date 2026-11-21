@@ -610,7 +610,7 @@ jobs:
             # Apex: validar o SAN antes de ativar o redirect HTTPS.
             # Arquivo existente não é suficiente: o certificado pode ser de api.avaliasolar.com.br.
             APEX_VHOST_SRC="${DEPLOY_DIR}/infra/nginx/avaliasolar.com.br.redirect.conf"
-            APEX_VHOST_DST="/etc/nginx/conf.d/avaliasolar.com.br.redirect.conf"
+            APEX_VHOST_DST="/etc/nginx/conf.d/00-avaliasolar.com.br.redirect.conf"
             APEX_CERT="/etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem"
             APEX_KEY="/etc/letsencrypt/live/avaliasolar.com.br/privkey.pem"
             APEX_WEBROOT="/var/www/certbot"
@@ -635,10 +635,16 @@ jobs:
 
               if command -v sudo >/dev/null 2>&1; then
                 sudo mkdir -p "${APEX_WEBROOT}/.well-known/acme-challenge"
-                sudo certbot certonly --webroot --webroot-path "${APEX_WEBROOT}"                   --cert-name avaliasolar.com.br --domain avaliasolar.com.br                   --preferred-challenges http --force-renewal --non-interactive                   --agree-tos --register-unsafely-without-email
+                sudo certbot certonly --webroot --webroot-path "${APEX_WEBROOT}" \
+                  --cert-name avaliasolar.com.br --domain avaliasolar.com.br \
+                  --preferred-challenges http --force-renewal --non-interactive \
+                  --agree-tos --register-unsafely-without-email
               else
                 mkdir -p "${APEX_WEBROOT}/.well-known/acme-challenge"
-                certbot certonly --webroot --webroot-path "${APEX_WEBROOT}"                   --cert-name avaliasolar.com.br --domain avaliasolar.com.br                   --preferred-challenges http --force-renewal --non-interactive                   --agree-tos --register-unsafely-without-email
+                certbot certonly --webroot --webroot-path "${APEX_WEBROOT}" \
+                  --cert-name avaliasolar.com.br --domain avaliasolar.com.br \
+                  --preferred-challenges http --force-renewal --non-interactive \
+                  --agree-tos --register-unsafely-without-email
               fi
 
               if apex_certificate_valid; then
@@ -650,13 +656,41 @@ jobs:
               return 1
             }
 
+            # Remove vhosts antigos ou duplicados sem prefixo 00
+            if command -v sudo >/dev/null 2>&1; then
+              sudo rm -f /etc/nginx/conf.d/avaliasolar.com.br.redirect.conf 2>/dev/null || true
+            else
+              rm -f /etc/nginx/conf.d/avaliasolar.com.br.redirect.conf 2>/dev/null || true
+            fi
+
+            # Desativa menções conflitantes ao apex em outros arquivos de vhost
+            for OTHER_CONF in /etc/nginx/conf.d/*.conf /etc/nginx/sites-enabled/*; do
+              [ -f "$OTHER_CONF" ] || continue
+              [ "$OTHER_CONF" = "$APEX_VHOST_DST" ] && continue
+              [ "$OTHER_CONF" = "/etc/nginx/conf.d/avaliasolar.com.br.redirect.conf" ] && continue
+              if grep -Eq '\bavaliasolar\.com\.br\b' "$OTHER_CONF" 2>/dev/null; then
+                echo "?? Removendo server_name apex conflitante de $OTHER_CONF..."
+                if command -v sudo >/dev/null 2>&1; then
+                  sudo sed -i.bak -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
+                else
+                  sed -i.bak -E 's/([[:space:]])avaliasolar\.com\.br([[:space:];])/\1\2/g' "$OTHER_CONF" 2>/dev/null || true
+                fi
+              fi
+            done
+
             if [ -f "${APEX_VHOST_SRC}" ] && ensure_apex_certificate; then
               if command -v sudo >/dev/null 2>&1; then
-                sudo sed                   -e 's|^    # ssl_certificate     |    ssl_certificate     |'                   -e 's|^    # ssl_certificate_key |    ssl_certificate_key |'                   "${APEX_VHOST_SRC}" | sudo tee "${APEX_VHOST_DST}" >/dev/null
+                sudo sed \
+                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
+                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
+                  "${APEX_VHOST_SRC}" | sudo tee "${APEX_VHOST_DST}" >/dev/null
               else
-                sed                   -e 's|^    # ssl_certificate     |    ssl_certificate     |'                   -e 's|^    # ssl_certificate_key |    ssl_certificate_key |'                   "${APEX_VHOST_SRC}" > "${APEX_VHOST_DST}"
+                sed \
+                  -e 's|^    # ssl_certificate     |    ssl_certificate     |' \
+                  -e 's|^    # ssl_certificate_key |    ssl_certificate_key |' \
+                  "${APEX_VHOST_SRC}" > "${APEX_VHOST_DST}"
               fi
-              echo "?? Vhost apex instalado com redirect 308 e certificado SAN válido."
+              echo "?? Vhost apex instalado com redirect 308 e certificado SAN válido em ${APEX_VHOST_DST}."
             else
               echo "!! Vhost apex não ativado; a auditoria pós-deploy continuará bloqueando TLS/308."
             fi
@@ -679,7 +713,7 @@ jobs:
             # O host pode usar Nginx Proxy Manager/OpenResty em container.
             # Nesse caso /etc/nginx/conf.d do host não é o proxy público.
             activate_npm_apex_redirect() {
-              NPM_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($0) ~ /nginx-proxy-manager|jc21\\/nginx-proxy-manager|openresty|(^|[-_])npm([-_]|$)/ { print $1; exit }')"
+              NPM_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | grep -Ei 'nginx-proxy-manager|openresty|\bnpm\b' | awk '{ print $1; exit }')"
               if [ -z "${NPM_CONTAINER}" ]; then
                 echo "?? Nenhum container NPM/OpenResty detectado; mantendo configuração do host."
                 return 0
