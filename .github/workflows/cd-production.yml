@@ -521,6 +521,32 @@ jobs:
             set +e
             set +o pipefail
 
+            reload_web_proxy() {
+              echo "?? Recarregando configuração do proxy web (OpenResty/Nginx)..."
+              if command -v sudo >/dev/null 2>&1; then
+                sudo nginx -s reload 2>/dev/null \
+                  || sudo openresty -s reload 2>/dev/null \
+                  || sudo systemctl reload openresty 2>/dev/null \
+                  || sudo systemctl reload nginx 2>/dev/null \
+                  || sudo service openresty reload 2>/dev/null \
+                  || sudo service nginx reload 2>/dev/null \
+                  || sudo pkill -HUP -f 'nginx: master' 2>/dev/null \
+                  || sudo pkill -HUP -f 'openresty' 2>/dev/null \
+                  || true
+              else
+                nginx -s reload 2>/dev/null \
+                  || openresty -s reload 2>/dev/null \
+                  || systemctl reload openresty 2>/dev/null \
+                  || systemctl reload nginx 2>/dev/null \
+                  || service openresty reload 2>/dev/null \
+                  || service nginx reload 2>/dev/null \
+                  || pkill -HUP -f 'nginx: master' 2>/dev/null \
+                  || pkill -HUP -f 'openresty' 2>/dev/null \
+                  || true
+              fi
+              echo "?? Proxy web recarregado."
+            }
+
             echo "?? Ajustando limite de upload no Nginx (413 safeguard)..."
             UPLOAD_LIMIT="${NGINX_CLIENT_MAX_BODY_SIZE:-25m}"
             NGINX_LIMIT_FILE="/etc/nginx/conf.d/zz-avalia-upload-limits.conf"
@@ -530,14 +556,12 @@ jobs:
               if [ "$(id -u)" = "0" ]; then
                 printf "%s\n" "$NGINX_SNIPPET" > "$NGINX_LIMIT_FILE"
                 if nginx -t 2>/dev/null; then
-                  systemctl is-active --quiet nginx && systemctl reload nginx || echo "?? Nginx nao esta ativo, skip reload"
-                  service nginx status >/dev/null 2>&1 && service nginx reload || true
+                  reload_web_proxy
                 fi
               elif command -v sudo >/dev/null 2>&1; then
                 printf "%s\n" "$NGINX_SNIPPET" | sudo tee "$NGINX_LIMIT_FILE" >/dev/null
                 if sudo nginx -t 2>/dev/null; then
-                  sudo systemctl is-active --quiet nginx && sudo systemctl reload nginx || echo "?? Nginx nao esta ativo, skip reload"
-                  sudo service nginx status >/dev/null 2>&1 && sudo service nginx reload || true
+                  reload_web_proxy
                 fi
               else
                 echo "!! Aviso: sem permissao para atualizar Nginx automaticamente. Ajuste manual necessario: client_max_body_size ${UPLOAD_LIMIT};"
@@ -695,20 +719,25 @@ jobs:
               echo "!! Vhost apex não ativado; a auditoria pós-deploy continuará bloqueando TLS/308."
             fi
 
-            # Reload Nginx se houver arquivos novos
+            # Reload Nginx/OpenResty se houver arquivos novos
             if command -v sudo >/dev/null 2>&1; then
               if sudo nginx -t; then
-                sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true
+                reload_web_proxy
               else
                 echo "!! Aviso: nginx -t falhou; mantendo configuracao atual sem reload."
               fi
             else
               if nginx -t; then
-                systemctl reload nginx 2>/dev/null || service nginx reload 2>/dev/null || true
+                reload_web_proxy
               else
                 echo "!! Aviso: nginx -t falhou; mantendo configuracao atual sem reload."
               fi
             fi
+
+            echo "?? Sondando vhost apex localmente via OpenSSL..."
+            openssl s_client -connect 127.0.0.1:443 -servername avaliasolar.com.br </dev/null 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null || true
+            echo "?? Sondando redirect HTTP localmente..."
+            curl -Iv http://127.0.0.1/ -H "Host: avaliasolar.com.br" 2>&1 | grep -iE 'location|http/' || true
 
             # O host pode usar Nginx Proxy Manager/OpenResty em container.
             # Nesse caso /etc/nginx/conf.d do host não é o proxy público.
