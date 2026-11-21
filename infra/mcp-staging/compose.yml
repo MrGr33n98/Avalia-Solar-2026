@@ -45,6 +45,7 @@ services:
       - .env
     environment:
       RAILS_ENV: production
+      MCP_STAGING_MODE: "true"
       RAILS_LOG_TO_STDOUT: "true"
       PORT: "3001"
       POSTGRES_HOST: postgres
@@ -71,6 +72,8 @@ services:
       MCP_PRIVATE_ALLOWED_HOSTS: mcp-staging.avaliasolar.com.br
       MCP_REMOTE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
       MCP_PRIVATE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
+    volumes:
+      - ./mcp_staging_canary.rb:/app/config/initializers/99_mcp_staging_canary.rb:ro
     depends_on:
       postgres:
         condition: service_healthy
