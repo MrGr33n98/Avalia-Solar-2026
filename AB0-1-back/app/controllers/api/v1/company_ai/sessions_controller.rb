@@ -8,7 +8,10 @@ module Api
         def create
           company = ::Company.find_by_slug_or_id(params[:id])
           company = nil unless company&.status == 'active'
-          if company && !::CompanyAi::SessionRateLimiter.allowed?(ip: request.remote_ip, company_id: company.id)
+          gate = ::CompanyAi::FeatureGate.call(company: company)
+          return render(json: { code: gate.reason }, status: :forbidden) unless gate.allowed?
+
+          if !::CompanyAi::SessionRateLimiter.allowed?(ip: request.remote_ip, company_id: company.id)
             return render json: { code: 'COMPANY_AI_RATE_LIMITED' }, status: :too_many_requests,
                           headers: { 'Retry-After' => '60' }
           end

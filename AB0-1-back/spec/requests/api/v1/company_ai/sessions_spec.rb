@@ -28,6 +28,7 @@ RSpec.describe 'Company AI contextual session API', type: :request do
     assistant.update!(active_version_id: version.id, enabled: true)
     allow(CompanyAi::FeatureGate).to receive(:call)
       .and_return(CompanyAi::FeatureGate::Result.new(allowed: true, reason: 'AVAILABLE'))
+    allow(CompanyAi::SessionRateLimiter).to receive(:allowed?).and_return(true)
 
     post "/api/v1/companies/#{company.id}/ai_sessions", params: { company_id: -9999, page_url: '/companies/another' }
     expect(response).to have_http_status(:created)
