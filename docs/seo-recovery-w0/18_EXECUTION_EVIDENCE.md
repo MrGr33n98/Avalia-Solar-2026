@@ -1,27 +1,35 @@
 # SEO Recovery W0 — Evidências de execução
 
-Data da coleta: 2026-11-20 (America/Sao_Paulo).
+Data da coleta: 2026-11-20/21 (America/Sao_Paulo).
+
+## Release entregue
+
+- PR: [#210](https://github.com/MrGr33n98/Avalia-Solar-2026/pull/210), mesclada.
+- Commit final em produção: `bc79842d45ddfb71dd4e777de6a7dc6dc95c4213`.
+- CI pós-merge: [run 44829252776](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44829252776), concluído com sucesso.
+- CD backend: [run 44831814482](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44831814482), concluído com sucesso.
+- CD frontend: [run 44831814580](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44831814580), concluído com sucesso.
+- Smoke público confirmou `x-release: bc79842d45ddfb71dd4e777de6a7dc6dc95c4213`.
 
 ## Baseline de produção
 
-- SHA servido pelo frontend: `cbbb7597a892e60d3e746f8b3185faeabf1135b7`.
-- CI: [run 44811135815](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44811135815), concluído com sucesso.
-- CD backend/frontend no fluxo principal: [run 44813179345](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44813179345). O escopo foi `frontend_only`; o backend não foi republicado nesse run.
-- Release frontend complementar: [run 44813179200](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44813179200), concluído com sucesso.
+- SHA servido antes da mudança: `cbbb7597a892e60d3e746f8b3185faeabf1135b7`.
+- Apex HTTPS: certificado apresentado com SAN de `api.avaliasolar.com.br`, incompatível com `avaliasolar.com.br`; com TLS ignorado, entregava JSON Rails 200.
+- Sitemap local antes da mudança: primeira resposta acima de 20 s; repetição observada em aproximadamente 5,7 s.
 
-## Verificações públicas reproduzidas
+## Verificações pós-deploy
 
-| Verificação         | Resultado observado                                                                                                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `www` homepage      | HTTP 200; canonical `https://www.avaliasolar.com.br`.                                                                                                                   |
-| `robots.txt`        | HTTP 200; anuncia apenas `sitemap-index.xml`.                                                                                                                           |
-| Sitemap index       | HTTP 200; 10 seções XML.                                                                                                                                                |
-| Integridade de URLs | 202 URLs das seções que responderam; nenhuma duplicata ou host fora de `www`. A seção `companies` excedeu o timeout de 30 s nessa coleta e não foi considerada íntegra. |
-| Empresa inexistente | HTTP 404 e `noindex, nofollow`; nenhuma tag canonical foi encontrada no corpo.                                                                                          |
-| Apex TLS            | Falha de hostname antes do HTTP; certificado apresentado tem SAN apenas `api.avaliasolar.com.br`. Com TLS ignorado, o apex entregou JSON Rails 200.                     |
-| `local-solar`       | 10 amostras: cold observado 10,93 s; p95 warm observado 5,55 s.                                                                                                         |
+Auditorias: [44833335108](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44833335108) e [44833290619](https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/44833290619). Os artifacts JSON/Markdown foram publicados pelo workflow.
 
-Os números acima são baseline verificável, não declaração de recuperação de indexação.
+| Verificação         | Resultado observado |
+| ------------------- | ------------------- |
+| `www` homepage      | HTTP 200; canonical `https://www.avaliasolar.com.br`; release final confirmada. |
+| `robots.txt`        | HTTP 200; referência ao sitemap index presente. |
+| Sitemap index       | HTTP 200; 10 seções XML. |
+| Integridade de URLs | 672 URLs, nenhuma duplicata e nenhum host inválido. |
+| Empresa inexistente | HTTP 404 e `noindex`. |
+| Sitemap local       | 45 URLs; cold observado 42,38 ms; warm p95 157,22 ms; meta cumprida. |
+| Apex TLS/308        | Falhou antes do HTTP por hostname mismatch; não foi possível comprovar redirect 308 com TLS válido. |
 
 ## GSC
 
@@ -40,13 +48,16 @@ O workflow `SEO — Post-deploy Production Audit` roda após os CDs de produçã
 No host que termina TLS:
 
 1. Confirmar DNS A/AAAA do apex e `www` apontando para o proxy correto, sem CNAME/AAAA residual direcionando ao backend.
-2. Emitir/renovar um certificado que inclua `avaliasolar.com.br` e `www.avaliasolar.com.br` (ou certificado separado válido para o apex). Não reutilizar o certificado exclusivo de `api.avaliasolar.com.br`.
-3. Instalar `infra/nginx/avaliasolar.com.br.redirect.conf` em `/etc/nginx/conf.d/` com as diretivas `ssl_certificate` e `ssl_certificate_key` apontando para o certificado emitido.
-4. Validar `nginx -t`, recarregar Nginx e testar sem `-k`:
+2. Emitir/renovar um certificado cujo SAN inclua `avaliasolar.com.br` (e, se desejado, `www.avaliasolar.com.br`). Não reutilizar o certificado exclusivo de `api.avaliasolar.com.br`.
+3. Instalar o certificado em `/etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem` e `privkey.pem`, ou ajustar o vhost para os paths reais.
+4. Garantir `infra/nginx/avaliasolar.com.br.redirect.conf` em `/etc/nginx/conf.d/`, com as diretivas SSL ativas.
+5. Validar e recarregar:
 
 ```bash
-curl --fail --silent --show-error -D - -o /dev/null https://avaliasolar.com.br/caminho?x=1
-curl --fail --silent --show-error -D - -o /dev/null https://www.avaliasolar.com.br/
+sudo openssl x509 -in /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem -noout -subject -issuer -dates -ext subjectAltName
+sudo nginx -t
+sudo systemctl reload nginx
+curl --fail --silent --show-error -D - -o /dev/null 'https://avaliasolar.com.br/caminho?x=1'
 ```
 
-O primeiro comando deve retornar HTTP 308 e `Location: https://www.avaliasolar.com.br/caminho?x=1`; o segundo deve continuar servindo o frontend. O CD versionado agora aplica esse vhost automaticamente somente se os arquivos do certificado já existirem.
+O último comando deve retornar HTTP 308 e `Location: https://www.avaliasolar.com.br/caminho?x=1`. Depois disso, reexecutar manualmente o workflow de auditoria e confirmar que o artifact fica verde. O CD versionado aplica o vhost automaticamente apenas quando os arquivos do certificado existem; ele não emite certificado nem corrige um SAN incorreto.
