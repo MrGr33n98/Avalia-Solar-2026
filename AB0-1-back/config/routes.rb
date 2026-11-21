@@ -461,6 +461,7 @@ Rails.application.routes.draw do
           get :badges, to: 'badges#index'
           get :feature_access
           get :ai_capability, to: 'company_ai/capabilities#show'
+          post :ai_sessions, to: 'company_ai/sessions#create'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :catalog
