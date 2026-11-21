@@ -642,7 +642,8 @@ jobs:
             apex_certificate_valid() {
               [ -f "${APEX_CERT}" ] && [ -f "${APEX_KEY}" ] || return 1
               command -v openssl >/dev/null 2>&1 || return 1
-              openssl x509 -in "${APEX_CERT}" -checkhost avaliasolar.com.br -noout >/dev/null 2>&1
+              openssl x509 -in "${APEX_CERT}" -checkhost avaliasolar.com.br -noout >/dev/null 2>&1 || return 1
+              openssl x509 -in "${APEX_CERT}" -checkend 86400 -noout >/dev/null 2>&1 || return 1
             }
 
             ensure_apex_certificate() {
@@ -776,8 +777,8 @@ jobs:
                 fi
               done
 
-              # 1. Copiar cert do host se existir e for válido para avaliasolar.com.br
-              if [ -f "${APEX_CERT}" ] && [ -f "${APEX_KEY}" ]; then
+              # 1. Copiar cert do host se existir e for válido e NÃO expirado para avaliasolar.com.br
+              if apex_certificate_valid; then
                 NPM_TMP="$(mktemp -d)"
                 if command -v sudo >/dev/null 2>&1; then
                   sudo cat "${APEX_CERT}" > "${NPM_TMP}/fullchain.pem"
@@ -820,35 +821,52 @@ jobs:
               printf '%s\n' "${NPM_APEX_HTTP}" | docker exec -i "${NPM_CONTAINER}" sh -c 'cat >> /data/nginx/custom/http_top.conf'
               docker exec "${NPM_CONTAINER}" nginx -t >/dev/null 2>&1 && docker exec "${NPM_CONTAINER}" nginx -s reload || true
 
-              # 3. Verifica se o container tem certificado válido com SAN para avaliasolar.com.br
+              # 3. Verifica se o container tem certificado válido e NÃO expirado com SAN para avaliasolar.com.br
               CERT_VALID=false
-              if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
+              if docker exec "${NPM_CONTAINER}" sh -c 'openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1 && openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkend 86400 -noout >/dev/null 2>&1'; then
                 CERT_VALID=true
-              elif docker exec "${NPM_CONTAINER}" test -f /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem 2>/dev/null; then
+              elif docker exec "${NPM_CONTAINER}" test -f /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem 2>/dev/null && \
+                   docker exec "${NPM_CONTAINER}" sh -c 'openssl x509 -in /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1 && openssl x509 -in /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem -checkend 86400 -noout >/dev/null 2>&1'; then
                 docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem /data/custom_ssl/avaliasolar.com.br/fullchain.pem
                 docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem /data/custom_ssl/avaliasolar.com.br/privkey.pem
-                if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
-                  CERT_VALID=true
-                fi
+                CERT_VALID=true
               fi
 
-              # Se ainda não for válido, tenta emissão via certbot dentro do container usando o webroot HTTP ativo
+              # Se ainda não for válido ou estiver expirado, emite/renova via certbot dentro do container usando o webroot HTTP ativo
               if [ "$CERT_VALID" != "true" ]; then
-                echo "Emitindo certificado para avaliasolar.com.br via certbot no NPM..."
-                docker exec "${NPM_CONTAINER}" certbot certonly --webroot -w /data/certbot \
+                echo "Emitindo/renovando certificado para avaliasolar.com.br via certbot no NPM..."
+                CERTBOT_OUT="$(docker exec "${NPM_CONTAINER}" certbot certonly --webroot -w /data/certbot \
                   --cert-name avaliasolar.com.br -d avaliasolar.com.br \
-                  --agree-tos --register-unsafely-without-email --non-interactive || true
+                  --force-renewal --agree-tos --register-unsafely-without-email --non-interactive 2>&1)" || true
+                echo "Certbot output: ${CERTBOT_OUT}"
                 if docker exec "${NPM_CONTAINER}" test -f /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem 2>/dev/null; then
                   docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem /data/custom_ssl/avaliasolar.com.br/fullchain.pem
                   docker exec "${NPM_CONTAINER}" cp /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem /data/custom_ssl/avaliasolar.com.br/privkey.pem
-                  if docker exec "${NPM_CONTAINER}" openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1; then
+                  if docker exec "${NPM_CONTAINER}" sh -c 'openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkhost avaliasolar.com.br -noout >/dev/null 2>&1 && openssl x509 -in /data/custom_ssl/avaliasolar.com.br/fullchain.pem -checkend 86400 -noout >/dev/null 2>&1'; then
                     CERT_VALID=true
+                    echo "Certificado renovado e validado com sucesso no NPM."
                   fi
                 fi
               fi
 
               # 4. Se o certificado for válido, ativa o bloco HTTPS (443) com redirect 308 (IPv4 limpo)
               if [ "$CERT_VALID" = "true" ]; then
+                # Sincroniza cópia do cert válido de volta para o host
+                SYNC_TMP="$(mktemp -d)"
+                docker cp "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/fullchain.pem" "${SYNC_TMP}/fullchain.pem" 2>/dev/null || true
+                docker cp "${NPM_CONTAINER}:/data/custom_ssl/avaliasolar.com.br/privkey.pem" "${SYNC_TMP}/privkey.pem" 2>/dev/null || true
+                if [ -f "${SYNC_TMP}/fullchain.pem" ] && [ -f "${SYNC_TMP}/privkey.pem" ]; then
+                  if command -v sudo >/dev/null 2>&1; then
+                    sudo mkdir -p /etc/letsencrypt/live/avaliasolar.com.br
+                    sudo cp "${SYNC_TMP}/fullchain.pem" /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem
+                    sudo cp "${SYNC_TMP}/privkey.pem" /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem
+                  else
+                    mkdir -p /etc/letsencrypt/live/avaliasolar.com.br
+                    cp "${SYNC_TMP}/fullchain.pem" /etc/letsencrypt/live/avaliasolar.com.br/fullchain.pem
+                    cp "${SYNC_TMP}/privkey.pem" /etc/letsencrypt/live/avaliasolar.com.br/privkey.pem
+                  fi
+                fi
+                rm -rf "${SYNC_TMP}"
                 NPM_APEX_FULL='
                   # AVALIA_SOLAR_APEX_REDIRECT_BEGIN
                   server {
