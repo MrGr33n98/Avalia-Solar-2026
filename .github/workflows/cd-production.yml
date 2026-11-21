@@ -760,6 +760,22 @@ jobs:
               echo "?? Ativando redirect apex no proxy público ${NPM_CONTAINER}..."
               docker exec "${NPM_CONTAINER}" sh -c 'mkdir -p /data/custom_ssl/avaliasolar.com.br /data/nginx/custom /data/certbot'
 
+              # 0. Saneia proxy hosts com upstream inexistente (evita falha fatal do nginx -t por containers desligados)
+              for _ in 1 2 3 4 5; do
+                NPM_CHECK="$(docker exec "${NPM_CONTAINER}" nginx -t 2>&1)" && break
+                if echo "$NPM_CHECK" | grep -q 'host not found in upstream'; then
+                  BROKEN_CONF="$(echo "$NPM_CHECK" | grep -oE '/data/nginx/proxy_host/[^:]+\.conf' | head -1)"
+                  if [ -n "$BROKEN_CONF" ]; then
+                    echo "?? Desativando proxy host com upstream inexistente: $BROKEN_CONF"
+                    docker exec "${NPM_CONTAINER}" mv "$BROKEN_CONF" "${BROKEN_CONF}.disabled"
+                  else
+                    break
+                  fi
+                else
+                  break
+                fi
+              done
+
               # 1. Copiar cert do host se existir e for válido para avaliasolar.com.br
               if [ -f "${APEX_CERT}" ] && [ -f "${APEX_KEY}" ]; then
                 NPM_TMP="$(mktemp -d)"
