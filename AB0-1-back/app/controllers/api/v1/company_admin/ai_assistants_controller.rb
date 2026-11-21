@@ -54,6 +54,9 @@ module Api
         private
 
         def authorize_editor!
+          if params[:company_id].present? && @company&.id.to_s != params[:company_id].to_s
+            return render json: { code: 'TENANT_SCOPE_MISMATCH' }, status: :forbidden
+          end
           # Never trust an arbitrary company_id; membership must be active for the *resolved* tenant.
           return if current_user&.admin?
           return if current_user&.respond_to?(:active_membership_for?) && current_user.active_membership_for?(@company.id)
