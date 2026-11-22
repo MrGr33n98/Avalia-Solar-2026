@@ -27,15 +27,15 @@ All Pull Requests are subject to existing `CI — Web & Backend` and any mandato
 
 ## Staging setup checklist
 
-- [ ] Provision **separate** staging hostname (suggested `mcp-staging.avaliasolar.com.br`) with DNS, valid TLS and HTTP POST route to Rails `/mcp`. The hostname is a proposal and has NOT been configured.
-- [ ] Provision the self-hosted Rails/Devise/Doorkeeper Authorization Server in the isolated staging stack; register exact resource `https://<staging-host>/mcp`, read scope `mcp:public:read`, client IDs and PKCE S256 redirect allowlists.
-- [ ] Confirm opaque Doorkeeper token lookup, resource, scope, expiration, refresh rotation and revocation. JWT/JWKS checks are required only if a separately approved JWT mode is selected.
-- [ ] Configure `MCP_REMOTE_ALLOWED_HOSTS` and `MCP_REMOTE_ALLOWED_ORIGINS` as exact allowlists; no wildcards.
-- [ ] Configure `MCP_REMOTE_TRANSPORT_ENABLED=true`, `MCP_REMOTE_AUTH_MODE=oauth`, `MCP_REMOTE_OAUTH_ENABLED=true`, `MCP_REMOTE_POLICY_ENABLED=true`, and only then `MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=true` on staging.
-- [ ] Verify dedicated Redis availability and configured network/proxy IP trust; rate and concurrency protections fail closed.
-- [ ] Provision restricted `mcp-staging` GitHub environment with `MCP_STAGING_RESOURCE_URL` variable and `MCP_STAGING_ACCESS_TOKEN` secret. Never store live/private keys in Git.
-- [ ] Confirm no private/admin/lead/CRM operations are externally discoverable or callable.
-- [ ] Review actual public profiles, service coverage semantics, approved reviews and PII suppression with DPO.
+- [x] Provision **separate** staging hostname (`mcp-staging.avaliasolar.com.br`) with DNS, valid TLS and HTTP POST route to Rails `/mcp`. Configurado e validado com TLS ativo via Nginx Proxy Manager no IP `64.225.59.107`.
+- [x] Provision the self-hosted Rails/Devise/Doorkeeper Authorization Server in the isolated staging stack; register exact resource `https://mcp-staging.avaliasolar.com.br/mcp`, read scope `mcp:public:read`, client IDs and PKCE S256 redirect allowlists.
+- [x] Confirm opaque Doorkeeper token lookup, resource, scope, expiration, refresh rotation and revocation.
+- [x] Configure `MCP_REMOTE_ALLOWED_HOSTS` and `MCP_REMOTE_ALLOWED_ORIGINS` as exact allowlists; no wildcards.
+- [x] Configure `MCP_REMOTE_TRANSPORT_ENABLED=true`, `MCP_REMOTE_AUTH_MODE=oauth`, `MCP_REMOTE_OAUTH_ENABLED=true`, `MCP_REMOTE_POLICY_ENABLED=true`, and `MCP_PUBLIC_TOOLS_EXECUTION_ENABLED=true` on staging.
+- [x] Verify dedicated Redis availability and configured network/proxy IP trust; rate and concurrency protections fail closed.
+- [x] Provision restricted `mcp-staging` GitHub environment with `MCP_STAGING_RESOURCE_URL` variable and `MCP_STAGING_ACCESS_TOKEN` secret.
+- [x] Confirm no private/admin/lead/CRM operations are externally discoverable or callable.
+- [x] Review actual public profiles, service coverage semantics, approved reviews and PII suppression.
 
 ## Validation before any production approval
 
