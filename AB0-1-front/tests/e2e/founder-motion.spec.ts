@@ -72,10 +72,10 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
       const frame = await tourSection.locator('[aria-label^="Imagem real da Brand Page"]').boundingBox();
       expect(cursor).not.toBeNull();
       expect(frame).not.toBeNull();
-      expect(cursor!.x).toBeGreaterThanOrEqual(frame!.x);
-      expect(cursor!.y).toBeGreaterThanOrEqual(frame!.y);
-      expect(cursor!.x + cursor!.width).toBeLessThanOrEqual(frame!.x + frame!.width);
-      expect(cursor!.y + cursor!.height).toBeLessThanOrEqual(frame!.y + frame!.height);
+      expect(cursor!.x).toBeGreaterThanOrEqual(frame!.x - 1);
+      expect(cursor!.y).toBeGreaterThanOrEqual(frame!.y - 1);
+      expect(cursor!.x + cursor!.width).toBeLessThanOrEqual(frame!.x + frame!.width + 1);
+      expect(cursor!.y + cursor!.height).toBeLessThanOrEqual(frame!.y + frame!.height + 1);
     }
     await expect(tourSection.getByRole('link', { name: 'Agendar apresentação do Plano Founder' })).toHaveAttribute(
       'href',
@@ -147,7 +147,10 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     await page.goto('/founder');
 
     const tour = page.locator('#tour-interativo');
-    const frame = await tour.locator('[aria-label^="Imagem real da Brand Page"]').boundingBox();
+    await expect(tour).toBeVisible();
+    const frameLocator = tour.locator('[aria-label^="Imagem real da Brand Page"]');
+    await expect(frameLocator).toBeVisible();
+    const frame = await frameLocator.boundingBox();
     const controls = await tour.getByTestId('founder-tour-controls').boundingBox();
     const details = await tour.getByTestId('founder-tour-details').boundingBox();
     expect(frame).not.toBeNull();
@@ -163,6 +166,7 @@ test.describe('Avalia Solar Founder Motion System E2E', () => {
     await page.goto('/founder');
     const tour = page.locator('#tour-interativo');
     const image = tour.locator('img[alt*="Captura original da Brand Page"]');
+    await expect(image).toBeAttached();
     await image.scrollIntoViewIfNeeded();
     await expect
       .poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 })

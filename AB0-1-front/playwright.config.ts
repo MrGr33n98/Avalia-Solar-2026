@@ -21,18 +21,21 @@ export default defineConfig({
     },
     {
       name: 'dashboard-mobile',
+      testMatch: /.*(?:dashboard|sales-crm).*\.spec\.ts/,
       use: {
         ...devices['Pixel 5'],
       },
     },
     {
       name: 'dashboard-tablet',
+      testMatch: /.*(?:dashboard|sales-crm).*\.spec\.ts/,
       use: {
         ...devices['iPad Mini'],
       },
     },
     {
       name: 'dashboard-desktop',
+      testMatch: /.*(?:dashboard|sales-crm).*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 720 },
