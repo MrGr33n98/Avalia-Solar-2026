@@ -364,7 +364,7 @@ Escala Fibonacci: 1, 2, 3, 5, 8, 13. Os pontos incluem implementação, testes e
 | SP-17 | Jest do widget e correção do ambiente de lockfile | Parcial | 3 |
 | SP-18 | Piloto, consentimento, retenção e revisão de privacidade | Pendente | 5 |
 
-Estimativa restante: **82 SP**. É uma estimativa de backlog, não um prazo garantido. A maior incerteza está em ingestão de documentos, reconciliação do provedor e operação do Live Inbox.
+Estimativa restante no quadro de story points, incluindo o item parcial: **74 SP**. É uma estimativa de backlog, não um prazo garantido. A task list abaixo decompõe esse trabalho e não deve ser somada novamente. A maior incerteza está em ingestão de documentos, reconciliação do provedor e operação do Live Inbox.
 
 ## 13. Backlog priorizado / task list
 
