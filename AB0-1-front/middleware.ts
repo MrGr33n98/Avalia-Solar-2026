@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSurfaceFromHost } from '@/lib/host-context';
-import { SURFACE_ORIGINS } from '@/lib/routing/surface-origins';
+import { SURFACE_ORIGINS, isCanonicalSurfaceHost } from '@/lib/routing/surface-origins';
 import { suspendedSocialDestination } from '@/lib/mvp-reviews';
 import {
   HOME_HERO_EXPERIMENT_COOKIE,
@@ -261,7 +261,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // CANONICAL SURFACE HOST FIREWALL (308 Permanent Redirects for misrouted paths)
-  if (surface === 'public' && process.env.NODE_ENV === 'production') {
+  // Only redirect when requests hit canonical production domains (e.g. www.avaliasolar.com.br),
+  // never on localhost, 127.0.0.1, or local/CI test runners.
+  if (
+    surface === 'public' &&
+    process.env.NODE_ENV === 'production' &&
+    isCanonicalSurfaceHost(cleanHost)
+  ) {
     // 1a. Sales CRM paths on www -> redirect to crm.avaliasolar.com.br
     if (pathname.startsWith('/dashboard/sales')) {
       const canonicalTarget = `${SURFACE_ORIGINS.crm}${pathname}${search}`;
