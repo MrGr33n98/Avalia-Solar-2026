@@ -21,7 +21,7 @@ module Api
 
       def validate_mcp_canary_request!
         return unless ::Mcp::Canary::Configuration.enforced?
-        return render_canary_error unless params[:resource] == ::Mcp::Canary::Configuration::CANONICAL_RESOURCE
+        return render_canary_error unless params[:resource] == ::Mcp::Canary::Configuration.canonical_resource
 
         case params[:grant_type].to_s
         when 'authorization_code'
@@ -52,7 +52,7 @@ module Api
       def validate_refresh_token_canary_request!
         token = Doorkeeper::AccessToken.by_refresh_token(params[:refresh_token].to_s)
         return render_canary_error unless token&.accessible?
-        return render_canary_error unless token.resource == ::Mcp::Canary::Configuration::CANONICAL_RESOURCE
+        return render_canary_error unless token.resource == ::Mcp::Canary::Configuration.canonical_resource
         return render_canary_error unless token.application&.uid == params[:client_id].to_s
 
         subject = ::Mcp::Oauth::Configuration.subject_for(token.resource_owner_id)

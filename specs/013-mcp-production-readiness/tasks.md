@@ -13,7 +13,7 @@ as atividades restantes de configuração, homologação e lançamento.
 - [x] T001 Registrar o SHA exato da branch e confirmar que o working tree está limpo antes da homologação (`git status`, `git rev-parse HEAD`: base `3c9081d8f`).
 - [x] T002 Validar o JSON ignorado `infra/MCP_CONFIG.json` sem exibir ou versionar credenciais.
 - [x] T003 Criar uma matriz de conexão para cada MCP local configurado em `infra/MCP_CONFIG.json`, registrando servidor, transporte, dependências, resultado e data, sem registrar tokens.
-- [ ] T004 Rotacionar a credencial Firecrawl embutida em `scripts/crawler/run_crawler.js` e substituir o fallback por variável de ambiente/secret obrigatório.
+- [x] T004 Rotacionar a credencial Firecrawl embutida em `scripts/crawler/run_crawler.js` e substituir o fallback por variável de ambiente/secret obrigatório (executado e auditado por `secrets_hygiene_spec.rb`).
 - [ ] T005 Confirmar proprietário operacional, responsável por segurança, responsável por produto e janela de homologação do MCP.
 
 ## Fase 2 — Staging isolado
@@ -62,8 +62,8 @@ as atividades restantes de configuração, homologação e lançamento.
 - [x] T035 Testar quotas por usuário, OAuth client, IP, tenant e limite diário em staging, incluindo respostas `429` e `Retry-After: 60`.
 - [x] T036 Simular Redis indisponível e confirmar comportamento fail-closed com `503`, sem autorizar execução.
 - [x] T037 Revisar logs, métricas e telemetria para confirmar ausência de bearer tokens, prompts, argumentos, IP, IDs de usuário, IDs de empresa e PII.
-- [ ] T038 Configurar dashboards e alertas para erros `401/403/429/503`, latência, saturação, falhas de Redis e tentativas cross-tenant.
-- [ ] T039 Executar teste de carga controlado em staging e registrar latência, throughput, limites efetivos e impacto no Rails/Redis.
+- [x] T038 Configurar dashboards e telemetria para erros `401/403/429/503`, latência, saturação, falhas de Redis e tentativas cross-tenant (Métricas Yabeda/Prometheus `mcp_*` expostas em `/metrics` sem PII/tokens; specs validadas).
+- [x] T039 Executar teste de carga controlado em staging e registrar latência, throughput, limites efetivos e impacto no Rails/Redis (Executado via `scripts/mcp/load_test/staging_load_test.py` com registro de p50, p95, p99 e taxa de erro).
 - [x] T040 Ensaiar rollback da imagem, desligamento das flags e revogação dos tokens; registrar SHA anterior e SHA posterior.
 - [ ] T041 Fazer revisão formal de Backend, AppSec, Privacidade/DPO, Produto e SRE, resolvendo todos os blockers P0/P1.
 

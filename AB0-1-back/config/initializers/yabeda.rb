@@ -117,6 +117,26 @@ Yabeda.configure do
     gauge :database_active_connections,
           comment: 'Number of active database connections'
   end
+
+  group :mcp do
+    counter :requests_total,
+            tags: %i[surface operation tool status outcome],
+            comment: 'Total number of MCP requests handled'
+
+    histogram :request_duration_seconds,
+              tags: %i[surface operation tool status],
+              unit: :seconds,
+              buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+              comment: 'MCP request latency in seconds'
+
+    counter :security_events_total,
+            tags: %i[surface event_type reason],
+            comment: 'Total number of MCP security and authorization rejections'
+
+    counter :quota_events_total,
+            tags: %i[surface mode result],
+            comment: 'Total number of MCP quota enforcement outcomes'
+  end
 end
 
 # Collect custom metrics periodically (every minute)
@@ -175,6 +195,75 @@ end
 # - yabeda_puma_booted_workers (gauge)
 # - yabeda_puma_running_threads (gauge)
 # - yabeda_puma_request_backlog (gauge)
+
+# Subscriptions to MCP telemetry and security events for Prometheus export
+ActiveSupport::Notifications.subscribe('mcp.remote.request') do |_name, _start, _finish, _id, payload|
+  if defined?(Yabeda) && Yabeda.respond_to?(:mcp)
+    tags = {
+      surface: 'remote',
+      operation: payload[:operation].to_s,
+      tool: payload[:tool].to_s,
+      status: payload[:http_status].to_s,
+      outcome: payload[:outcome].to_s
+    }
+    Yabeda.mcp.requests_total.increment(tags) if Yabeda.mcp.respond_to?(:requests_total)
+
+    if Yabeda.mcp.respond_to?(:request_duration_seconds) && payload[:duration_ms]
+      duration_seconds = payload[:duration_ms].to_f / 1000.0
+      duration_tags = {
+        surface: 'remote',
+        operation: payload[:operation].to_s,
+        tool: payload[:tool].to_s,
+        status: payload[:http_status].to_s
+      }
+      Yabeda.mcp.request_duration_seconds.measure(duration_tags, duration_seconds)
+    end
+  end
+end
+
+ActiveSupport::Notifications.subscribe('mcp.private.request') do |_name, _start, _finish, _id, payload|
+  if defined?(Yabeda) && Yabeda.respond_to?(:mcp)
+    tags = {
+      surface: 'private',
+      operation: payload[:operation].to_s,
+      tool: payload[:tool].to_s,
+      status: payload[:http_status].to_s,
+      outcome: payload[:outcome].to_s
+    }
+    Yabeda.mcp.requests_total.increment(tags) if Yabeda.mcp.respond_to?(:requests_total)
+
+    if Yabeda.mcp.respond_to?(:request_duration_seconds) && payload[:duration_ms]
+      duration_seconds = payload[:duration_ms].to_f / 1000.0
+      duration_tags = {
+        surface: 'private',
+        operation: payload[:operation].to_s,
+        tool: payload[:tool].to_s,
+        status: payload[:http_status].to_s
+      }
+      Yabeda.mcp.request_duration_seconds.measure(duration_tags, duration_seconds)
+    end
+  end
+end
+
+ActiveSupport::Notifications.subscribe('mcp.security.event') do |_name, _start, _finish, _id, payload|
+  if defined?(Yabeda) && Yabeda.respond_to?(:mcp) && Yabeda.mcp.respond_to?(:security_events_total)
+    Yabeda.mcp.security_events_total.increment({
+      surface: payload[:surface].to_s,
+      event_type: payload[:event_type].to_s,
+      reason: payload[:reason].to_s
+    })
+  end
+end
+
+ActiveSupport::Notifications.subscribe('mcp.quota.event') do |_name, _start, _finish, _id, payload|
+  if defined?(Yabeda) && Yabeda.respond_to?(:mcp) && Yabeda.mcp.respond_to?(:quota_events_total)
+    Yabeda.mcp.quota_events_total.increment({
+      surface: payload[:surface].to_s,
+      mode: payload[:mode].to_s,
+      result: payload[:result].to_s
+    })
+  end
+end
 
 Rails.application.config.after_initialize do
   Rails.logger.info '✅ Yabeda metrics initialized'

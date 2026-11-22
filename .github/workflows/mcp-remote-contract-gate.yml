@@ -125,6 +125,7 @@ jobs:
           ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c ../.github/scripts/mcp_private_staging_smoke.rb
           python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
+          python3 -m py_compile ../scripts/mcp/load_test/staging_load_test.py
           node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
           ruby -ryaml -e 'YAML.load_file(ARGV.fetch(0))' ../infra/mcp-staging/compose.yml
           ruby -c app/services/mcp/public_tool_registry.rb
@@ -132,6 +133,7 @@ jobs:
         run: |
           node --check ../scripts/mcp/interop/typescript_sdk_v2_smoke.mjs
           python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
+          python3 -m py_compile ../scripts/mcp/load_test/staging_load_test.py
       - name: Enforce MCP workflow secret isolation
         run: ruby ../.github/scripts/test_mcp_c4_sdk_workflow.rb
       - name: Prepare test database
@@ -153,6 +155,8 @@ jobs:
             spec/services/mcp/remote_telemetry_spec.rb \
             spec/services/mcp/private/telemetry_spec.rb \
             spec/services/mcp/canary/*_spec.rb \
+            spec/services/mcp/observability_spec.rb \
+            spec/security/secrets_hygiene_spec.rb \
             spec/requests/api/v1/mcp/public_directory_execution_spec.rb \
             spec/requests/api/v1/mcp/production_canary_guard_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb

@@ -21,7 +21,7 @@ module Api
 
       def validate_mcp_canary_request!
         return unless ::Mcp::Canary::Configuration.enforced?
-        return head :forbidden unless params[:resource] == ::Mcp::Canary::Configuration::CANONICAL_RESOURCE
+        return head :forbidden unless params[:resource] == ::Mcp::Canary::Configuration.canonical_resource
         return unless respond_to?(:current_user) && current_user.present?
 
         client_id = params[:client_id].to_s

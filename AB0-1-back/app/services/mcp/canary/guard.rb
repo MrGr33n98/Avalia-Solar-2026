@@ -34,18 +34,28 @@ module Mcp
 
       def authorize!(method:, tool_name: nil)
         return true unless Configuration.enforced?
-        raise Failure, :unavailable unless Configuration.configured?
+        unless Configuration.configured?
+          emit_security_event('canary_guard', 'unavailable')
+          raise Failure, :unavailable
+        end
 
         validate_token_context!
         case method
         when 'server/discover', 'initialize', 'ping', 'tools/list'
           true
         when 'tools/call'
-          raise Failure, :execution_disabled unless Configuration.execution_enabled?
-          raise Failure, :tool_not_allowed unless Configuration::PUBLIC_TOOLS.include?(tool_name)
+          unless Configuration.execution_enabled?
+            emit_security_event('canary_guard', 'execution_disabled')
+            raise Failure, :execution_disabled
+          end
+          unless Configuration::PUBLIC_TOOLS.include?(tool_name)
+            emit_security_event('canary_guard', 'tool_not_allowed')
+            raise Failure, :tool_not_allowed
+          end
 
           true
         else
+          emit_security_event('canary_guard', 'method_not_allowed')
           raise Failure, :method_not_allowed
         end
       end
@@ -53,14 +63,27 @@ module Mcp
       private
 
       def validate_token_context!
-        raise Failure, :forbidden unless @auth_context.is_a?(Hash)
-        raise Failure, :forbidden unless @auth_context[:token_format].to_s == 'opaque'
-        raise Failure, :forbidden unless @auth_context[:resource] == Configuration::CANONICAL_RESOURCE
-        unless Array(@auth_context[:scopes]).include?(Mcp::Oauth::Configuration::REQUIRED_SCOPE)
+        unless @auth_context.is_a?(Hash) &&
+               @auth_context[:token_format].to_s == 'opaque' &&
+               Configuration.canonical_resource.present? &&
+               @auth_context[:resource] == Configuration.canonical_resource &&
+               Array(@auth_context[:scopes]).include?(Mcp::Oauth::Configuration::REQUIRED_SCOPE) &&
+               Configuration.client_allowed?(@auth_context[:client_id]) &&
+               Configuration.subject_allowed?(@auth_context[:subject])
+          emit_security_event('canary_guard', 'forbidden')
           raise Failure, :forbidden
         end
-        raise Failure, :forbidden unless Configuration.client_allowed?(@auth_context[:client_id])
-        raise Failure, :forbidden unless Configuration.subject_allowed?(@auth_context[:subject])
+      end
+
+      def emit_security_event(event_type, reason)
+        ActiveSupport::Notifications.instrument(
+          'mcp.security.event',
+          surface: 'remote',
+          event_type: event_type,
+          reason: reason
+        )
+      rescue StandardError => e
+        Rails.logger.warn("[MCP Guard Telemetry] error=#{e.class}")
       end
     end
   end
