@@ -434,15 +434,15 @@ companies_data.each do |data|
   company.active_admin = true
   company.financing_enabled = data[:categories].any? { |c| c.include?('financiamento') || c.include?('credito') }
 
+  Array(data[:categories]).each do |seo_url|
+    cat = Category.find_by(seo_url: seo_url)
+    next unless cat
+    company.categories << cat unless company.categories.exists?(cat.id)
+  end
+
   if company.save
     companies_created += 1 if company.previous_changes.key?('id')
     companies_updated += 1 if company.previous_changes.any? && !company.previous_changes.key?('id')
-
-    Array(data[:categories]).each do |seo_url|
-      cat = Category.find_by(seo_url: seo_url)
-      next unless cat
-      company.categories << cat unless company.categories.exists?(cat.id)
-    end
   else
     companies_skipped += 1
   end

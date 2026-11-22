@@ -71,25 +71,28 @@ raise 'E2E banner fixture must have no custom banner' if free_banner_company.ban
 
 puts "Empresa E2E Free pronta: #{free_banner_company.slug}"
 
-kaju_company = Company.find_or_initialize_by(slug: 'kaju-energia-solar')
-kaju_company.assign_attributes(
-  name: 'KAJU Energia Solar',
-  website: 'https://kajuenergia.com.br',
-  state: 'SP',
-  city: 'São Paulo',
-  phone: '11999999999',
-  email: 'contato@kajuenergia.com.br',
-  email_public: 'contato@kajuenergia.com.br',
-  description: 'Instaladora de energia solar residencial e comercial.',
-  status: 'active',
-  moderation_status: 'approved',
-  verified: true,
-  active_admin: true,
-  featured: true
-)
-kaju_company.save!
+solar_cat = Category.find_by(seo_url: 'energia-solar-residencial') || Category.find_by(seo_url: 'energia-solar') || Category.first
 
-solar_cat = Category.find_by(seo_url: 'energia-solar-residencial') || Category.find_by(seo_url: 'energia-solar')
+kaju_company = Company.find_by(slug: 'kaju-energia-solar') ||
+  FactoryBot.create(
+    :company,
+    name: 'KAJU Energia Solar',
+    slug: 'kaju-energia-solar',
+    description: 'Instaladora de energia solar residencial e comercial.',
+    website: 'https://kajuenergia.com.br',
+    phone: '11999999999',
+    whatsapp: '11999999999',
+    email: 'contato@kajuenergia.com.br',
+    email_public: 'contato@kajuenergia.com.br',
+    state: 'SP',
+    city: 'São Paulo',
+    status: 'active',
+    moderation_status: 'approved',
+    verified: true,
+    active_admin: true,
+    featured: true
+  )
+
 if solar_cat && !kaju_company.categories.exists?(solar_cat.id)
   kaju_company.categories << solar_cat
 end
