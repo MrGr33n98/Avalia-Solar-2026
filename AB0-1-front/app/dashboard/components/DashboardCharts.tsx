@@ -16,35 +16,30 @@ import {
 } from "recharts";
 import ChartCard from "./ChartCard";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, BarChart3 } from "lucide-react";
 
-const salesData = [
-  { month: "Jan", value: 45000, proposals: 12 },
-  { month: "Fev", value: 52000, proposals: 15 },
-  { month: "Mar", value: 48000, proposals: 11 },
-  { month: "Abr", value: 61000, proposals: 18 },
-  { month: "Mai", value: 55000, proposals: 14 },
-  { month: "Jun", value: 67000, proposals: 20 },
-];
-
-const categoryData = [
-  { name: "Solar", value: 45 },
-  { name: "Eólica", value: 28 },
-  { name: "Biomassa", value: 15 },
-  { name: "Hidro", value: 12 },
-];
-
-const performanceData = [
-  { month: "Jan", conversao: 68, satisfacao: 85 },
-  { month: "Fev", conversao: 72, satisfacao: 88 },
-  { month: "Mar", conversao: 65, satisfacao: 82 },
-  { month: "Abr", conversao: 78, satisfacao: 91 },
-  { month: "Mai", conversao: 75, satisfacao: 89 },
-  { month: "Jun", conversao: 82, satisfacao: 93 },
-];
+function ChartEmptyState({ message = 'Nenhum dado registrado para o período.' }: { message?: string }) {
+  return (
+    <div
+      role="status"
+      aria-label={message}
+      className="h-[300px] w-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-[hsl(var(--dashboard-border))] rounded-xl bg-[hsl(var(--dashboard-surface)/0.3)]"
+    >
+      <BarChart3 className="h-10 w-10 text-[hsl(var(--dashboard-muted))] mb-2 opacity-50" aria-hidden="true" />
+      <p className="text-sm font-medium text-[hsl(var(--dashboard-ink))]">{message}</p>
+      <p className="text-xs text-[hsl(var(--dashboard-muted))] mt-1">
+        Conforme novas interações ocorrerem, o gráfico será atualizado automaticamente.
+      </p>
+    </div>
+  );
+}
 
 // Helper components for the DashboardCharts object
-function AreaChartComponent({ data }: { data: any[] }) {
+function AreaChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <ChartEmptyState />;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ReAreaChart data={data}>
@@ -83,7 +78,11 @@ function AreaChartComponent({ data }: { data: any[] }) {
   );
 }
 
-function BarChartComponent({ data }: { data: any[] }) {
+function BarChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <ChartEmptyState />;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ReBarChart data={data}>
@@ -114,7 +113,11 @@ function BarChartComponent({ data }: { data: any[] }) {
   );
 }
 
-function LineChartComponent({ data }: { data: any[] }) {
+function LineChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <ChartEmptyState />;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={300}>
       <ReLineChart data={data}>
@@ -153,135 +156,158 @@ export const DashboardCharts = {
   LineChart: LineChartComponent,
 };
 
-export function RevenueChart() {
+export function RevenueChart({ data }: { data?: Record<string, unknown>[] }) {
+  const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
+
   return (
     <ChartCard
       title="Receita Mensal"
-      description="Evolução da receita nos últimos 6 meses"
+      description="Evolução da receita no período"
       actions={
-        <Button variant="ghost" size="icon">
-          <Download className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Exportar dados do gráfico em CSV"
+          title="Exportar dados do gráfico em CSV"
+        >
+          <Download className="h-4 w-4" aria-hidden="true" />
         </Button>
       }
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ReAreaChart data={salesData}>
-          <defs>
-            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis 
-            dataKey="month" 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-          />
-          <YAxis 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-            tickFormatter={(value) => `R$ ${value / 1000}k`}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--clay-surface))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "var(--clay-radius-md)",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            fill="url(#colorValue)"
-          />
-        </ReAreaChart>
-      </ResponsiveContainer>
+      {chartData.length === 0 ? (
+        <ChartEmptyState message="Nenhum dado de receita registrado para o período." />
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <ReAreaChart data={chartData}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis 
+              dataKey="month" 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+            />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickFormatter={(value) => `R$ ${value / 1000}k`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--clay-surface))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "var(--clay-radius-md)",
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              fill="url(#colorValue)"
+            />
+          </ReAreaChart>
+        </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }
 
-export function ProposalsChart() {
+export function ProposalsChart({ data }: { data?: Record<string, unknown>[] }) {
+  const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
+
   return (
     <ChartCard
       title="Propostas por Categoria"
-      description="Distribuição de propostas por tipo de energia"
+      description="Distribuição de propostas por categoria"
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ReBarChart data={categoryData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis 
-            dataKey="name" 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-          />
-          <YAxis 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--clay-surface))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "var(--clay-radius-md)",
-            }}
-          />
-          <Bar 
-            dataKey="value" 
-            fill="hsl(var(--accent))"
-            radius={[8, 8, 0, 0]}
-          />
-        </ReBarChart>
-      </ResponsiveContainer>
+      {chartData.length === 0 ? (
+        <ChartEmptyState message="Nenhum dado de propostas registrado para o período." />
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <ReBarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis 
+              dataKey="name" 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+            />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--clay-surface))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "var(--clay-radius-md)",
+              }}
+            />
+            <Bar 
+              dataKey="value" 
+              fill="hsl(var(--accent))"
+              radius={[8, 8, 0, 0]}
+            />
+          </ReBarChart>
+        </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }
 
-export function PerformanceChart() {
+export function PerformanceChart({ data }: { data?: Record<string, unknown>[] }) {
+  const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
+
   return (
     <ChartCard
       title="Performance"
-      description="Taxa de conversão e satisfação do cliente"
+      description="Taxa de conversão e interações"
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ReLineChart data={performanceData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis 
-            dataKey="month" 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-          />
-          <YAxis 
-            stroke="hsl(var(--muted-foreground))"
-            fontSize={12}
-            tickFormatter={(value) => `${value}%`}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--clay-surface))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "var(--clay-radius-md)",
-            }}
-          />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="conversao"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            name="Taxa de Conversão"
-          />
-          <Line
-            type="monotone"
-            dataKey="satisfacao"
-            stroke="hsl(var(--accent))"
-            strokeWidth={2}
-            name="Satisfação"
-          />
-        </ReLineChart>
-      </ResponsiveContainer>
+      {chartData.length === 0 ? (
+        <ChartEmptyState message="Nenhum dado de performance registrado para o período." />
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <ReLineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis 
+              dataKey="month" 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+            />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))"
+              fontSize={12}
+              tickFormatter={(value) => `${value}%`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--clay-surface))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "var(--clay-radius-md)",
+              }}
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="conversao"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              name="Taxa de Conversão"
+            />
+            <Line
+              type="monotone"
+              dataKey="satisfacao"
+              stroke="hsl(var(--accent))"
+              strokeWidth={2}
+              name="Satisfação"
+            />
+          </ReLineChart>
+        </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }

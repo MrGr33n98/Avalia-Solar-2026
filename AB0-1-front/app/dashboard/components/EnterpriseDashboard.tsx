@@ -299,7 +299,11 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   } = useCompanyDashboardData(companyId);
 
   const { resolvedTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const param = searchParams.get('tab');
+    if (param === 'info') return 'product-general';
+    return param || 'overview';
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -434,20 +438,21 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
 
   // Sync tab change with URL
   const handleTabChange = (tab: string) => {
-    if (tab === 'live-inbox') {
+    const normalizedTab = tab === 'info' ? 'product-general' : tab;
+    if (normalizedTab === 'live-inbox') {
       router.push('/dashboard/inbox');
       return;
     }
-    if (tab === 'icp-config') {
+    if (normalizedTab === 'icp-config') {
       router.push('/dashboard/icp');
       return;
     }
-    if (tab === 'proposals') {
+    if (normalizedTab === 'proposals') {
       router.push('/dashboard/proposals');
       return;
     }
 
-    setActiveTab(tab);
+    setActiveTab(normalizedTab);
 
     // Canonical Dashboard View tracking
     trackDashboardViewed(companyId, tab, {

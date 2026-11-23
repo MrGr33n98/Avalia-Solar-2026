@@ -221,6 +221,9 @@ function MetricCard({
   comparison,
   available = true,
   href,
+  subtitle,
+  actionLabel,
+  onAction,
 }: {
   icon: typeof Eye;
   title: string;
@@ -228,20 +231,28 @@ function MetricCard({
   comparison?: number | null;
   available?: boolean;
   href?: () => void;
+  subtitle?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   const isPositive = (comparison || 0) > 0;
   const isNegative = (comparison || 0) < 0;
+  const displaySubtitle = subtitle || (available ? 'vs. período anterior' : 'Ainda não mensurado');
+
   return (
     <section className="min-w-0 rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
       <div className="flex items-center gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-accent))]">
           <Icon className="h-4 w-4" />
         </span>
         <p className="text-xs font-semibold text-[hsl(var(--dashboard-ink))]">{title}</p>
       </div>
       <div className="mt-4 flex items-end gap-2">
-        <strong className="text-3xl leading-none tracking-tight text-[hsl(var(--dashboard-ink))]">
-          {available ? value : '—'}
+        <strong className={cn(
+          "text-3xl leading-none tracking-tight text-[hsl(var(--dashboard-ink))]",
+          !available && "text-xl font-medium text-[hsl(var(--dashboard-muted))]"
+        )}>
+          {value}
         </strong>
         {available && comparison !== undefined && comparison !== null && (
           <span
@@ -265,16 +276,16 @@ function MetricCard({
         )}
       </div>
       <div className="mt-2 flex min-h-4 items-center justify-between gap-2">
-        <p className="text-[11px] text-[hsl(var(--dashboard-muted))]">
-          {available ? 'vs. período anterior' : 'Ainda não mensurado'}
+        <p className="text-[11px] text-[hsl(var(--dashboard-muted))] truncate" title={displaySubtitle}>
+          {displaySubtitle}
         </p>
-        {href && available && (
+        {(href || onAction) && (
           <button
             type="button"
-            onClick={href}
-            className="text-[11px] font-semibold text-blue-600 hover:text-blue-700"
+            onClick={onAction || href}
+            className="shrink-0 text-[11px] font-semibold text-[hsl(var(--dashboard-accent))] hover:underline"
           >
-            Ver detalhes
+            {actionLabel || (available ? 'Ver detalhes' : 'Configurar')}
           </button>
         )}
       </div>
@@ -421,7 +432,7 @@ export default function OverviewTab({
         title: 'Adicione a logo da empresa',
         description: 'Um perfil reconhecível transmite mais confiança.',
         icon: UserRound,
-        tab: 'info',
+        tab: 'product-general',
         color: 'text-blue-600 bg-blue-50',
       });
     if (!company?.description)
@@ -429,7 +440,7 @@ export default function OverviewTab({
         title: 'Complete as informações básicas',
         description: 'Perfis completos ajudam clientes a decidir.',
         icon: FileText,
-        tab: 'info',
+        tab: 'product-general',
         color: 'text-blue-600 bg-blue-50',
       });
     if (!company?.website && !company?.website_url && !company?.whatsapp && !company?.phone)
@@ -437,7 +448,7 @@ export default function OverviewTab({
         title: 'Ative um canal de orçamento',
         description: 'Assim visitantes poderão entrar em contato.',
         icon: PhoneCall,
-        tab: 'info',
+        tab: 'product-general',
         color: 'text-amber-600 bg-amber-50',
       });
     if (number(company?.reviews_count) < 5)
@@ -629,7 +640,15 @@ export default function OverviewTab({
               available={detailedAnalyticsAvailable}
               href={() => onNavigateToTab?.('analytics')}
             />
-            <MetricCard icon={Clock3} title="Tempo médio de resposta" value="—" available={false} />
+            <MetricCard
+              icon={Clock3}
+              title="Tempo médio de resposta"
+              value={company?.response_time ? `${company.response_time} min` : 'Não configurado'}
+              available={Boolean(company?.response_time)}
+              subtitle={company?.response_time ? 'Tempo médio no canal oficial' : 'Canal de chat sem histórico'}
+              actionLabel="Configurar canal"
+              onAction={() => onNavigateToTab?.('product-general')}
+            />
           </div>
 
           <section className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-4 py-3 sm:flex-row sm:items-center">
@@ -643,7 +662,7 @@ export default function OverviewTab({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onNavigateToTab?.(actions[0]?.tab || 'info')}
+              onClick={() => onNavigateToTab?.(actions[0]?.tab || 'product-general')}
               className="h-9 shrink-0 border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-xs font-semibold text-[hsl(var(--dashboard-accent))] hover:bg-[hsl(var(--dashboard-surface))]"
             >
               Ver recomendações
@@ -665,6 +684,26 @@ export default function OverviewTab({
               </div>
               {currentRows.length ? (
                 <div className="h-[242px]">
+                  <div className="sr-only">
+                    <table aria-label="Histórico de desempenho de visualizações e interações">
+                      <thead>
+                        <tr>
+                          <th scope="col">Data</th>
+                          <th scope="col">Visualizações</th>
+                          <th scope="col">Interações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentRows.map((row) => (
+                          <tr key={row.date}>
+                            <td>{formatDate(row.date)}</td>
+                            <td>{row.views}</td>
+                            <td>{row.clicks}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={currentRows.map((row) => ({ ...row, label: formatDate(row.date) }))}
@@ -739,6 +778,26 @@ export default function OverviewTab({
               </p>
               {sources.length ? (
                 <div className="mt-4 flex items-center gap-3">
+                  <div className="sr-only">
+                    <table aria-label="Distribuição de fontes de tráfego rastreadas">
+                      <thead>
+                        <tr>
+                          <th scope="col">Fonte</th>
+                          <th scope="col">Visitas</th>
+                          <th scope="col">Percentual</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sources.map((source) => (
+                          <tr key={source.name}>
+                            <td>{source.name}</td>
+                            <td>{source.visits}</td>
+                            <td>{source.percentage}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <div className="h-32 w-32 shrink-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>

@@ -9,6 +9,8 @@ interface CompanyContextType {
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
   selectCompany: (company: Company) => Promise<void>;
+  selectCompanyById: (id: number | string) => Promise<Company | null>;
+  hasCompanyAccess: (id: number | string) => boolean;
   companies: Company[];
   isLoading: boolean;
   refetchCompanies: () => void;
@@ -86,6 +88,21 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasCompanyAccess = (id: number | string): boolean => {
+    const numId = Number(id);
+    if (!Number.isFinite(numId) || numId <= 0) return false;
+    return companies.some((c) => Number(c.id) === numId);
+  };
+
+  const selectCompanyById = async (id: number | string): Promise<Company | null> => {
+    const numId = Number(id);
+    if (!Number.isFinite(numId) || numId <= 0) return null;
+    const match = companies.find((c) => Number(c.id) === numId);
+    if (!match) return null;
+    await selectCompany(match);
+    return match;
+  };
+
   // Keep active company aligned with memberships from API and clean stale localStorage ids.
   useEffect(() => {
     if (isLoading) return;
@@ -142,6 +159,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       activeCompany, 
       setActiveCompany, 
       selectCompany,
+      selectCompanyById,
+      hasCompanyAccess,
       companies, 
       isLoading, 
       refetchCompanies: refetch 

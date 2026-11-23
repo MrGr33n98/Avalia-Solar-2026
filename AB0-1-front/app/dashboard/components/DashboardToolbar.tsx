@@ -23,6 +23,7 @@ interface DashboardToolbarProps {
   onToggleNavigation?: () => void;
   navigationOpen?: boolean;
   themeToggle?: React.ReactNode;
+  onHelpClick?: () => void;
 }
 
 export default function DashboardToolbar({
@@ -31,6 +32,7 @@ export default function DashboardToolbar({
   onToggleNavigation,
   navigationOpen = false,
   themeToggle,
+  onHelpClick,
 }: DashboardToolbarProps) {
   const { user } = useAuth();
   const userInitials =
@@ -74,7 +76,16 @@ export default function DashboardToolbar({
           )}
           <button
             type="button"
-            className="hidden h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-[hsl(var(--dashboard-muted))] hover:bg-[hsl(var(--dashboard-surface))] md:inline-flex"
+            onClick={() => {
+              if (onHelpClick) {
+                onHelpClick();
+              } else {
+                window.open('https://wa.me/5548991823908?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20Dashboard%20Avalia%20Solar', '_blank', 'noopener,noreferrer');
+              }
+            }}
+            aria-label="Central de Ajuda e Suporte Avalia Solar"
+            title="Abrir Central de Ajuda e Suporte"
+            className="hidden h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-[hsl(var(--dashboard-muted))] hover:bg-[hsl(var(--dashboard-surface))] hover:text-[hsl(var(--dashboard-ink))] transition-colors md:inline-flex"
           >
             <HelpCircle className="h-4 w-4" aria-hidden="true" /> Ajuda
           </button>

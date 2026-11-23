@@ -159,7 +159,7 @@ export function DashboardNavigationFlyout({
                 isCollapsed
                   ? 'hidden'
                   : isCompactRail
-                  ? 'block w-full px-1 text-center text-[10px] line-clamp-2'
+                  ? 'block w-full px-1 text-center text-xs font-medium leading-tight truncate'
                   : 'ml-3 flex-1 text-sm text-left truncate'
               )}
             >

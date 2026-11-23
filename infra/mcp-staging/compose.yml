@@ -75,7 +75,7 @@ services:
       MCP_CANARY_ENABLED: "true"
       MCP_CANARY_PHASE: "read_only"
       MCP_CANARY_ALLOWED_CLIENT_IDS: ${MCP_CANARY_ALLOWED_CLIENT_IDS:-OVJY8XT0x82_d8DuGF-Es4h-tbOWoHgsCRDYeGuvxpM}
-      MCP_CANARY_ALLOWED_SUBJECTS: ${MCP_CANARY_ALLOWED_SUBJECTS:-user:3}
+      MCP_CANARY_ALLOWED_SUBJECTS: ${MCP_CANARY_ALLOWED_SUBJECTS:-user:3,user:5}
     depends_on:
       postgres:
         condition: service_healthy

@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -36,6 +37,7 @@ const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboa
 function DashboardPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const { user, loading: authLoading, error: authError } = useAuth();
   const { activeCompany, companies, isLoading: companyLoading, selectCompany } = useCompanyContext();
   
@@ -112,29 +114,81 @@ function DashboardPageContent() {
       // Continua o fluxo abaixo se tiver companies (review + membership)
     }
 
-    // Admin view
-    if (user.role === 'admin' || (user.role as string) === 'super_admin') {
-      setViewMode('system_admin');
-    } else {
-      // Workspace empresarial: company user OU review com CompanyMember ativo
-      if (activeCompany) {
+    const isAdmin = user.role === 'admin' || (user.role as string) === 'super_admin';
+    const targetCompanyIdParam = searchParams.get('company_id');
+    const targetCompanyId = targetCompanyIdParam ? Number(targetCompanyIdParam) : null;
+    const hasValidTargetCompanyId = targetCompanyId !== null && Number.isFinite(targetCompanyId) && targetCompanyId > 0;
+
+    // 1. Resolução para Administrador Geral (com suporte a impersonation segura de empresa)
+    if (isAdmin) {
+      if (hasValidTargetCompanyId) {
+        const match = companies.find((c) => Number(c.id) === targetCompanyId);
+        if (match) {
+          if (!activeCompany || Number(activeCompany.id) !== targetCompanyId) {
+            void selectCompany(match);
+          }
+        }
         setViewMode('company_admin');
-      } else if (companies.length === 1) {
-        // Auto-select if only one company
-        void selectCompany(companies[0]);
-        setViewMode('company_admin');
-      } else if (companies.length > 1) {
-        // Multiple companies, none selected → chooser
-        router.replace('/select-company');
-        setViewMode('redirecting');
-      } else if (user.role !== 'review') {
-        // company role sem empresas → onboarding
-        router.replace('/select-company');
-        setViewMode('redirecting');
+        return;
       }
-      // review sem empresas já foi tratado acima (redirect para review-dashboard)
+      setViewMode('system_admin');
+      return;
     }
-  }, [activeCompany, authLoading, companyLoading, companies, router, searchParams, user, selectCompany]);
+
+    // 2. Resolução para Workspace Empresarial com company_id explícito na URL
+    if (hasValidTargetCompanyId) {
+      const targetMatch = companies.find((c) => Number(c.id) === targetCompanyId);
+
+      if (targetMatch) {
+        // Acesso autorizado: URL tem precedência sobre o localStorage prévio
+        if (!activeCompany || Number(activeCompany.id) !== targetCompanyId) {
+          void selectCompany(targetMatch);
+        }
+        setViewMode('company_admin');
+        return;
+      }
+
+      // IDOR Guard: O usuário solicitou uma empresa que NÃO consta nas suas associações
+      if (!companyLoading) {
+        toast({
+          title: 'Acesso não autorizado',
+          description: 'Você não tem permissão para gerenciar a empresa solicitada.',
+          variant: 'destructive',
+        });
+
+        // Limpa parâmetro não autorizado e preserva isolamento do tenant
+        if (activeCompany) {
+          router.replace('/dashboard');
+          setViewMode('company_admin');
+          return;
+        } else if (companies.length === 1) {
+          void selectCompany(companies[0]);
+          router.replace('/dashboard');
+          setViewMode('company_admin');
+          return;
+        } else {
+          router.replace('/select-company');
+          setViewMode('redirecting');
+          return;
+        }
+      }
+      return;
+    }
+
+    // 3. Fluxo padrão (sem company_id explícito na URL)
+    if (activeCompany) {
+      setViewMode('company_admin');
+    } else if (companies.length === 1) {
+      void selectCompany(companies[0]);
+      setViewMode('company_admin');
+    } else if (companies.length > 1) {
+      router.replace('/select-company');
+      setViewMode('redirecting');
+    } else if (user.role !== 'review') {
+      router.replace('/select-company');
+      setViewMode('redirecting');
+    }
+  }, [activeCompany, authLoading, companyLoading, companies, router, searchParams, user, selectCompany, toast]);
 
   if (authError) {
     return (
@@ -168,8 +222,11 @@ function DashboardPageContent() {
   }
 
   // COMPANY ADMIN VIEW - Canonical Enterprise Dashboard
-  if (viewMode === 'company_admin' && activeCompany) {
-    return <EnterpriseDashboard companyId={String(activeCompany.id)} />;
+  if (viewMode === 'company_admin') {
+    const effectiveCompanyId = activeCompany ? String(activeCompany.id) : searchParams.get('company_id');
+    if (effectiveCompanyId) {
+      return <EnterpriseDashboard companyId={effectiveCompanyId} />;
+    }
   }
 
   // SYSTEM ADMIN VIEW

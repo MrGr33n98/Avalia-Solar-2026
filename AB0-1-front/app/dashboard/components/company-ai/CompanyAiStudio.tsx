@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { fetchApi } from '@/lib/api';
 import { track } from '@/lib/analytics/lazy';
 
@@ -170,7 +171,13 @@ export default function CompanyAiStudio({ companyId }: { companyId: string }) {
     <section aria-label="Assistente IA da empresa" className="min-w-0 space-y-4 pb-12">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <img src="/assets/chat-widget-avalia-solar.png" alt="" className="h-9 w-9 rounded-full" />
+          <Image
+            src="/assets/chat-widget-avalia-solar.png"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-full object-cover"
+          />
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Assistente IA</h2>
             <p className="text-xs text-slate-500">Atendimento contextual · Dados aprovados · Sem código</p>

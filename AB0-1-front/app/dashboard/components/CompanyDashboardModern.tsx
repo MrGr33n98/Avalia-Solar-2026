@@ -18,6 +18,10 @@ import { DashboardCharts } from '../components/DashboardCharts';
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
+/**
+ * @deprecated Este componente legado foi substituído pelo EnterpriseDashboard.tsx como shell canônico único.
+ * Mantido apenas como referência histórica temporária e isolado de todas as rotas ativas.
+ */
 interface CompanyDashboardModernProps {
   companyId: string;
 }
