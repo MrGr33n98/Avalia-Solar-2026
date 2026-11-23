@@ -239,6 +239,7 @@ class HealthController < ActionController::API
 
   # Get application version
   def app_version
+    return ENV['GIT_SHA'] if ENV['GIT_SHA'].present?
     return ENV['APP_VERSION'] if ENV['APP_VERSION'].present?
     return File.read(Rails.root.join('VERSION')).strip if File.exist?(Rails.root.join('VERSION'))
 

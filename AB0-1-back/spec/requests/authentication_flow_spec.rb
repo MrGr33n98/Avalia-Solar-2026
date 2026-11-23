@@ -1,6 +1,17 @@
 require 'rails_helper'
 
 RSpec.describe 'Authentication Flow', type: :request do
+  describe 'browser login' do
+    it 'renders the Devise login form instead of the legacy corporate landing page' do
+      get '/users/sign_in'
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Bem-vindo de volta')
+      expect(response.body).not_to include('localhost:3001')
+      expect(response.body).not_to include('Portal Administrativo')
+    end
+  end
+
   let(:category) do
     Category.find_by(name: 'Energia Solar') || Category.create!(name: 'Energia Solar', description: 'Categoria de testes')
   end

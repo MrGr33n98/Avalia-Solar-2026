@@ -159,6 +159,8 @@ jobs:
           tags: |
             ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging
             ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:staging-${{ github.sha }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           secrets: |
             "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}"
           cache-from: type=registry,ref=ghcr.io/${{ steps.repo_name.outputs.repository }}-backend:cache-staging

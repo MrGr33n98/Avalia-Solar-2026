@@ -1,5 +1,6 @@
 ## syntax=docker/dockerfile:1.7
 FROM ruby:3.2.2-slim AS builder
+ARG GIT_SHA=unknown
 
 # 1. Instalação de dependências do sistema
 RUN apt-get update -qq && \
@@ -52,6 +53,7 @@ RUN --mount=type=secret,id=RAILS_MASTER_KEY \
 
 # --- Estágio Final ---
 FROM ruby:3.2.2-slim
+ARG GIT_SHA=unknown
 
 # Instala apenas dependências de runtime
 RUN apt-get update -qq && \
@@ -72,7 +74,8 @@ WORKDIR /app
 ENV RAILS_ENV=production \
     RAILS_LOG_TO_STDOUT=true \
     RAILS_SERVE_STATIC_FILES=true \
-    PORT=3001
+    PORT=3001 \
+    GIT_SHA=${GIT_SHA}
 
 # Copia apenas o necessário do builder para reduzir tamanho da imagem
 COPY --from=builder /usr/local/bundle /usr/local/bundle

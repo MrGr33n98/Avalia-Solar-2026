@@ -46,6 +46,18 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     assert json_response['checks'].present?
   end
 
+  test 'detailed health reports the deployed git sha when available' do
+    previous_sha = ENV['GIT_SHA']
+    ENV['GIT_SHA'] = 'test-sha'
+
+    get '/health/details'
+
+    assert_response :success
+    assert_equal 'test-sha', JSON.parse(response.body)['version']
+  ensure
+    ENV['GIT_SHA'] = previous_sha
+  end
+
   test 'readiness check should verify database connection' do
     get '/health/readiness'
     assert_response :success
