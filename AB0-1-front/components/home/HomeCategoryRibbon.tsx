@@ -212,7 +212,8 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
       <nav
         role="region"
         aria-label="Categorias principais"
-        className="mx-auto flex h-[76px] sm:h-[82px] max-w-[1500px] items-center px-3 sm:px-6 relative"
+        data-testid="home-category-ribbon-shell"
+        className="relative mx-auto flex h-[76px] max-w-[1330px] items-center px-3 sm:h-[82px] sm:px-6 md:px-4"
       >
         {/* Seta de navegação esquerda */}
         {canScrollLeft && (
@@ -220,7 +221,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
             type="button"
             onClick={() => scroll('left')}
             aria-label="Rolar categorias para esquerda"
-            className="absolute left-2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer"
+            className="absolute left-4 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -229,7 +230,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
         {/* Gradiente sutil à esquerda */}
         {canScrollLeft && (
           <div
-            className="pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white via-white/80 to-transparent z-10 hidden md:block"
+            className="pointer-events-none absolute left-4 top-0 bottom-0 w-10 bg-gradient-to-r from-white via-white/80 to-transparent z-10 hidden md:block"
             aria-hidden="true"
           />
         )}
@@ -240,7 +241,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
           tabIndex={0}
           role="region"
           aria-label="Trilho de categorias e atalhos"
-          className="flex w-full items-center gap-4 sm:gap-6 lg:gap-7 overflow-x-auto no-scrollbar scroll-smooth py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
+          className="flex w-full min-w-0 items-center gap-4 overflow-x-auto scroll-smooth py-1 no-scrollbar sm:gap-6 md:pr-10 lg:gap-7 focus-visible:rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* 1. Categorias ▾ */}
@@ -375,7 +376,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
         {/* Gradiente sutil à direita */}
         {canScrollRight && (
           <div
-            className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white via-white/80 to-transparent z-10 hidden md:block"
+            className="pointer-events-none absolute right-4 top-0 bottom-0 w-10 bg-gradient-to-l from-white via-white/80 to-transparent z-10 hidden md:block"
             aria-hidden="true"
           />
         )}
@@ -386,7 +387,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
             type="button"
             onClick={() => scroll('right')}
             aria-label="Rolar categorias para direita"
-            className="absolute right-2 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer"
+            className="absolute right-4 z-20 hidden md:flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition-all hover:bg-slate-50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
