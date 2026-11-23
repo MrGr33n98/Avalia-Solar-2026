@@ -1,0 +1,83 @@
+<% content_for :title, "Autorizar Conexão" %>
+
+<div class="w-full max-w-[400px] flex flex-col items-center">
+  <!-- Brand Logo & Header -->
+  <div class="flex flex-col items-center mb-6">
+    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20 mb-2.5">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    </div>
+    <span class="text-lg font-bold text-slate-900 tracking-tight">Avalia Solar</span>
+  </div>
+
+  <!-- Astryx Style Card -->
+  <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200/80 p-8">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Autorizar Conexão</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        O aplicativo <strong class="text-slate-800"><%= @pre_auth.client.name %></strong> solicita permissão para acessar os dados do Avalia Solar.
+      </p>
+    </div>
+
+    <!-- Scopes Box -->
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6">
+      <p class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Permissões solicitadas:</p>
+      <ul class="space-y-2 text-xs text-slate-600">
+        <% @pre_auth.scopes.each do |scope| %>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>
+              <% if scope == "mcp:public:read" %>
+                Consultar catálogo público, perfis de integradores e avaliações
+              <% elsif scope == "mcp:company:read" %>
+                Consultar dados e métricas da sua empresa
+              <% else %>
+                <%= scope %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3">
+      <%= form_tag oauth_authorization_path, method: :post, data: { turbo: false } do %>
+        <%= hidden_field_tag :client_id, @pre_auth.client.uid %>
+        <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri %>
+        <%= hidden_field_tag :state, @pre_auth.state %>
+        <%= hidden_field_tag :response_type, @pre_auth.response_type %>
+        <%= hidden_field_tag :scope, @pre_auth.scope %>
+        <%= hidden_field_tag :code_challenge, @pre_auth.code_challenge %>
+        <%= hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method %>
+        <%= hidden_field_tag :resource, params[:resource] if params[:resource].present? %>
+
+        <%= submit_tag "Autorizar Acesso",
+            class: "w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold text-sm shadow-sm transition-all duration-150 cursor-pointer text-center" %>
+      <% end %>
+
+      <%= form_tag oauth_authorization_path, method: :delete, data: { turbo: false } do %>
+        <%= hidden_field_tag :client_id, @pre_auth.client.uid %>
+        <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri %>
+        <%= hidden_field_tag :state, @pre_auth.state %>
+        <%= hidden_field_tag :response_type, @pre_auth.response_type %>
+        <%= hidden_field_tag :scope, @pre_auth.scope %>
+        <%= hidden_field_tag :code_challenge, @pre_auth.code_challenge %>
+        <%= hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method %>
+        <%= hidden_field_tag :resource, params[:resource] if params[:resource].present? %>
+
+        <%= submit_tag "Cancelar",
+            class: "w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium text-sm transition-all cursor-pointer text-center" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Terms & Privacy Footer -->
+  <p class="mt-6 text-center text-xs text-slate-400 max-w-[340px] leading-relaxed">
+    Esta conexão segue a
+    <a href="https://www.avaliasolar.com.br/privacidade" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600 transition-colors">Política de Privacidade</a> do Avalia Solar.
+  </p>
+</div>

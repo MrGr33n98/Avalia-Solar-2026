@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <title><%= content_for?(:title) ? yield(:title) + " — Avalia Solar" : "Avalia Solar App" %></title>
+    <title><%= content_for?(:title) ? yield(:title) + " — Avalia Solar" : "Avalia Solar" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta charset="utf-8">
     <%= csrf_meta_tags %>
@@ -19,20 +19,20 @@
         }
       }
     </script>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" rescue nil %>
+    <%= javascript_importmap_tags rescue nil %>
   </head>
 
-  <body class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+  <body class="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 antialiased font-sans">
 
     <%# Flash %>
     <% if notice.present? %>
-      <div class="w-full max-w-sm mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      <div class="w-full max-w-[400px] mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-xs">
         <%= notice %>
       </div>
     <% end %>
     <% if alert.present? %>
-      <div class="w-full max-w-sm mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      <div class="w-full max-w-[400px] mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 shadow-xs">
         <%= alert %>
       </div>
     <% end %>
@@ -40,7 +40,7 @@
     <%= yield %>
 
     <%# Footer %>
-    <p class="mt-8 text-xs text-gray-400">
+    <p class="mt-8 text-xs text-slate-400">
       &copy; <%= Date.current.year %> Avalia Solar. Todos os direitos reservados.
     </p>
 
