@@ -18,7 +18,11 @@ const {
   parseCompanyProfile
 } = require('./enf_crawler');
 
-const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || 'fc-3787a994f87a4ae9b572b2cafa89bc85';
+const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
+if (!FIRECRAWL_API_KEY) {
+  console.error('[ERRO FATAL] FIRECRAWL_API_KEY é obrigatória e não foi configurada no ambiente.');
+  process.exit(1);
+}
 const TOTAL_PAGES = 24;
 
 /**

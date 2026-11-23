@@ -45,6 +45,7 @@ services:
       - .env
     environment:
       RAILS_ENV: production
+      MCP_STAGING_MODE: "true"
       RAILS_LOG_TO_STDOUT: "true"
       PORT: "3001"
       POSTGRES_HOST: postgres
@@ -71,6 +72,10 @@ services:
       MCP_PRIVATE_ALLOWED_HOSTS: mcp-staging.avaliasolar.com.br
       MCP_REMOTE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
       MCP_PRIVATE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
+      MCP_CANARY_ENABLED: "true"
+      MCP_CANARY_PHASE: "read_only"
+      MCP_CANARY_ALLOWED_CLIENT_IDS: ${MCP_CANARY_ALLOWED_CLIENT_IDS:-OVJY8XT0x82_d8DuGF-Es4h-tbOWoHgsCRDYeGuvxpM}
+      MCP_CANARY_ALLOWED_SUBJECTS: ${MCP_CANARY_ALLOWED_SUBJECTS:-user:3}
     depends_on:
       postgres:
         condition: service_healthy

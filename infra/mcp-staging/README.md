@@ -1,7 +1,29 @@
-# Avalia Solar MCP C4 — isolated staging infrastructure template
+# Avalia Solar MCP C4 — Staging Infrastructure Architecture & Runbook
 
-> **NOT a production deployment.** These files are a non-executed reference
-> for an operations-approved VM/project separate from the production Droplet.
+> **Ambiente de Homologação (Staging):** O MCP Staging está provisionado e em operação
+> através de **isolamento lógico por containers Docker** na infraestrutura DigitalOcean
+> (Droplet `64.225.59.107`), sob o domínio `mcp-staging.avaliasolar.com.br`.
+
+## 1. Topologia Real e Nível de Isolamento
+
+- **Host:** Droplet DigitalOcean `64.225.59.107` (compartilhado logicamente com a stack de produção).
+- **Projeto Docker Compose:** `avalia-solar-mcp-staging` (definido em `infra/mcp-staging/compose.yml`).
+- **Rede:** Rede Docker dedicada em modo bridge (`mcp_staging_net`), isolada da rede de produção.
+- **Porta:** `127.0.0.1:3101` (bind restrito a loopback local, sem exposição direta à internet).
+- **Reverse Proxy & TLS:** Nginx Proxy Manager (NPM) com terminação TLS (Let's Encrypt) e proxy reverso para `127.0.0.1:3101`.
+- **Banco de Dados & Cache:** Containers e volumes PostgreSQL 14 (`postgres_data`) e Redis 7 (`redis_data`) totalmente dedicados ao staging, sem compartilhamento com os bancos de produção.
+- **Identidade e Fixtures:** Usuários sintéticos e empresas sintéticas criados exclusivamente no banco de staging (`mcp_staging_db`).
+
+### Riscos de Recursos Compartilhados e Mitigações
+
+1. **Contenção de CPU e Memória:**
+   - *Risco:* Testes de carga ou spikes em staging consumirem recursos do Droplet e impactarem a latência do frontend/backend de produção.
+   - *Mitigação:* Limites de concurrency no script de carga (padrão 5 workers), quotas Redis rigorosas (30 req/min por identidade), e monitoramento de CPU/RAM via métricas de sistema e Yabeda.
+2. **Isolamento de Rede:**
+   - *Risco:* Exposição acidental da porta do container Rails staging para a internet.
+   - *Mitigação:* `compose.yml` mapeia explicitamente `127.0.0.1:3101:3001`, bloqueando qualquer acesso que não passe pela terminação TLS do Nginx.
+3. **Futura Evolução para Produção (Wave G5):**
+   - Para volumes de tráfego de marketplace em produção, uma VM/Droplet fisicamente dedicada deve ser contratada caso o tráfego público de agentes cresça substancialmente.
 
 ## Preconditions
 

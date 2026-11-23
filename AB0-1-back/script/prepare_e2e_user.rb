@@ -71,6 +71,33 @@ raise 'E2E banner fixture must have no custom banner' if free_banner_company.ban
 
 puts "Empresa E2E Free pronta: #{free_banner_company.slug}"
 
+solar_cat = Category.find_by(seo_url: 'energia-solar-residencial') || Category.find_by(seo_url: 'energia-solar') || Category.first
+
+kaju_company = Company.find_by(slug: 'kaju-energia-solar') ||
+  FactoryBot.create(
+    :company,
+    name: 'KAJU Energia Solar',
+    slug: 'kaju-energia-solar',
+    description: 'Instaladora de energia solar residencial e comercial.',
+    website: 'https://kajuenergia.com.br',
+    phone: '11999999999',
+    whatsapp: '11999999999',
+    email: 'contato@kajuenergia.com.br',
+    email_public: 'contato@kajuenergia.com.br',
+    state: 'SP',
+    city: 'São Paulo',
+    status: 'active',
+    moderation_status: 'approved',
+    verified: true,
+    active_admin: true,
+    featured: true
+  )
+
+if solar_cat && !kaju_company.categories.exists?(solar_cat.id)
+  kaju_company.categories << solar_cat
+end
+puts "Empresa E2E KAJU pronta: #{kaju_company.slug}"
+
 email = ENV.fetch('E2E_USER_EMAIL', 'test@avaliasolar.com.br')
 password = ENV.fetch('E2E_USER_PASSWORD', 'Password123')
 

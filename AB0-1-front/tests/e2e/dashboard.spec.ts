@@ -159,7 +159,7 @@ test.describe('Dashboard PWA — Sprint 1', () => {
           const body = document.body;
           return window.getComputedStyle(body).overflowX;
         });
-        expect(bodyOverflowX).toBe('hidden');
+        expect(['hidden', 'clip']).toContain(bodyOverflowX);
 
         const hasHorizontalOverflow = await page.evaluate(() => {
           return document.documentElement.scrollWidth > document.documentElement.clientWidth;

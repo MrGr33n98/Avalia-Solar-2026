@@ -6,7 +6,7 @@ RSpec.describe Mcp::Canary::Guard do
   let(:context) do
     {
       subject: 'user:42', client_id: 'client-canary',
-      scopes: ['mcp:public:read'], resource: Mcp::Canary::Configuration::CANONICAL_RESOURCE,
+      scopes: ['mcp:public:read'], resource: Mcp::Canary::Configuration::CANONICAL_PRODUCTION_RESOURCE,
       token_format: 'opaque'
     }
   end
@@ -24,8 +24,10 @@ RSpec.describe Mcp::Canary::Guard do
       'MCP_REMOTE_POLICY_ENABLED' => 'true',
       'MCP_PUBLIC_TOOLS_EXECUTION_ENABLED' => 'true',
       'MCP_OAUTH_TOKEN_FORMAT' => 'opaque',
-      'MCP_OAUTH_RESOURCE' => Mcp::Canary::Configuration::CANONICAL_RESOURCE,
-      'MCP_OAUTH_ISSUER' => Mcp::Canary::Configuration::CANONICAL_ISSUER
+      'MCP_OAUTH_RESOURCE' => Mcp::Canary::Configuration::CANONICAL_PRODUCTION_RESOURCE,
+      'MCP_OAUTH_ISSUER' => Mcp::Canary::Configuration::CANONICAL_PRODUCTION_ISSUER,
+      'MCP_REMOTE_ALLOWED_HOSTS' => Mcp::Canary::Configuration::CANONICAL_PRODUCTION_HOST,
+      'MCP_STAGING_MODE' => nil
     }.each { |key, value| allow(ENV).to receive(:[]).with(key).and_return(value) }
     allow(ENV).to receive(:fetch).with('MCP_CANARY_PHASE', 'disabled').and_return('read_only')
     allow(ENV).to receive(:fetch).with('MCP_OAUTH_TOKEN_FORMAT', 'opaque').and_return('opaque')
@@ -66,6 +68,17 @@ RSpec.describe Mcp::Canary::Guard do
       .to be(true)
     expect { described_class.authorize!(method: 'tools/call', tool_name: 'bulk_lead_export', auth_context: context) }
       .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:tool_not_allowed) }
+  end
+
+  it 'rejects private tools on the public canary endpoint' do
+    expect { described_class.authorize!(method: 'tools/call', tool_name: 'get_my_company_overview', auth_context: context) }
+      .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:tool_not_allowed) }
+  end
+
+  it 'rejects token without required scope' do
+    context[:scopes] = ['other:scope']
+    expect { described_class.authorize!(method: 'tools/list', auth_context: context) }
+      .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:forbidden) }
   end
 
   it 'rejects JWT contexts and wrong resources even when identity strings match' do
@@ -111,5 +124,55 @@ RSpec.describe Mcp::Canary::Guard do
     allow(ENV).to receive(:[]).with('MCP_CANARY_ENABLED').and_return('false')
 
     expect(described_class.authorize!(method: 'tools/list', auth_context: nil)).to be(true)
+  end
+
+  describe 'Staging profile integration' do
+    let(:staging_context) do
+      {
+        subject: 'user:3',
+        client_id: 'staging-client',
+        scopes: ['mcp:public:read'],
+        resource: Mcp::Canary::Configuration::CANONICAL_STAGING_RESOURCE,
+        token_format: 'opaque'
+      }
+    end
+
+    before do
+      {
+        'MCP_STAGING_MODE' => 'true',
+        'MCP_CANARY_ENABLED' => 'true',
+        'MCP_CANARY_PHASE' => 'read_only',
+        'MCP_CANARY_ALLOWED_CLIENT_IDS' => 'staging-client',
+        'MCP_CANARY_ALLOWED_SUBJECTS' => 'user:3',
+        'MCP_REMOTE_TRANSPORT_ENABLED' => 'true',
+        'MCP_REMOTE_AUTH_MODE' => 'oauth',
+        'MCP_REMOTE_OAUTH_ENABLED' => 'true',
+        'MCP_REMOTE_POLICY_ENABLED' => 'true',
+        'MCP_PUBLIC_TOOLS_EXECUTION_ENABLED' => 'true',
+        'MCP_OAUTH_TOKEN_FORMAT' => 'opaque',
+        'MCP_OAUTH_RESOURCE' => Mcp::Canary::Configuration::CANONICAL_STAGING_RESOURCE,
+        'MCP_OAUTH_ISSUER' => Mcp::Canary::Configuration::CANONICAL_STAGING_ISSUER,
+        'MCP_REMOTE_ALLOWED_HOSTS' => Mcp::Canary::Configuration::CANONICAL_STAGING_HOST
+      }.each { |key, value| allow(ENV).to receive(:[]).with(key).and_return(value) }
+      allow(ENV).to receive(:fetch).with('MCP_CANARY_PHASE', 'disabled').and_return('read_only')
+      allow(ENV).to receive(:fetch).with('MCP_OAUTH_TOKEN_FORMAT', 'opaque').and_return('opaque')
+    end
+
+    it 'allows staging-authorized client and subject with staging canonical resource' do
+      expect(described_class.authorize!(method: 'tools/list', auth_context: staging_context)).to be(true)
+      expect(described_class.authorize!(method: 'tools/call', tool_name: 'list_integrators', auth_context: staging_context)).to be(true)
+    end
+
+    it 'rejects token presented to staging with production resource' do
+      staging_context[:resource] = Mcp::Canary::Configuration::CANONICAL_PRODUCTION_RESOURCE
+      expect { described_class.authorize!(method: 'tools/list', auth_context: staging_context) }
+        .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:forbidden) }
+    end
+
+    it 'rejects unauthorized subject on staging' do
+      staging_context[:subject] = 'user:999'
+      expect { described_class.authorize!(method: 'tools/list', auth_context: staging_context) }
+        .to raise_error(described_class::Failure) { |error| expect(error.type).to eq(:forbidden) }
+    end
   end
 end

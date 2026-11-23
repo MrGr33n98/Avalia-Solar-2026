@@ -65,14 +65,23 @@ module Mcp
         checks.each do |dimension, value, bucket, ttl, retry_after|
           key = "mcp:quota:v1:#{@mode}:#{dimension}:#{bucket}:#{digest(value)}"
           count = redis.call('EVAL', SCRIPT, 1, key, 1, ttl).to_i
-          raise Failure.new(:unavailable) if count < 1
-          raise Failure.new(:rate_limited, retry_after: retry_after) if count > limits.fetch(dimension)
+          if count < 1
+            instrument_quota_event('unavailable')
+            raise Failure.new(:unavailable)
+          end
+          if count > limits.fetch(dimension)
+            instrument_quota_event('rate_limited')
+            instrument_security_event('quota_exceeded', 'rate_limited')
+            raise Failure.new(:rate_limited, retry_after: retry_after)
+          end
         end
       end
+      instrument_quota_event('allowed')
       true
     rescue Failure
       raise
     rescue StandardError
+      instrument_quota_event('unavailable')
       raise Failure, :unavailable
     end
 
@@ -87,17 +96,50 @@ module Mcp
       minute = Time.current.utc.to_i / 60
       key = "mcp:quota:v1:private:tenant:#{minute}:#{digest(@tenant_id)}"
       count = Sidekiq.redis { |redis| redis.call('EVAL', SCRIPT, 1, key, 1, 120).to_i }
-      raise Failure, :unavailable if count < 1
-      raise Failure.new(:rate_limited, retry_after: 60) if count > LIMITS.fetch(:private).fetch(:tenant)
+      if count < 1
+        instrument_quota_event('unavailable', mode_name: 'private_tenant')
+        raise Failure, :unavailable
+      end
+      if count > LIMITS.fetch(:private).fetch(:tenant)
+        instrument_quota_event('rate_limited', mode_name: 'private_tenant')
+        instrument_security_event('quota_exceeded', 'tenant_rate_limited')
+        raise Failure.new(:rate_limited, retry_after: 60)
+      end
 
+      instrument_quota_event('allowed', mode_name: 'private_tenant')
       true
     rescue Failure
       raise
     rescue StandardError
+      instrument_quota_event('unavailable', mode_name: 'private_tenant')
       raise Failure, :unavailable
     end
 
     private
+
+    def instrument_quota_event(result, mode_name: nil)
+      surface_name = @mode == :private ? 'private' : 'remote'
+      ActiveSupport::Notifications.instrument(
+        'mcp.quota.event',
+        surface: surface_name,
+        mode: mode_name || @mode.to_s,
+        result: result.to_s
+      )
+    rescue StandardError
+      nil
+    end
+
+    def instrument_security_event(event_type, reason)
+      surface_name = @mode == :private ? 'private' : 'remote'
+      ActiveSupport::Notifications.instrument(
+        'mcp.security.event',
+        surface: surface_name,
+        event_type: event_type.to_s,
+        reason: reason.to_s
+      )
+    rescue StandardError
+      nil
+    end
 
     def enabled?
       if @mode == :private

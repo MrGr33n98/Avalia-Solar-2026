@@ -154,6 +154,7 @@ test.describe('Comparador Visual Free × Brand Page Premium (/founder)', () => {
   test('CA06b: mobile permite comparar sem overflow horizontal', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     const section = page.locator('#comparador-visual');
+    await expect(section).toBeAttached();
     await section.scrollIntoViewIfNeeded();
     await section.getByRole('button', { name: 'Comparar com divisor' }).click();
     await expect(section.getByRole('slider')).toBeVisible();

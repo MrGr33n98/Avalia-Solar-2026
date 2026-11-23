@@ -51,6 +51,7 @@ end
 def attach_banner_if_missing(record, filename_prefix)
   return unless active_storage_available?
   return unless record.respond_to?(:banner)
+  record.reload if record.persisted?
   return if record.banner.attached?
 
   record.banner.attach(
@@ -395,6 +396,7 @@ companies_data = [
   { name: 'Revo Energia', website: 'https://revoenergia.com.br', state: 'SP', notes: 'Projetos solares e O&M', categories: %w[energia-solar monitoramento-operacao-manutencao energia-solar-comercial-industrial] },
   { name: 'Eletrobras Chesf Solar', website: 'https://www.chesf.gov.br', state: 'PE', notes: 'Projetos solares de grande porte', categories: %w[energia-solar energia-solar-comercial-industrial] },
   { name: 'Sicredi Solar', website: 'https://www.sicredi.com.br', state: 'RS', notes: 'Conteúdo informativo e reviews sobre crédito solar', categories: %w[energia-solar financiamento-energia-solar] },
+  { name: 'KAJU Energia Solar', website: 'https://kajuenergia.com.br', state: 'SP', notes: 'Instaladora de energia solar residencial e comercial', categories: %w[energia-solar instaladores-energia-solar energia-solar-residencial] },
 
   # Novas empresas exemplares para novos hubs
   { name: 'Philips Hue', website: 'https://www.philips-hue.com', state: 'SP', notes: 'Iluminação LED inteligente', categories: %w[eficiencia-energetica iluminacao-led-inteligente] },
@@ -432,15 +434,15 @@ companies_data.each do |data|
   company.active_admin = true
   company.financing_enabled = data[:categories].any? { |c| c.include?('financiamento') || c.include?('credito') }
 
+  Array(data[:categories]).each do |seo_url|
+    cat = Category.find_by(seo_url: seo_url)
+    next unless cat
+    company.categories << cat unless company.categories.exists?(cat.id)
+  end
+
   if company.save
     companies_created += 1 if company.previous_changes.key?('id')
     companies_updated += 1 if company.previous_changes.any? && !company.previous_changes.key?('id')
-
-    Array(data[:categories]).each do |seo_url|
-      cat = Category.find_by(seo_url: seo_url)
-      next unless cat
-      company.categories << cat unless company.categories.exists?(cat.id)
-    end
   else
     companies_skipped += 1
   end
