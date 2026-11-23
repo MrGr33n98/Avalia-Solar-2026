@@ -29,11 +29,13 @@ export interface CompanySellerData {
   facebook?: string;
 }
 
+export type SellerEditorMode = 'profile' | 'channels';
+
 export interface SellerInformationPanelProps {
   company: CompanySellerData;
   draft: CompanySellerData | null;
   editorOpen: boolean;
-  editorMode: 'profile' | 'channels';
+  editorMode: SellerEditorMode;
   saving: boolean;
   refreshing: boolean;
   onEdit: (mode: 'profile' | 'channels') => void;

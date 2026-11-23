@@ -105,21 +105,21 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
 
   return (
     <section data-testid="cta-visibility-settings" aria-labelledby="cta-visibility-heading"
-      className="rounded-xl border border-[#DDE5F0] bg-white p-4 shadow-sm sm:p-5">
+      className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-4 shadow-sm sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-blue-700">Brand Page / Conversão</p>
-          <h2 id="cta-visibility-heading" className="mt-1 text-base font-bold text-[#0A1F44]">
+          <p className="text-xs font-semibold text-[hsl(var(--dashboard-accent))]">Brand Page / Conversão</p>
+          <h2 id="cta-visibility-heading" className="mt-1 text-base font-semibold text-[hsl(var(--dashboard-ink))]">
             Visibilidade dos botões
           </h2>
-          <p className="mt-1 text-xs text-slate-600">Escolha quais ações serão exibidas no perfil público. Não altera seu plano.</p>
+          <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">Escolha quais ações serão exibidas no perfil público. Não altera seu plano.</p>
         </div>
-        <span className="rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
+        <span className="rounded-md border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] px-2 py-1 text-[11px] font-semibold text-[hsl(var(--dashboard-accent))]">
           Configuração independente
         </span>
       </div>
 
-      {loading && <p role="status" className="mt-4 text-sm text-slate-600">Carregando preferências…</p>}
+      {loading && <p role="status" className="mt-4 text-sm text-[hsl(var(--dashboard-muted))]">Carregando preferências…</p>}
       {!ready && !loading && (
         <Button type="button" variant="outline" className="mt-4 min-h-11"
           onClick={() => setRefresh((v) => v + 1)}>Tentar novamente</Button>
@@ -140,18 +140,18 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
               const unavailable = !item.available;
               return (
                 <label key={item.key}
-                  className="flex min-h-[92px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 focus-within:ring-2 focus-within:ring-blue-600">
-                  <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[#0B5FFF]"
+                  className="flex min-h-[92px] cursor-pointer items-start gap-3 rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-3 focus-within:ring-2 focus-within:ring-[hsl(var(--dashboard-accent))]">
+                  <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[hsl(var(--dashboard-accent))]"
                     data-testid={'cta-checkbox-' + item.key}
                     checked={checked}
                     disabled={saving || ((!item.available || !item.configured) && !checked)}
                     onChange={(e) => setDraft((prev) => prev ? { ...prev, [item.key]: e.target.checked } : prev)}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-[#0A1F44]">{item.title}</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-slate-600">{item.description}</span>
+                    <span className="block text-sm font-semibold text-[hsl(var(--dashboard-ink))]">{item.title}</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--dashboard-muted))]">{item.description}</span>
                     <span className={'mt-2 block text-[11px] font-medium ' +
-                      (unavailable || !item.configured ? 'text-amber-700' : checked ? 'text-emerald-700' : 'text-slate-600')}>
+                      (unavailable || !item.configured ? 'text-amber-700' : checked ? 'text-emerald-700' : 'text-[hsl(var(--dashboard-muted))]')}>
                       {unavailable ? 'Indisponível no plano atual' :
                         !item.configured ? 'Configure um WhatsApp válido para exibir' :
                         checked ? 'Ativado' : 'Desativado'}
@@ -163,34 +163,34 @@ export default function CtaVisibilitySettings({ companyId }: { companyId: string
           </div>
           {(!actual.availability.quote || !actual.availability.whatsapp) &&
             <Link href={'/dashboard?company_id=' + encodeURIComponent(companyId) + '&tab=product-pricing'}
-              className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-blue-700 hover:underline">
+              className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[hsl(var(--dashboard-accent))] hover:underline">
               Consultar planos e benefícios →
             </Link>}
 
-          <div className="mt-4 rounded-lg border border-blue-100 bg-[#F7F9FF] p-3">
+          <div className="mt-4 rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-3">
             <div className="flex items-center justify-between gap-3">
-              <strong className="text-xs text-[#0A1F44]">Prévia do hero</strong>
-              <span className="text-[11px] text-slate-500">Prévia — publicação após salvar</span>
+              <strong className="text-xs text-[hsl(var(--dashboard-ink))]">Prévia do hero</strong>
+              <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">Prévia — publicação após salvar</span>
             </div>
             <div data-testid="cta-preview" className="mt-3 flex flex-wrap gap-2">
-              {quoteVisible && <span className="inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white">Solicitar orçamento</span>}
-              {whatsappVisible && <span className="inline-flex min-h-11 items-center rounded-lg bg-green-600 px-4 text-xs font-semibold text-white">WhatsApp</span>}
-              <span className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800">Comparar</span>
-              <span className="inline-flex min-h-11 items-center rounded-lg border border-amber-300 bg-white px-3 text-xs text-slate-800">Avaliar</span>
+              {quoteVisible && <span className="inline-flex min-h-11 items-center rounded-lg bg-[hsl(var(--dashboard-accent))] px-4 text-xs font-semibold text-white">Solicitar orçamento</span>}
+              {whatsappVisible && <span className="inline-flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white">WhatsApp</span>}
+              <span className="inline-flex min-h-11 items-center rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-3 text-xs text-[hsl(var(--dashboard-ink))]">Comparar</span>
+              <span className="inline-flex min-h-11 items-center rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-3 text-xs text-[hsl(var(--dashboard-ink))]">Avaliar</span>
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">A prévia não concede permissões nem modifica o perfil sem salvar.</p>
+            <p className="mt-2 text-[11px] text-[hsl(var(--dashboard-muted))]">A prévia não concede permissões nem modifica o perfil sem salvar.</p>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
             {changed && <span className="text-xs text-amber-700">Alterações não salvas</span>}
             <Button type="button" onClick={() => { void save(); }} disabled={!changed || saving}
-              data-testid="save-cta-visibility" className="min-h-11 bg-[#0B5FFF] text-white hover:bg-blue-700">
+              data-testid="save-cta-visibility" className="min-h-11 bg-[hsl(var(--dashboard-accent))] text-white hover:bg-[hsl(var(--dashboard-accent))/0.9]">
               {saving ? 'Salvando…' : 'Salvar visibilidade'}
             </Button>
           </div>
         </>
       )}
-      {notice && <p role="status" aria-live="polite" className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700">{notice}</p>}
+      {notice && <p role="status" aria-live="polite" className="mt-3 rounded-md border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] px-3 py-2 text-xs text-[hsl(var(--dashboard-ink))]">{notice}</p>}
     </section>
   );
 }

@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'Rack::Attack' do
   include Rack::Test::Methods
+  include ActiveSupport::Testing::TimeHelpers
 
   def app
     Rails.application
@@ -27,30 +28,36 @@ RSpec.describe 'Rack::Attack' do
     let(:endpoint) { '/api/v1/analytics/track' }
 
     it 'allows requests under limit (100/min)' do
-      99.times do
-        post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
-      end
+      travel_to(Time.current.beginning_of_minute + 1.second) do
+        99.times do
+          post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+        end
 
-      post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
-      expect(last_response.status).not_to eq(429)
+        post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+        expect(last_response.status).not_to eq(429)
+      end
     end
 
     it 'blocks requests over limit' do
-      101.times do
-        post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
-      end
+      travel_to(Time.current.beginning_of_minute + 1.second) do
+        101.times do
+          post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+        end
 
-      expect(last_response.status).to eq(429)
-      json = JSON.parse(last_response.body)
-      expect(json['error']).to eq('Rate limit exceeded')
+        expect(last_response.status).to eq(429)
+        json = JSON.parse(last_response.body)
+        expect(json['error']).to eq('Rate limit exceeded')
+      end
     end
 
     it 'includes rate limit headers' do
-      101.times do
-        post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
-      end
+      travel_to(Time.current.beginning_of_minute + 1.second) do
+        101.times do
+          post endpoint, { event_type: 'profile_view' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+        end
 
-      expect(last_response.headers).to include('X-RateLimit-Limit')
+        expect(last_response.headers).to include('X-RateLimit-Limit')
+      end
     end
   end
 

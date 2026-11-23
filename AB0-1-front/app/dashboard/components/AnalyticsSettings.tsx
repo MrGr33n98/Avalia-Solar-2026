@@ -116,7 +116,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
       <div className="p-12 space-y-8">
          <div className="animate-pulse space-y-4">
             <div className="h-8 w-64 bg-white/5 rounded-lg" />
-            <div className="h-[400px] w-full bg-white/5 rounded-3xl" />
+            <div className="h-[400px] w-full bg-white/5 rounded-xl" />
          </div>
       </div>
     );
@@ -151,7 +151,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
           {/* Collection Modes */}
-          <Card className="clay-precision bg-[#002B4D]/50 border-none rounded-[3rem] overflow-hidden">
+          <Card className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] overflow-hidden">
             <CardHeader className="p-8 border-b border-white/5">
               <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Intelligence Sources</CardTitle>
               <CardDescription className="text-white/40 font-medium">Defina como os dados brutos são capturados e processados.</CardDescription>
@@ -159,7 +159,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={cn(
-                  "flex items-center justify-between p-6 rounded-3xl border transition-all duration-300",
+                  "flex items-center justify-between p-6 rounded-xl border transition-all duration-300",
                   settings.collection_modes.automatic_tracking ? "bg-brand-blue/10 border-brand-blue/30" : "bg-white/[0.02] border-white/5 opacity-60"
                 )}>
                   <div className="space-y-1">
@@ -183,7 +183,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                 </div>
 
                 <div className={cn(
-                  "flex items-center justify-between p-6 rounded-3xl border transition-all duration-300",
+                  "flex items-center justify-between p-6 rounded-xl border transition-all duration-300",
                   settings.collection_modes.declared_input ? "bg-emerald-600/10 border-emerald-500/30" : "bg-white/[0.02] border-white/5 opacity-60"
                 )}>
                   <div className="space-y-1">
@@ -208,7 +208,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
               </div>
 
               {/* Integrated Sources */}
-              <div className="p-8 rounded-[2.5rem] bg-black/40 border border-white/5 space-y-6">
+              <div className="p-8 rounded-xl bg-black/40 border border-white/5 space-y-6">
                  <div className="flex items-center justify-between">
                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">External Pipeline (Integrations)</Label>
                     <Badge variant="outline" className="text-[8px] border-white/10 text-white/20">OAUTH SECURE</Badge>
@@ -268,14 +268,14 @@ export default function AnalyticsSettings({ companyId }: Props) {
           </Card>
 
           {/* Visibility Protocol */}
-          <Card className="clay-precision bg-[#002B4D]/50 border-none rounded-[3rem] overflow-hidden">
+          <Card className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] overflow-hidden">
             <CardHeader className="p-8 border-b border-white/5">
               <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Public Visibility Protocol</CardTitle>
               <CardDescription className="text-white/40 font-medium">Controle granular da exposição de sinal para o mercado.</CardDescription>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] border border-white/5">
+                <div className="flex items-center justify-between p-6 rounded-xl bg-white/[0.02] border border-white/5">
                   <div className="space-y-1">
                     <Label className="text-xs font-black uppercase text-white">Reputation Index</Label>
                     <p className="text-[10px] text-brand-green font-bold">ALWAYS PUBLIC</p>
@@ -283,7 +283,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                   <ShieldCheck className="h-5 w-5 text-brand-green/50" />
                 </div>
                 
-                <div className="flex items-center justify-between p-6 rounded-3xl bg-white/[0.01] border border-white/5">
+                <div className="flex items-center justify-between p-6 rounded-xl bg-white/[0.01] border border-white/5">
                   <div className="space-y-1">
                     <Label className="text-xs font-black uppercase text-white">Latency (Response)</Label>
                     <p className="text-[10px] text-white/30 font-medium">Banda de exibição pública</p>
@@ -310,7 +310,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       <SelectTrigger className="w-24 h-9 bg-black/40 border-white/5 text-[10px] font-black uppercase rounded-lg">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#002B4D] border-white/10">
+                      <SelectContent className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-ink))]">
                         <SelectItem value="1h">≤ 1h</SelectItem>
                         <SelectItem value="4h">≤ 4h</SelectItem>
                         <SelectItem value="24h">≤ 24h</SelectItem>
@@ -368,7 +368,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.05 }}
-                      className="group p-8 rounded-[2.5rem] bg-[#002B4D]/30 border border-white/5 hover:border-brand-blue/20 transition-all"
+                      className="group p-8 rounded-xl rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] hover:border-[hsl(var(--dashboard-accent))/0.3] transition-all"
                     >
                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                           <div className="md:col-span-4 space-y-4">
@@ -407,7 +407,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
                                 <SelectTrigger className="h-14 px-6 rounded-2xl bg-black/40 border-white/5 text-xs font-black uppercase tracking-widest">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#002B4D] border-white/10">
+                                <SelectContent className="bg-[hsl(var(--dashboard-panel))] border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-ink))]">
                                   <SelectItem value="declared">Declarado</SelectItem>
                                   <SelectItem value="verified">Verificado</SelectItem>
                                   <SelectItem value="calculated">Calculado</SelectItem>
@@ -438,7 +438,7 @@ export default function AnalyticsSettings({ companyId }: Props) {
 
         {/* Intelligence Sidebar */}
         <div className="lg:col-span-4 space-y-8">
-           <Card className="clay-precision bg-gradient-to-br from-[#002B4D] to-[#0A0E17] border border-white/5 rounded-[3.5rem] p-10 space-y-8 sticky top-8">
+           <Card className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-10 space-y-8 sticky top-8">
               <div className="space-y-4">
                  <div className="h-14 w-14 rounded-2xl bg-brand-blue/10 flex items-center justify-center border border-brand-blue/20">
                     <ShieldCheck className="h-7 w-7 text-brand-blue" />
@@ -467,13 +467,13 @@ export default function AnalyticsSettings({ companyId }: Props) {
                        <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: '88.5%' }}
-                        className="h-full bg-brand-blue shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                        className="h-full bg-brand-blue " 
                        />
                     </div>
                  </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
+              <div className="p-6 rounded-xl bg-white/[0.02] border border-white/5 space-y-4">
                  <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
                     <span className="text-[10px] font-black text-brand-green uppercase tracking-widest">Sincronização OK</span>
