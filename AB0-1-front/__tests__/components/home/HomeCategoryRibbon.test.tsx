@@ -31,6 +31,18 @@ describe('HomeCategoryRibbon', () => {
     mockPathname = '/';
   });
 
+  it('keeps its desktop content inside the shared 1330px Home grid and reserves room for arrows', () => {
+    const { container } = render(<HomeCategoryRibbon />);
+    const shell = screen.getByTestId('home-category-ribbon-shell');
+    expect(shell).toHaveClass('max-w-[1330px]', 'md:px-4', 'mx-auto');
+
+    const rail = screen.getByRole('region', { name: 'Trilho de categorias e atalhos' });
+    expect(rail).toHaveClass('w-full', 'min-w-0', 'overflow-x-auto', 'md:pr-10');
+    expect(container.querySelector('[aria-label="Categorias principais"]')).toBe(shell);
+
+    // Responsive geometry is verified in a real browser by home-horizontal-alignment.spec.ts.
+  });
+
   it('renders the principal navigation region and accessibility landmarks', () => {
     render(<HomeCategoryRibbon />);
 
