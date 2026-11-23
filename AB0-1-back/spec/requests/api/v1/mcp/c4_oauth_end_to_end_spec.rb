@@ -55,22 +55,33 @@ RSpec.describe 'C4 OAuth issuance, MCP use and revocation', type: :request do
 
   def exchange_authorization_code(scope:, resource:)
     client = oauth_client(scope)
-    grant = Doorkeeper::AccessGrant.create!(
-      resource_owner_id: user.id,
-      application_id: client.id,
-      token: SecureRandom.hex(32),
-      expires_in: 600,
+    sign_in user
+    get '/oauth/authorize', params: {
+      client_id: client.uid,
       redirect_uri: redirect_uri,
-      scopes: scope,
+      response_type: 'code',
+      scope: scope,
+      state: 'c4-oauth-state',
       code_challenge: challenge,
       code_challenge_method: 'S256',
       resource: resource
-    )
+    }
+
+    expect(response).to have_http_status(:ok)
+    form = Nokogiri::HTML(response.body).at_css('form[method="post"]')
+    expect(form).to be_present
+    form_params = form.css('input[type="hidden"]').to_h do |input|
+      [input['name'], input['value']]
+    end
+
+    post '/oauth/authorize', params: form_params
+    expect(response).to be_redirect
+    authorization_code = URI.decode_www_form(URI(response.location).query.to_s).to_h.fetch('code')
 
     post '/oauth/token', params: {
       grant_type: 'authorization_code',
       client_id: client.uid,
-      code: grant.plaintext_token,
+      code: authorization_code,
       redirect_uri: redirect_uri,
       code_verifier: verifier,
       resource: resource
@@ -78,6 +89,18 @@ RSpec.describe 'C4 OAuth issuance, MCP use and revocation', type: :request do
 
     expect(response).to have_http_status(:ok)
     [client, response.parsed_body.fetch('access_token'), response.parsed_body.fetch('refresh_token')]
+  end
+
+  def legacy_request(method, bearer:, params:, id: 'c4-legacy')
+    request_headers = {
+      'CONTENT_TYPE' => 'application/json',
+      'ACCEPT' => 'application/json, text/event-stream',
+      'MCP-Protocol-Version' => '2025-11-25',
+      'Host' => 'mcp.example.test',
+      'Authorization' => "Bearer #{bearer}"
+    }
+    post '/mcp', params: { jsonrpc: '2.0', id: id, method: method, params: params }.to_json,
+         headers: request_headers
   end
 
   def modern_request(method, bearer:, name: nil, arguments: {})
@@ -109,6 +132,15 @@ RSpec.describe 'C4 OAuth issuance, MCP use and revocation', type: :request do
     client, token, _refresh = exchange_authorization_code(
       scope: 'mcp:public:read', resource: public_resource
     )
+    legacy_request('initialize', bearer: token, id: 'c4-initialize', params: {
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      clientInfo: { name: 'c4-oauth-test', version: '1' }
+    })
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('result', 'protocolVersion')).to eq('2025-11-25')
+
     modern_request('tools/list', bearer: token)
 
     expect(response).to have_http_status(:ok)

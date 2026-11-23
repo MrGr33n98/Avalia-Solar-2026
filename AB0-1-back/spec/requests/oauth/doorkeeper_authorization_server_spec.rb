@@ -142,4 +142,62 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     expect { get '/oauth/applications' }
       .to raise_error(ActionController::RoutingError)
   end
+
+  describe 'GET /oauth/authorize' do
+    let(:resource) { 'https://mcp.example.test/mcp' }
+
+    before do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('MCP_REMOTE_OAUTH_ENABLED').and_return('true')
+      allow(ENV).to receive(:[]).with('MCP_OAUTH_RESOURCE').and_return(resource)
+      allow(ENV).to receive(:[]).with('MCP_PRIVATE_REMOTE_OAUTH_ENABLED').and_return('false')
+      allow(ENV).to receive(:[]).with('MCP_PRIVATE_OAUTH_RESOURCE').and_return('')
+      sign_in user
+    end
+
+    def authorization_params(client_id:, requested_redirect_uri:)
+      {
+        client_id: client_id,
+        redirect_uri: requested_redirect_uri,
+        response_type: 'code',
+        scope: 'mcp:public:read',
+        state: 'oauth-redirect-test-state',
+        code_challenge: code_challenge(code_verifier),
+        code_challenge_method: 'S256',
+        resource: resource
+      }
+    end
+
+    it 'aceita o callback cadastrado no cliente' do
+      get '/oauth/authorize', params: authorization_params(
+        client_id: application.uid,
+        requested_redirect_uri: redirect_uri
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(application.name)
+    end
+
+    it 'recusa callback diferente do cadastrado sem redirecionar para ele' do
+      get '/oauth/authorize', params: authorization_params(
+        client_id: application.uid,
+        requested_redirect_uri: 'https://attacker.example.test/callback'
+      )
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response).not_to be_redirect
+      expect(response.headers['Location']).to be_nil
+    end
+
+    it 'recusa client_id não cadastrado sem redirecionar ao callback informado' do
+      get '/oauth/authorize', params: authorization_params(
+        client_id: 'cliente-nao-cadastrado',
+        requested_redirect_uri: redirect_uri
+      )
+
+      expect(response.status).to be_between(400, 499)
+      expect(response).not_to be_redirect
+      expect(response.headers['Location']).to be_nil
+    end
+  end
 end
