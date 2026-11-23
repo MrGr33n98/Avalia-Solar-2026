@@ -35,7 +35,8 @@ function ChartEmptyState({ message = 'Nenhum dado registrado para o período.' }
 }
 
 // Helper components for the DashboardCharts object
-function AreaChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function AreaChartComponent({ data }: { data?: any[] }) {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return <ChartEmptyState />;
   }
@@ -78,7 +79,8 @@ function AreaChartComponent({ data }: { data?: Record<string, unknown>[] }) {
   );
 }
 
-function BarChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function BarChartComponent({ data }: { data?: any[] }) {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return <ChartEmptyState />;
   }
@@ -113,7 +115,8 @@ function BarChartComponent({ data }: { data?: Record<string, unknown>[] }) {
   );
 }
 
-function LineChartComponent({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function LineChartComponent({ data }: { data?: any[] }) {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return <ChartEmptyState />;
   }
@@ -156,7 +159,8 @@ export const DashboardCharts = {
   LineChart: LineChartComponent,
 };
 
-export function RevenueChart({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function RevenueChart({ data }: { data?: any[] }) {
   const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
 
   return (
@@ -217,7 +221,8 @@ export function RevenueChart({ data }: { data?: Record<string, unknown>[] }) {
   );
 }
 
-export function ProposalsChart({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function ProposalsChart({ data }: { data?: any[] }) {
   const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
 
   return (
@@ -259,7 +264,8 @@ export function ProposalsChart({ data }: { data?: Record<string, unknown>[] }) {
   );
 }
 
-export function PerformanceChart({ data }: { data?: Record<string, unknown>[] }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function PerformanceChart({ data }: { data?: any[] }) {
   const chartData = data && Array.isArray(data) && data.length > 0 ? data : [];
 
   return (

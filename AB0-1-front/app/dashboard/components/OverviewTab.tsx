@@ -61,6 +61,7 @@ type CompanyOverview = {
   phone?: string;
   reviews_count?: number;
   categories?: unknown[];
+  response_time?: number | string | null;
 };
 type CampaignOverview = { utm_source?: string; total_visits?: number };
 type IntentOverview = {
