@@ -133,7 +133,14 @@ export default function Navbar() {
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">
       {/* Campanha B2B apenas no marketplace público; buyer autenticado ganha 48px úteis. */}
       {!pathname?.startsWith('/review-dashboard') && <CompanyRegistrationTicker />}
-      <div className="mx-auto flex h-[56px] max-w-[1500px] items-center gap-1.5 px-3 sm:px-4 dashboard:px-4 xl:h-[60px] xl:gap-3 2xl:gap-4 xl:px-6 min-w-0">
+      <div
+        data-testid="site-header-content"
+        className={cn(
+          'mx-auto flex h-[56px] min-w-0 items-center gap-1.5 px-3 sm:px-4 dashboard:px-4 xl:h-[60px] xl:gap-3 2xl:gap-4',
+          // The Home alone shares the 1330px / 16px content grid with its hero and ribbons.
+          pathname === '/' ? 'max-w-[1330px] md:px-4' : 'max-w-[1500px] xl:px-6'
+        )}
+      >
         <Link
           href="/"
           aria-label="Home Avalia Solar"
