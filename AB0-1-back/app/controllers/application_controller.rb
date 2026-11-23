@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
   protect_from_forgery with: :exception, unless: -> { active_admin_request? }
+  layout :layout_by_resource
   before_action :set_notifications, if: :user_signed_in?
   before_action :configure_permitted_parameters, if: :devise_controller?
   after_action :prevent_backend_indexing
@@ -14,6 +15,18 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def layout_by_resource
+    if devise_controller? || doorkeeper_controller?
+      'app_auth'
+    else
+      'application'
+    end
+  end
+
+  def doorkeeper_controller?
+    self.class.name.to_s.start_with?('Doorkeeper::')
+  end
 
   # ActiveAdmin e o dashboard público podem coexistir no mesmo navegador. Sem
   # esta seleção explícita, o Pundit pode receber o `current_user` da sessão
