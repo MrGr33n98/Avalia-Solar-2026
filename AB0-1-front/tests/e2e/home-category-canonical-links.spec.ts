@@ -30,9 +30,18 @@ test.describe('Home Canonical Category & Solutions Links (SEO P0)', () => {
 
       const categoryRegion = page.locator('[role="region"][aria-label="Categorias principais"]');
       const solutionsRegion = page.locator('[role="region"][aria-label="Tipos de solução"]');
+      const solutionsMount = page.getByTestId('home-solutions-mobile-only');
 
       await expect(categoryRegion).toBeVisible();
-      await expect(solutionsRegion).toBeVisible();
+      // The solutions rail is intentionally retained in the DOM for canonical
+      // links and mobile discovery, but takes no layout space on desktop.
+      if (viewport.width >= 768) {
+        await expect(solutionsMount).toHaveCSS('display', 'none');
+        await expect(solutionsRegion).toBeHidden();
+      } else {
+        await expect(solutionsMount).toBeVisible();
+        await expect(solutionsRegion).toBeVisible();
+      }
 
       const categoryLinks = await categoryRegion
         .locator('a[href^="/categories/"]')
@@ -63,7 +72,7 @@ test.describe('Home Canonical Category & Solutions Links (SEO P0)', () => {
         expect(allHomeRailHrefs).not.toContain(forbidden);
       }
 
-      // Todos os links exibidos nos dois rails devem responder 200 sem 404 ou redirect
+      // Links existentes nos dois rails, inclusive o oculto no desktop, devem responder 200 sem redirect
       const responses = await Promise.all(
         allHomeRailHrefs.map(async (href) => ({
           href,
@@ -88,3 +97,25 @@ test.describe('Home Canonical Category & Solutions Links (SEO P0)', () => {
   }
 });
 
+
+test('Home solution rail switches visibility at md (767px vs 768px) without leaving a desktop spacer', async ({ page }) => {
+  await page.setViewportSize({ width: 767, height: 900 });
+  const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+  expect(response?.status()).toBe(200);
+
+  const railMount = page.getByTestId('home-solutions-mobile-only');
+  const solutionRegion = page.getByRole('region', { name: 'Tipos de solução' });
+
+  await expect(railMount).toBeVisible();
+  await expect(solutionRegion).toBeVisible();
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  await expect(railMount).toHaveCSS('display', 'none');
+  await expect(solutionRegion).toBeHidden();
+  const hiddenLayoutHeight = await railMount.evaluate((node) => node.getBoundingClientRect().height);
+  expect(hiddenLayoutHeight, 'Desktop must not retain a blank solutions rail row').toBe(0);
+
+  await page.setViewportSize({ width: 767, height: 900 });
+  await expect(railMount).toBeVisible();
+  await expect(solutionRegion).toBeVisible();
+});

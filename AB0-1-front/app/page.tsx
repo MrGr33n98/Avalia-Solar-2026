@@ -259,8 +259,8 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 4. Tipos de solução: categorias filhas oficiais para SEO e navegação canônica */}
-      <div className="mx-auto max-w-[1320px]">
+      {/* 4. Tipos de solução: mantém navegação/links canônicos no mobile, sem redundância visual no desktop */}
+      <div className="mx-auto max-w-[1320px] md:hidden" data-testid="home-solutions-mobile-only">
         <Suspense fallback={<div className="h-24 animate-pulse rounded bg-slate-50" />}>
           <HomeSolutionsRailWrapper dataPromise={categoriesDataPromise} />
         </Suspense>
