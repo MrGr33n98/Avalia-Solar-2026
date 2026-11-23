@@ -29,7 +29,8 @@ export interface CompanySellerData {
   facebook?: string;
 }
 
-export type SellerEditorMode = 'profile' | 'channels';
+export type SellerPublicDetails = CompanySellerData;
+export type SellerEditorMode = 'profile' | 'channels' | 'contacts';
 
 export interface SellerInformationPanelProps {
   company: CompanySellerData;
@@ -38,7 +39,7 @@ export interface SellerInformationPanelProps {
   editorMode: SellerEditorMode;
   saving: boolean;
   refreshing: boolean;
-  onEdit: (mode: 'profile' | 'channels') => void;
+  onEdit: (mode: SellerEditorMode) => void;
   onEditorOpenChange: (open: boolean) => void;
   onFieldChange: (field: keyof CompanySellerData, value: string | number | undefined) => void;
   onSave: () => Promise<void>;
