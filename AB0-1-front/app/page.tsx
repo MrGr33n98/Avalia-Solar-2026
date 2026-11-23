@@ -15,8 +15,7 @@ import { CategoryCardsErrorBoundary } from '@/components/landing/CategoryCardsEr
 import LandingCategoryCard from '@/components/landing/LandingCategoryCard';
 import PublicCompanyCard from '@/components/company/PublicCompanyCard';
 import RecommendedCompaniesSection from '@/components/home/RecommendedCompaniesSection';
-import HomeLocationBar from '@/components/home/HomeLocationBar';
-import HomeCategoryRail from '@/components/home/HomeCategoryRail';
+import HomeCategoryRibbon from '@/components/home/HomeCategoryRibbon';
 import HomeHeroBanner from '@/components/home/HomeHeroBanner';
 import HomeSolutionsRail from '@/components/home/HomeSolutionsRail';
 import HomeCompaniesRail from '@/components/home/HomeCompaniesRail';
@@ -235,22 +234,13 @@ export default async function Home() {
         <HomePageTracking />
       </Suspense>
 
-      {/* 1. Barra de Localização Compacta */}
-      <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-8 animate-pulse bg-slate-50 rounded" />}>
-          <HomeLocationBar defaultState="SC" />
-        </Suspense>
-      </div>
+      {/* 1. Ribbon Única Borderless de Categorias & Atalhos 3D com Dropdown/Drawer */}
+      <Suspense fallback={<div className="h-[76px] sm:h-[82px] w-full animate-pulse bg-white border-b border-slate-100" />}>
+        <HomeCategoryRailWrapper dataPromise={categoriesDataPromise} />
+      </Suspense>
 
-      {/* 2. Categorias principais da taxonomia oficial */}
-      <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-44 animate-pulse rounded bg-slate-50" />}>
-          <HomeCategoryRailWrapper dataPromise={categoriesDataPromise} />
-        </Suspense>
-      </div>
-
-      {/* 3. Hero Banner Compacto com Foto, CTA e Banners do ActiveAdmin */}
-      <div className="mx-auto max-w-[1330px]">
+      {/* 2. Hero Banner Compacto com Foto, CTA e Banners do ActiveAdmin */}
+      <div className="mx-auto max-w-[1330px] pt-1 md:pt-2">
         <Suspense
           fallback={
             <div className="aspect-[39/23] md:aspect-[133/23] w-full max-w-[1330px] animate-pulse rounded-none md:rounded-xl bg-slate-100 mx-auto my-0 md:my-2" />
@@ -260,19 +250,19 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 4. Tipos de solução: categorias filhas oficiais, sem ofertas inventadas */}
-      <div className="mx-auto max-w-[1320px]">
-        <Suspense fallback={<div className="h-24 animate-pulse rounded bg-slate-50" />}>
-          <HomeSolutionsRailWrapper dataPromise={categoriesDataPromise} />
-        </Suspense>
-      </div>
-
-      {/* 5. Seis empresas em destaque com favorito e comparação */}
+      {/* 3. Seis empresas em destaque com favorito e comparação */}
       <div className="mx-auto max-w-[1320px]">
         <Suspense
           fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}
         >
           <HomeCompaniesRailWrapper dataPromise={companiesDataPromise} />
+        </Suspense>
+      </div>
+
+      {/* 4. Tipos de solução: categorias filhas oficiais para SEO e navegação canônica */}
+      <div className="mx-auto max-w-[1320px]">
+        <Suspense fallback={<div className="h-24 animate-pulse rounded bg-slate-50" />}>
+          <HomeSolutionsRailWrapper dataPromise={categoriesDataPromise} />
         </Suspense>
       </div>
 
@@ -394,7 +384,7 @@ async function HomeCategoryRailWrapper({
     console.error('[Home] HomeCategoryRailWrapper fallback triggered:', error);
   }
 
-  return <HomeCategoryRail categories={categories} />;
+  return <HomeCategoryRibbon categories={categories} />;
 }
 
 async function HomeSolutionsRailWrapper({

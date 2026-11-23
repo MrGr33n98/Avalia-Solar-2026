@@ -33,7 +33,6 @@ import { normalizeCategoryKey } from '@/lib/categoryIcons';
 import { getFullImageUrl } from '@/utils/image';
 import { CategoryMotionIcon } from '../categories/CategoryMotionIcon';
 import { useAuth } from '@/contexts/AuthContext';
-import { openSignupGate } from '@/lib/signup-gate';
 
 type MobileMenuView = 'main' | 'categories';
 
@@ -52,10 +51,6 @@ interface MobileCategoriesDrawerProps {
 
 function getCategoryHref(category: CategoryTreeNode) {
   return `/categories/${category.seo_url || category.slug}`;
-}
-
-function formatCount(count: number) {
-  return `${count} ${count === 1 ? 'empresa' : 'empresas'}`;
 }
 
 function normalizeText(value: string) {
@@ -97,16 +92,7 @@ export const MobileCategoriesDrawer: React.FC<MobileCategoriesDrawerProps> = ({
 
   const handleViewAllCategories = () => {
     closeDrawer();
-    if (!isAuthenticated) {
-      openSignupGate({
-        source: 'search_results',
-        returnTo: '/categories',
-        title: 'Explore todas as categorias',
-        description: 'Crie sua conta gratuita para ver e filtrar todas as categorias disponíveis.',
-      });
-    } else {
-      router.push('/categories');
-    }
+    router.push('/categories');
   };
 
   const visibleCategories = useMemo(
