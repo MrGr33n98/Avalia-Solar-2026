@@ -402,17 +402,17 @@ function SectionCard({
   const contentId = useId();
 
   return (
-    <Card className={cn('min-w-0 overflow-hidden rounded-[15px] border border-[#e3e3e8] bg-white shadow-none', className)}>
-      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-[#efeff1] px-5 py-4 sm:px-6">
+    <Card className={cn('min-w-0 overflow-hidden rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs', className)}>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 border-b border-[hsl(var(--dashboard-border))] px-5 py-4 sm:px-6">
         <div className="min-w-0">
-          <CardTitle className="break-words text-[17px] font-bold leading-6 tracking-tight text-[#292532]">{title}</CardTitle>
-          {description && <p className="mt-1 text-[12px] leading-[18px] text-[#777380]">{description}</p>}
+          <CardTitle className="break-words text-[17px] font-bold leading-6 tracking-tight text-[hsl(var(--dashboard-ink))]">{title}</CardTitle>
+          {description && <p className="mt-1 text-[12px] leading-[18px] text-[hsl(var(--dashboard-muted))]">{description}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {actions}
           <button
             type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] transition-colors hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[hsl(var(--dashboard-accent))] transition-colors hover:bg-[hsl(var(--dashboard-surface))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[hsl(var(--dashboard-accent))]"
             onClick={() => setIsOpen((current) => !current)}
             aria-label={isOpen ? `Recolher ${title}` : `Expandir ${title}`}
             title={isOpen ? 'Recolher' : 'Expandir'}
@@ -444,8 +444,8 @@ function InfoItem({
 }) {
   return (
     <div className="min-w-0 space-y-1 py-1">
-      <div className="text-[12px] font-semibold leading-4 text-[#5a5663]">{label}</div>
-      <div className="min-w-0 break-words text-[13px] leading-5 text-[#2d2936]">{isBlank(value) ? fallback : value}</div>
+      <div className="text-[12px] font-semibold leading-4 text-[hsl(var(--dashboard-muted))]">{label}</div>
+      <div className="min-w-0 break-words text-[13px] leading-5 text-[hsl(var(--dashboard-ink))]">{isBlank(value) ? fallback : value}</div>
     </div>
   );
 }
@@ -911,15 +911,15 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="rounded-md border-[#e5e2f0] bg-[#f4f2fa] px-2 py-0.5 text-[11px] text-[#594bbc]">
+            <Badge variant="outline" className="rounded-md border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] px-2 py-0.5 text-[11px] text-[hsl(var(--dashboard-accent))]">
               Central Institucional
             </Badge>
             <Badge variant="outline" className={cn('rounded-md px-2 py-0.5 text-[11px]', publicationClass(currentData.status))}>
               {publicationLabel(currentData.status)}
             </Badge>
           </div>
-          <h2 className="break-words text-2xl font-bold tracking-tight text-[#24212b]">Informações gerais</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <h2 className="break-words text-2xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">Informações gerais</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[hsl(var(--dashboard-muted))]">
             Gerencie o perfil público, a identidade da marca e os dados apresentados aos compradores.
             Alterações podem passar por revisão antes da publicação.
           </p>
@@ -932,13 +932,13 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="w-full rounded-lg bg-brand-blue text-white hover:bg-blue-700 sm:w-auto">
+              <Button onClick={handleSave} disabled={saving} className="w-full rounded-lg bg-[hsl(var(--dashboard-accent))] text-white hover:opacity-90 sm:w-auto">
                 <Save className="mr-2 h-4 w-4" />
                 {saving ? 'Salvando...' : 'Salvar alterações'}
               </Button>
             </>
           ) : (
-            <Button onClick={() => openSellerEditor('profile')} className="w-full rounded-md bg-[#594bbc] text-white hover:bg-[#493da5] sm:w-auto">
+            <Button onClick={() => openSellerEditor('profile')} className="w-full rounded-lg bg-[hsl(var(--dashboard-accent))] text-white hover:opacity-90 sm:w-auto">
               <Pencil className="mr-2 h-4 w-4" />
               Editar informações
             </Button>
@@ -1058,7 +1058,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
           icon={Globe}
           className="xl:col-span-2"
           actions={
-            <button type="button" onClick={() => openSellerEditor('contacts')} className="inline-flex h-10 w-10 items-center justify-center rounded-md text-[#594bbc] hover:bg-[#f0edfb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#594bbc]" aria-label="Editar canais de contato" title="Editar canais de contato">
+            <button type="button" onClick={() => openSellerEditor('contacts')} className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[hsl(var(--dashboard-accent))] hover:bg-[hsl(var(--dashboard-surface))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[hsl(var(--dashboard-accent))]" aria-label="Editar canais de contato" title="Editar canais de contato">
               <Pencil className="h-[18px] w-[18px]" aria-hidden="true" />
             </button>
           }

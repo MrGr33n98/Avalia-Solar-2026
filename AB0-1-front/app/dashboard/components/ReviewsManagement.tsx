@@ -223,32 +223,28 @@ function MetricCard({
   label,
   value,
   detail,
-  icon: Icon,
   children,
 }: {
   label: string;
   value: string;
   detail: string;
-  icon: typeof Star;
+  icon?: typeof Star;
   children?: React.ReactNode;
 }) {
   return (
-    <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950">
+    <Card className="rounded-xl border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs">
       <CardContent className="p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+        <div className="mb-2">
+          <p className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">
             {label}
           </p>
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-brand-blue dark:border-white/10 dark:bg-white/5">
-            <Icon className="h-4 w-4" />
-          </span>
         </div>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-3xl font-bold tracking-tight text-slate-950 tabular-nums dark:text-white">
+            <p className="text-2xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))] tabular-nums">
               {value}
             </p>
-            <p className="mt-1 text-xs text-slate-500">{detail}</p>
+            <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">{detail}</p>
           </div>
           {children}
         </div>
@@ -595,31 +591,29 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-brand-blue">
-            <ShieldCheck className="h-5 w-5" />
+          <div className="mb-2 flex items-center gap-2 text-[hsl(var(--dashboard-accent))]">
             <span className="text-xs font-semibold uppercase tracking-[0.16em]">
               Central de reputação
             </span>
           </div>
-          <h3 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
+          <h3 className="text-xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">
             O que seus clientes estão dizendo
           </h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-[hsl(var(--dashboard-muted))]">
             Acompanhe qualidade, volume e origem das avaliações em um único lugar.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-500 dark:border-white/10 dark:bg-slate-950">
-            <Database className="h-3.5 w-3.5" />
+          <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] px-3 text-[11px] font-medium text-[hsl(var(--dashboard-muted))]">
             Todo o histórico
             {stats.last_review_at ? ` · até ${formatDate(stats.last_review_at)}` : ''}
           </span>
           <Button
             asChild
-            className="h-10 rounded-lg bg-brand-blue px-4 text-sm font-semibold text-white hover:bg-brand-blue/90"
+            className="h-9 rounded-lg bg-[hsl(var(--dashboard-accent))] px-4 text-xs font-semibold text-white hover:opacity-90 transition-opacity"
           >
             <Link href="/dashboard?tab=review-forms">
-              <QrCode className="mr-2 h-4 w-4" /> Coletar avaliações
+              Coletar avaliações
             </Link>
           </Button>
         </div>
@@ -700,34 +694,31 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
         />
       </div>
 
-      <Card className="overflow-hidden border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950">
+      <Card className="rounded-xl overflow-hidden border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs">
         <CardContent className="grid gap-6 p-5 lg:grid-cols-[1.1fr_1fr]">
           <section>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-brand-blue" />
-                  <h4 className="text-sm font-semibold text-slate-950 dark:text-white">
-                    Cobertura do diagnóstico
-                  </h4>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <h4 className="text-sm font-semibold text-[hsl(var(--dashboard-ink))]">
+                  Cobertura do diagnóstico
+                </h4>
+                <p className="mt-1 text-xs leading-5 text-[hsl(var(--dashboard-muted))]">
                   Mostra quais sinais possuem dados suficientes para análise. Não é uma nota de
                   reputação.
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                <strong className="text-2xl font-bold tabular-nums text-slate-950 dark:text-white">
+                <strong className="text-2xl font-bold tabular-nums text-[hsl(var(--dashboard-ink))]">
                   {availableSignals}/4
                 </strong>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">sinais ativos</p>
+                <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--dashboard-muted))]">sinais ativos</p>
               </div>
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {diagnosticSignals.map((signal) => (
                 <div
                   key={signal.label}
-                  className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/[0.03]"
+                  className="flex items-center gap-3 rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-3"
                 >
                   {signal.available ? (
                     <CircleCheck className="h-4 w-4 shrink-0 text-emerald-500" />
@@ -735,10 +726,10 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     <Clock3 className="h-4 w-4 shrink-0 text-amber-500" />
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    <p className="text-xs font-semibold text-[hsl(var(--dashboard-ink))]">
                       {signal.label}
                     </p>
-                    <p className="truncate text-[11px] text-slate-500">{signal.detail}</p>
+                    <p className="truncate text-[11px] text-[hsl(var(--dashboard-muted))]">{signal.detail}</p>
                   </div>
                 </div>
               ))}
@@ -776,17 +767,17 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950 xl:col-span-8">
+        <Card className="rounded-xl border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs xl:col-span-8">
           <CardHeader className="flex-row items-start justify-between space-y-0 p-5 pb-2">
             <div>
-              <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+              <CardTitle className="text-base font-semibold text-[hsl(var(--dashboard-ink))]">
                 Evolução das avaliações
               </CardTitle>
-              <p className="mt-1 text-xs text-slate-500">Volume recebido e nota média por mês</p>
+              <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">Volume recebido e nota média por mês</p>
             </div>
-            <div className="flex items-center gap-4 text-[11px] text-slate-500">
+            <div className="flex items-center gap-4 text-[11px] text-[hsl(var(--dashboard-muted))]">
               <span className="flex items-center gap-1.5">
-                <i className="h-2 w-2 rounded-sm bg-brand-blue" /> Volume
+                <i className="h-2 w-2 rounded-sm bg-[hsl(var(--dashboard-accent))]" /> Volume
               </span>
               <span className="flex items-center gap-1.5">
                 <i className="h-2 w-2 rounded-full bg-emerald-500" /> Nota
@@ -796,6 +787,25 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
           <CardContent className="p-5 pt-3">
             {monthlyData.length ? (
               <div className="h-64 w-full" aria-label="Gráfico de evolução das avaliações">
+                <table className="sr-only">
+                  <caption>Evolução mensal de avaliações e nota média</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Mês</th>
+                      <th scope="col">Avaliações</th>
+                      <th scope="col">Nota média</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyData.map((d) => (
+                      <tr key={d.label}>
+                        <td>{d.label}</td>
+                        <td>{d.reviews}</td>
+                        <td>{d.rating}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={monthlyData}
@@ -835,7 +845,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                       yAxisId="reviews"
                       dataKey="reviews"
                       name="Avaliações"
-                      fill="#2563eb"
+                      fill="hsl(var(--dashboard-accent))"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={32}
                     />
@@ -851,9 +861,9 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center dark:border-white/10 dark:bg-white/[0.02]">
-                <MessageSquare className="mb-3 h-6 w-6 text-slate-300" />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] text-center">
+                <MessageSquare className="mb-3 h-6 w-6 text-[hsl(var(--dashboard-muted))]" />
+                <p className="text-sm font-medium text-[hsl(var(--dashboard-muted))]">
                   A evolução aparecerá após a primeira avaliação publicada.
                 </p>
               </div>
@@ -861,27 +871,27 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
           </CardContent>
         </Card>
 
-        <Card className="border-slate-200/80 bg-white shadow-none dark:border-white/10 dark:bg-slate-950 xl:col-span-4">
+        <Card className="rounded-xl border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs xl:col-span-4">
           <CardHeader className="p-5 pb-2">
-            <CardTitle className="text-base font-semibold text-slate-950 dark:text-white">
+            <CardTitle className="text-base font-semibold text-[hsl(var(--dashboard-ink))]">
               Distribuição das notas
             </CardTitle>
-            <p className="mt-1 text-xs text-slate-500">Participação por quantidade de estrelas</p>
+            <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">Participação por quantidade de estrelas</p>
           </CardHeader>
           <CardContent className="space-y-4 p-5 pt-4">
             {distribution.map((item) => (
               <div key={item.rating} className="grid grid-cols-[36px_1fr_74px] items-center gap-3">
-                <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <span className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--dashboard-ink))]">
                   {item.rating} <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 </span>
-                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--dashboard-surface))]">
                   <div
-                    className="h-full rounded-full bg-brand-blue"
+                    className="h-full rounded-full bg-[hsl(var(--dashboard-accent))]"
                     style={{ width: `${item.percentage}%` }}
                   />
                 </div>
-                <span className="text-right text-xs tabular-nums text-slate-500">
-                  {item.percentage}% <span className="text-slate-400">({item.count})</span>
+                <span className="text-right text-xs tabular-nums text-[hsl(var(--dashboard-muted))]">
+                  {item.percentage}% <span className="opacity-70">({item.count})</span>
                 </span>
               </div>
             ))}
@@ -913,7 +923,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar feedback"
-                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs text-slate-800 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 dark:border-white/10 dark:bg-white/5 dark:text-white sm:w-44"
+                  className="h-9 w-full rounded-lg border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] pl-9 pr-3 text-xs text-[hsl(var(--dashboard-ink))] outline-none transition focus:border-[hsl(var(--dashboard-accent))] focus:ring-2 focus:ring-[hsl(var(--dashboard-accent))/10] sm:w-44"
                 />
               </label>
               <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/10">
@@ -970,7 +980,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     className="p-5 transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.02]"
                   >
                     <div className="flex gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-blue/10 text-sm font-bold text-brand-blue">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--dashboard-accent))/10] text-sm font-bold text-[hsl(var(--dashboard-accent))]">
                         {review.userName.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1039,8 +1049,8 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                           {review.comment || 'Avaliação enviada sem comentário.'}
                         </p>
                         {review.reply && (
-                          <div className="mt-3 rounded-lg border-l-2 border-brand-blue bg-slate-50 px-3 py-2.5 dark:bg-white/5">
-                            <p className="text-[11px] font-semibold text-brand-blue">
+                          <div className="mt-3 rounded-lg border-l-2 border-[hsl(var(--dashboard-accent))] bg-slate-50 px-3 py-2.5 dark:bg-white/5">
+                            <p className="text-[11px] font-semibold text-[hsl(var(--dashboard-accent))]">
                               Resposta da empresa
                             </p>
                             <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
@@ -1064,7 +1074,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                 {!reviews.length && (
                   <Link
                     href="/dashboard?tab=review-forms"
-                    className="mt-2 text-sm font-medium text-brand-blue hover:underline"
+                    className="mt-2 text-sm font-medium text-[hsl(var(--dashboard-accent))] hover:underline"
                   >
                     Criar um canal de coleta
                   </Link>
@@ -1224,7 +1234,7 @@ export default function ReviewsManagement({ companyId }: ReviewsManagementProps)
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                         <div
-                          className="h-full rounded-full bg-brand-blue"
+                          className="h-full rounded-full bg-[hsl(var(--dashboard-accent))]"
                           style={{ width: `${(criterion.average / 5) * 100}%` }}
                         />
                       </div>

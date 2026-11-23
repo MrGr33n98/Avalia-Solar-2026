@@ -10,9 +10,6 @@ import {
   Zap, 
   AlertTriangle,
   ArrowRight,
-  ShieldCheck,
-  ZapOff,
-  Flame,
   Activity,
   Loader2
 } from 'lucide-react';
@@ -83,7 +80,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
   // Find current company in the list
   const yourCompanyData = competitorsFromAPI.find(c => c.id === parseInt(companyId)) || competitorsFromAPI.find(c => c.isCurrentCompany) || competitorsFromAPI[0];
   
-  // Use API data or fallback to mock data
+  // Use API data or fallback
   const yourCompany: Competitor = yourCompanyData || {
     id: parseInt(companyId) || 1,
     name: 'Sua Empresa',
@@ -99,7 +96,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
     .filter(c => c.id !== parseInt(companyId))
     .slice(0, 4);
 
-  // Fallback to mock data if API fails
+  // Fallback to initial view if API is empty
   const allCompanies = (competitorsFromAPI.length > 0 
     ? [yourCompany, ...topCompetitors]
     : [
@@ -124,7 +121,7 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 }
   };
 
@@ -132,20 +129,20 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
+        <Loader2 className="h-8 w-8 animate-spin text-[hsl(var(--dashboard-accent))]" />
       </div>
     );
   }
 
   if (error && competitorsFromAPI.length === 0) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-2xl border-[0.5px] border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/[0.04] p-8 text-center shadow-[2px_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/[0.04] p-8 text-center shadow-xs">
         <div className="space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10">
-            <AlertTriangle className="h-6 w-6 text-amber-400" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
+            <AlertTriangle className="h-6 w-6 text-amber-500" />
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-white">Falha ao carregar benchmark</p>
-          <p className="text-xs font-medium text-white/50">{error}</p>
+          <p className="text-sm font-semibold text-[hsl(var(--dashboard-ink))]">Falha ao carregar benchmark</p>
+          <p className="text-xs text-[hsl(var(--dashboard-muted))]">{error}</p>
         </div>
       </div>
     );
@@ -160,25 +157,24 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
     >
       {/* Strategic Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-brand-blue mb-1">
-            <Activity className="h-4 w-4" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Competitor Intelligence</span>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-[hsl(var(--dashboard-accent))]">
+            <span className="text-xs font-semibold">Inteligência Competitiva</span>
           </div>
-          <h2 className="text-4xl font-black tracking-tighter uppercase text-white">
-            Benchmark <span className="text-brand-blue">Analítico</span>
+          <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">
+            Benchmark Analítico
           </h2>
-          <p className="text-sm text-white/40 max-w-md font-medium leading-relaxed">
-            Monitoramento em tempo real do ecossistema competitivo e posicionamento estratégico de mercado.
+          <p className="text-xs text-[hsl(var(--dashboard-muted))] max-w-md leading-relaxed">
+            Monitoramento do ecossistema competitivo e posicionamento de mercado.
           </p>
         </div>
         
-        <div className="flex gap-3">
-          <Button variant="outline" className="h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px]">
-            Exportar Relatório
+        <div className="flex gap-2.5">
+          <Button variant="outline" className="h-10 rounded-lg border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-xs font-medium text-[hsl(var(--dashboard-ink))] hover:bg-[hsl(var(--dashboard-surface))]">
+            Exportar relatório
           </Button>
-          <Button className="h-11 bg-brand-blue hover:bg-brand-blue text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-            Ação Proativa
+          <Button className="h-10 rounded-lg bg-[hsl(var(--dashboard-accent))] hover:bg-[hsl(var(--dashboard-accent))/0.9] text-xs font-medium text-white shadow-xs">
+            Ação recomendada
           </Button>
         </div>
       </div>
@@ -186,70 +182,67 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
       {/* KPI Matrix */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Posição de Mercado"
+          title="Posição de mercado"
           value={`#${yourRank}`}
           change="+1"
           changeType="positive"
           icon={Trophy}
           description="Ranking na categoria"
-          variant="glass"
         />
         <MetricCard
-          title="Força no Quadrante"
+          title="Força no quadrante"
           value={`${yourCompany.quadrantStrength.toFixed(1)} pts`}
           change={`${yourCompany.completenessOfVision.toFixed(0)} visão / ${yourCompany.abilityToExecute.toFixed(0)} execução`}
           changeType="positive"
           icon={Target}
           description="Média dos eixos estratégicos"
-          variant="glass"
         />
         <MetricCard
-          title="Reputação Média"
+          title="Reputação média"
           value={yourCompany.rating.toFixed(1)}
           change={rankingData?.quadrant_meta?.criterion_title || 'Score validado no ranking'}
           changeType="neutral"
           icon={Star}
           description="Nota usada no comparativo"
-          variant="glass"
         />
         <MetricCard
-           title="Velocity Score"
-           value={`${yourCompany.abilityToExecute.toFixed(0)}/100`}
-           change={`${executionGap > 0 ? `Gap de ${executionGap} pts` : 'No topo do eixo'}`}
-           changeType={executionGap > 0 ? 'neutral' : 'positive'}
-           icon={Flame}
-           description="Capacidade de execução atual"
-           variant="glass"
+          title="Score de execução"
+          value={`${yourCompany.abilityToExecute.toFixed(0)}/100`}
+          change={executionGap > 0 ? `Gap de ${executionGap} pts` : 'No topo do eixo'}
+          changeType={executionGap > 0 ? 'neutral' : 'positive'}
+          icon={Activity}
+          description="Capacidade de execução atual"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Main Ranking Table */}
-        <Card className="lg:col-span-8 clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] rounded-2xl overflow-hidden shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
-          <CardHeader className="p-6 border-b border-slate-200/50 dark:border-white/[0.06]">
+        <Card className="lg:col-span-8 bg-[hsl(var(--dashboard-panel))] border border-[hsl(var(--dashboard-border))] rounded-xl overflow-hidden shadow-xs">
+          <CardHeader className="p-5 border-b border-[hsl(var(--dashboard-border))]">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-black text-white uppercase tracking-tight">Espectro de Liderança</CardTitle>
-                <CardDescription className="text-white/40 font-medium">Top 4 players monitorados no setor</CardDescription>
+                <CardTitle className="text-base font-semibold text-[hsl(var(--dashboard-ink))]">Espectro de Liderança</CardTitle>
+                <CardDescription className="text-xs text-[hsl(var(--dashboard-muted))]">Top players monitorados no setor</CardDescription>
               </div>
-              <Badge className="bg-brand-blue/20 text-blue-400 border-none hover:bg-brand-blue/30 font-black tracking-widest text-[10px] py-1 px-3">
-                LIVE UPDATES
+              <Badge variant="outline" className="text-xs font-medium py-0.5 px-2.5 rounded-md border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-muted))]">
+                Atualizado recentemente
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-xs">
+                <caption className="sr-only">Tabela comparativa de competidores no setor solar</caption>
                 <thead>
-                  <tr className="border-b border-slate-200/50 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
-                    <th className="px-8 py-5 text-left text-[10px] font-black text-white/40 uppercase tracking-widest">Identidade</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Visão</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Execução</th>
-                    <th className="px-6 py-5 text-center text-[10px] font-black text-white/40 uppercase tracking-widest">Reputação</th>
-                    <th className="px-8 py-5 text-right text-[10px] font-black text-white/40 uppercase tracking-widest">Status</th>
+                  <tr className="border-b border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-muted))]">
+                    <th scope="col" className="px-5 py-3 text-left font-semibold">Empresa</th>
+                    <th scope="col" className="px-4 py-3 text-center font-semibold">Visão</th>
+                    <th scope="col" className="px-4 py-3 text-center font-semibold">Execução</th>
+                    <th scope="col" className="px-4 py-3 text-center font-semibold">Reputação</th>
+                    <th scope="col" className="px-5 py-3 text-right font-semibold">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200/50 dark:divide-white/[0.06]">
+                <tbody className="divide-y divide-[hsl(var(--dashboard-border))]">
                   {allCompanies.map((company, index) => {
                     const isYou = company.id === yourCompany.id;
                     return (
@@ -257,75 +250,69 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
                         key={company.id}
                         variants={itemVariants}
                         className={cn(
-                          "group transition-all hover:bg-white/[0.03]",
-                          isYou && "bg-brand-blue/[0.03]"
+                          "transition-colors hover:bg-[hsl(var(--dashboard-surface))]",
+                          isYou && "bg-[hsl(var(--dashboard-accent))]/5"
                         )}
                       >
-                        <td className="px-8 py-6">
-                          <div className="flex items-center gap-4">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
                             <span className={cn(
-                              "text-lg font-black italic min-w-[24px]",
-                              index === 0 ? "text-amber-500" : "text-white/20"
+                              "font-semibold text-sm min-w-[20px]",
+                              index === 0 ? "text-amber-500" : "text-[hsl(var(--dashboard-muted))]"
                             )}>
                               {String(index + 1).padStart(2, '0')}
                             </span>
-                            <Avatar className="h-12 w-12 rounded-full border border-cyan-400/15 bg-white p-1 shadow-[0_0_20px_rgba(56,189,248,0.12)]">
+                            <Avatar className="h-9 w-9 rounded-full border border-[hsl(var(--dashboard-border))] bg-white p-0.5">
                               <AvatarImage src={company.logo_url} className="rounded-full object-contain" />
-                              <AvatarFallback className="rounded-full bg-blue-900/50 text-white font-black">
+                              <AvatarFallback className="rounded-full bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-ink))] font-semibold text-xs">
                                 {company.name.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-white text-sm">{company.name}</span>
+                                <span className="font-semibold text-[hsl(var(--dashboard-ink))] text-xs">{company.name}</span>
                                 {isYou && (
-                                  <Badge className="bg-brand-blue text-[10px] font-black py-0 px-2">VOCÊ</Badge>
+                                  <Badge className="bg-[hsl(var(--dashboard-accent))] text-[10px] font-semibold py-0 px-1.5 rounded-sm">Você</Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <ShieldCheck className="h-3 w-3 text-blue-400" />
-                                <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">
-                                  {isYou ? 'Empresa monitorada' : 'Concorrente monitorado'}
-                                </span>
-                              </div>
+                              <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">
+                                {isYou ? 'Empresa selecionada' : 'Concorrente direto'}
+                              </span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-6 text-center">
+                        <td className="px-4 py-4 text-center">
                           <div className="space-y-1">
-                            <span className="text-sm font-black text-white font-mono">{company.completenessOfVision.toFixed(0)}</span>
-                            <div className="w-20 mx-auto">
-                               <Progress value={company.completenessOfVision} className="h-1 bg-white/5" indicatorClassName="bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+                            <span className="font-medium text-[hsl(var(--dashboard-ink))] font-mono">{company.completenessOfVision.toFixed(0)}</span>
+                            <div className="w-16 mx-auto">
+                              <Progress value={company.completenessOfVision} className="h-1 bg-[hsl(var(--dashboard-surface))]" />
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-6 text-center">
+                        <td className="px-4 py-4 text-center">
                           <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Zap className="h-3 w-3 text-emerald-400" />
-                              <span className="text-sm font-black text-white font-mono">{company.abilityToExecute.toFixed(0)}</span>
-                            </div>
-                            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">PODER DE ENTREGA</span>
+                            <span className="font-medium text-[hsl(var(--dashboard-ink))] font-mono">{company.abilityToExecute.toFixed(0)}</span>
+                            <span className="text-[10px] text-[hsl(var(--dashboard-muted))]">Execução</span>
                           </div>
                         </td>
-                        <td className="px-6 py-6 text-center">
-                          <div className="space-y-1">
-                             <span className="text-sm font-black text-amber-400 font-mono">{company.rating.toFixed(1)}</span>
-                             <span className="block text-[10px] text-white/30 font-bold uppercase tracking-widest">RATING CONSOLIDADO</span>
+                        <td className="px-4 py-4 text-center">
+                          <div className="space-y-0.5">
+                            <span className="font-semibold text-amber-500 font-mono">{company.rating.toFixed(1)}</span>
+                            <span className="block text-[10px] text-[hsl(var(--dashboard-muted))]">Rating</span>
                           </div>
                         </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex flex-col items-end gap-2">
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex flex-col items-end gap-1">
                             {index === 0 ? (
-                              <Badge className="bg-amber-500/10 text-amber-500 border-none font-black text-[9px] tracking-widest px-2">LÍDER DE MERCADO</Badge>
+                              <Badge variant="outline" className="border-amber-500/30 text-amber-600 bg-amber-500/10 font-medium text-[10px] px-2 py-0.5 rounded-sm">Líder</Badge>
                             ) : company.quadrantStrength >= 80 ? (
-                              <Badge className="bg-brand-blue/10 text-brand-blue border-none font-black text-[9px] tracking-widest px-2">VISIONÁRIO</Badge>
+                              <Badge variant="outline" className="border-[hsl(var(--dashboard-accent))]/30 text-[hsl(var(--dashboard-accent))] bg-[hsl(var(--dashboard-accent))]/10 font-medium text-[10px] px-2 py-0.5 rounded-sm">Visionário</Badge>
                             ) : (
-                              <Badge className="bg-white/5 text-white/30 border-none font-black text-[9px] tracking-widest px-2">DESAFIANTE</Badge>
+                              <Badge variant="outline" className="border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-muted))] font-medium text-[10px] px-2 py-0.5 rounded-sm">Desafiante</Badge>
                             )}
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-brand-green">
-                               <TrendingUp className="h-3 w-3" />
-                               <span className="font-mono">{company.quadrantStrength.toFixed(1)} pts</span>
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+                              <TrendingUp className="h-3 w-3" />
+                              <span className="font-mono">{company.quadrantStrength.toFixed(1)} pts</span>
                             </div>
                           </div>
                         </td>
@@ -336,68 +323,51 @@ export default function CompetitorBenchmark({ companyId }: CompetitorBenchmarkPr
               </table>
             </div>
           </CardContent>
-          <div className="p-6 bg-white/[0.01] border-t border-slate-200/50 dark:border-white/[0.06] text-center">
-            <Button variant="ghost" className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-transparent">
-              Visualizar Ecossistema Completo <ArrowRight className="ml-2 h-3 w-3" />
+          <div className="p-4 bg-[hsl(var(--dashboard-surface))] border-t border-[hsl(var(--dashboard-border))] text-center">
+            <Button variant="ghost" className="text-xs font-medium text-[hsl(var(--dashboard-muted))] hover:text-[hsl(var(--dashboard-ink))]">
+              Visualizar ecossistema completo <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </div>
         </Card>
 
         {/* Tactical Recommendation Column */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="clay-precision border-[0.5px] border-blue-200/50 dark:border-blue-500/20 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-600/20 dark:to-purple-600/20 backdrop-blur-xl p-6 relative overflow-hidden group shadow-[2px_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3)]">
-            <div className="absolute -right-4 -top-4 w-32 h-32 bg-brand-blue/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700" />
-            <div className="relative z-10 space-y-4">
-              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
-                <ShieldCheck className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">Vantagem Tática</h4>
-                  <p className="text-sm text-white/80 leading-relaxed font-medium">
-                  Seu diferencial competitivo precisa concentrar energia em <span className="text-white font-black underline decoration-blue-400">execução e visão</span>. 
-                  {executionGap > 0 || visionGap > 0
-                    ? `Hoje o gap para o líder é de ${visionGap} pts em visão e ${executionGap} pts em execução.`
-                    : 'Você já ocupa a faixa mais alta do quadrante competitivo.'}
-                </p>
-              </div>
-              <Button className="w-full h-11 bg-white text-brand-blue font-black uppercase tracking-widest text-[10px] hover:bg-white/90">
-                Ver Insights IA
+        <div className="lg:col-span-4 space-y-5">
+          <Card className="border border-[hsl(var(--dashboard-border))] rounded-xl bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-[hsl(var(--dashboard-ink))]">Vantagem Tática</h4>
+              <p className="text-xs text-[hsl(var(--dashboard-muted))] leading-relaxed">
+                Seu diferencial competitivo se concentra em <strong className="text-[hsl(var(--dashboard-ink))]">execução e visão</strong>. 
+                {executionGap > 0 || visionGap > 0
+                  ? ` Hoje o gap para o líder é de ${visionGap} pts em visão e ${executionGap} pts em execução.`
+                  : ' Você já ocupa a faixa mais alta do quadrante competitivo.'}
+              </p>
+              <Button className="w-full h-10 rounded-lg bg-[hsl(var(--dashboard-accent))] text-white text-xs font-medium hover:bg-[hsl(var(--dashboard-accent))/0.9]">
+                Ver recomendações táticas
               </Button>
             </div>
           </Card>
 
-          <Card className="clay-precision bg-white dark:bg-[hsl(var(--clay-surface))] border-[0.5px] border-slate-200/80 dark:border-white/[0.08] rounded-2xl p-6 shadow-[2px_2px_8px_hsl(var(--clay-shadow-dark)/0.04),-2px_-2px_8px_hsl(var(--clay-shadow-light)/0.6)] dark:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_6px_rgba(255,255,255,0.03)]">
-            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-              <AlertTriangle className="h-3 w-3 text-amber-500" />
-              Priority Gaps
+          <Card className="bg-[hsl(var(--dashboard-panel))] border border-[hsl(var(--dashboard-border))] rounded-xl p-5 shadow-xs">
+            <h4 className="text-xs font-semibold text-[hsl(var(--dashboard-muted))] mb-4 flex items-center gap-1.5">
+              <span>Gaps prioritários</span>
             </h4>
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs font-bold text-white">
-                  <span>Vision Gap</span>
-                  <span className="text-amber-500">-{visionGap} pts</span>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-medium text-[hsl(var(--dashboard-ink))]">
+                  <span>Vision gap</span>
+                  <span className="text-amber-600 font-mono">-{visionGap} pts</span>
                 </div>
-                <Progress value={Math.max(0, 100 - visionGap)} className="h-1.5 bg-white/5" indicatorClassName="bg-amber-500" />
-                <p className="text-[10px] text-white/40 font-medium">Diferença de autoridade estratégica para o líder do quadrante.</p>
+                <Progress value={Math.max(0, 100 - visionGap)} className="h-1.5 bg-[hsl(var(--dashboard-surface))]" />
+                <p className="text-[11px] text-[hsl(var(--dashboard-muted))]">Diferença de autoridade estratégica para o líder da categoria.</p>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs font-bold text-white">
-                  <span>Execution Gap</span>
-                  <span className="text-brand-green">{executionGap > 0 ? `${executionGap} pts` : 'Top Tier'}</span>
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-medium text-[hsl(var(--dashboard-ink))]">
+                  <span>Execution gap</span>
+                  <span className="text-emerald-600 font-mono">{executionGap > 0 ? `${executionGap} pts` : 'Top tier'}</span>
                 </div>
-                <Progress value={Math.max(0, 100 - executionGap)} className="h-1.5 bg-white/5" indicatorClassName="bg-brand-green" />
-                <p className="text-[10px] text-white/40 font-medium">Capacidade operacional relativa ao player que lidera a categoria.</p>
-              </div>
-              
-              <div className="pt-4 mt-4 border-t border-slate-200/50 dark:border-white/[0.06]">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
-                   <ZapOff className="h-5 w-5 text-purple-400 shrink-0" />
-                   <div>
-                     <p className="text-[10px] font-black text-white uppercase tracking-widest">Growth Engine</p>
-                     <p className="text-[11px] text-white/40 font-bold">Priorize sinais que elevem visão e execução no ranking.</p>
-                   </div>
-                </div>
+                <Progress value={Math.max(0, 100 - executionGap)} className="h-1.5 bg-[hsl(var(--dashboard-surface))]" />
+                <p className="text-[11px] text-[hsl(var(--dashboard-muted))]">Capacidade operacional relativa ao player que lidera a categoria.</p>
               </div>
             </div>
           </Card>

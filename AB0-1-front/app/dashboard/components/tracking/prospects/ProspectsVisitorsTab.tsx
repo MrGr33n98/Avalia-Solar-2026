@@ -1,6 +1,5 @@
 'use client';
 
-import { Building2, Eye, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { ProspectsWorkspaceResponse } from '@/lib/api';
@@ -19,22 +18,21 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
   return (
     <div className="space-y-6">
       {/* Privacy Notice Banner */}
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-sm space-y-2">
-        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold">
-          <Lock className="h-5 w-5 shrink-0" />
-          <span>Privacidade em Primeiro Lugar (LGPD / Zero Dados Sintéticos)</span>
+      <div className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-4 text-xs space-y-1">
+        <div className="font-semibold text-[hsl(var(--dashboard-ink))]">
+          Privacidade e Conformidade LGPD (Zero Dados Sintéticos)
         </div>
-        <p className="text-xs text-[hsl(var(--dashboard-muted))] leading-relaxed">
+        <p className="text-[hsl(var(--dashboard-muted))] leading-relaxed">
           O Avalia Solar não inventa nomes de empresas nem aplica fingerprinting cross-site sem base legal.
-          Identificações de contas só são exibidas quando há evidência legítima fornecida via CRM integrado ou chave de identificador customizado (`custom_ids`). Visitantes sem identificação explícita são tratados estritamente como anônimos.
+          Identificações de contas só são exibidas quando há evidência legítima fornecida via CRM integrado ou chave de identificador customizado (<code className="font-mono text-[11px]">custom_ids</code>). Visitantes sem identificação explícita são tratados estritamente como anônimos.
         </p>
       </div>
 
-      {/* Counters */}
+      {/* Metric Counters */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
-            Total de Visitantes
+        <div className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
+          <span className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">
+            Total de visitantes
           </span>
           <p className="mt-2 text-2xl font-bold text-[hsl(var(--dashboard-ink))]">
             {records.length}
@@ -42,19 +40,19 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
           <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">Sessões no período</span>
         </div>
 
-        <div className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
-            Contas Identificadas
+        <div className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
+          <span className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">
+            Contas identificadas
           </span>
-          <p className="mt-2 text-2xl font-bold text-blue-600">
+          <p className="mt-2 text-2xl font-bold text-[hsl(var(--dashboard-accent))]">
             {identifiedCount}
           </p>
           <span className="text-[11px] text-[hsl(var(--dashboard-muted))]">Com evidência vinculada</span>
         </div>
 
-        <div className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--dashboard-muted))]">
-            Visitantes Anônimos
+        <div className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs">
+          <span className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">
+            Visitantes anônimos
           </span>
           <p className="mt-2 text-2xl font-bold text-[hsl(var(--dashboard-muted))]">
             {anonymousCount}
@@ -64,7 +62,7 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
       </div>
 
       {/* Tabela de Contas e Visitantes */}
-      <section className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs overflow-hidden">
+      <section className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs overflow-hidden">
         <div className="p-5 border-b border-[hsl(var(--dashboard-border))] flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-[hsl(var(--dashboard-ink))]">
@@ -78,14 +76,15 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
+            <caption className="sr-only">Lista de visitantes e contas identificadas com dados de navegação</caption>
             <thead className="bg-[hsl(var(--dashboard-surface))] border-b border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-muted))]">
               <tr>
-                <th className="py-3 px-4 font-semibold">Conta / Identificador</th>
-                <th className="py-3 px-4 font-semibold">Status de Evidência</th>
-                <th className="py-3 px-4 font-semibold">Primeiro Clique</th>
-                <th className="py-3 px-4 font-semibold">Origem</th>
-                <th className="py-3 px-4 font-semibold">País</th>
-                <th className="py-3 px-4 font-semibold text-right">Ação</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Conta / Identificador</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Status de Evidência</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Primeiro Clique</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Origem</th>
+                <th scope="col" className="py-3 px-4 font-semibold">País</th>
+                <th scope="col" className="py-3 px-4 font-semibold text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--dashboard-border))]">
@@ -105,34 +104,25 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
                       onClick={() => onSelectProspect(r.id)}
                     >
                       <td className="py-3 px-4 font-medium">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`p-1.5 rounded-lg ${
-                              isIdentified ? 'bg-blue-500/10 text-blue-600' : 'bg-slate-500/10 text-slate-500'
-                            }`}
-                          >
-                            <Building2 className="h-3.5 w-3.5" />
+                        <div>
+                          <div className={`font-medium ${isIdentified ? 'text-[hsl(var(--dashboard-ink))]' : 'text-[hsl(var(--dashboard-muted))]'}`}>
+                            {r.account_name}
                           </div>
-                          <div>
-                            <div className="text-[hsl(var(--dashboard-ink))]">
-                              {r.account_name}
-                            </div>
-                            <div className="text-[10px] text-[hsl(var(--dashboard-muted))] font-mono">
-                              ID: {r.id.slice(0, 8)}...
-                            </div>
+                          <div className="text-[10px] text-[hsl(var(--dashboard-muted))] font-mono">
+                            ID: {r.id.slice(0, 8)}...
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <Badge
                           variant="outline"
-                          className={
+                          className={`rounded-md text-[11px] ${
                             r.evidence_status === 'lead_confirmed'
-                              ? 'border-purple-500/30 text-purple-600 bg-purple-500/10'
+                              ? 'border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-ink))] bg-[hsl(var(--dashboard-surface))]'
                               : r.evidence_status === 'landing_verified'
                               ? 'border-emerald-500/30 text-emerald-600 bg-emerald-500/10'
-                              : 'border-slate-500/30 text-slate-600 bg-slate-500/10'
-                          }
+                              : 'border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-muted))] bg-transparent'
+                          }`}
                         >
                           {r.evidence_status === 'lead_confirmed'
                             ? 'Lead Confirmado'
@@ -159,9 +149,9 @@ export default function ProspectsVisitorsTab({ data, onSelectProspect }: Props) 
                             e.stopPropagation();
                             onSelectProspect(r.id);
                           }}
-                          className="h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          aria-label={`Ver detalhes da jornada de ${r.account_name}`}
+                          className="h-7 px-2.5 rounded-lg text-xs font-medium text-[hsl(var(--dashboard-accent))] hover:bg-[hsl(var(--dashboard-surface))]"
                         >
-                          <Eye className="h-3.5 w-3.5 mr-1" />
                           Detalhes
                         </Button>
                       </td>

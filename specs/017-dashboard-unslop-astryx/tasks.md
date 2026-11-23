@@ -1,5 +1,5 @@
 
-Tarefas de Implementação: Refatoração do Dashboard Avalia Solar
+  de Implementação: Refatoração do Dashboard Avalia Solar
 
 **Código do Recurso:** 017-dashboard-unslop-astryx  
 **Data:** 23/11/2026  

@@ -209,31 +209,31 @@ export default function PlanAndSubscription({
 
   return (
     <div className="space-y-7 pb-8">
-      <div className="border-b border-slate-200 pb-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">Conta empresarial / Assinatura</p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#10244b] sm:text-4xl">Plano e Assinatura</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Veja seus recursos, compare opções e gerencie o plano da empresa com segurança.</p>
+      <div className="border-b border-[hsl(var(--dashboard-border))] pb-5">
+        <p className="text-xs font-semibold text-[hsl(var(--dashboard-accent))]">Conta empresarial / Assinatura</p>
+        <h2 className="mt-2 text-2xl lg:text-3xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">Plano e Assinatura</h2>
+        <p className="mt-1 max-w-2xl text-xs text-[hsl(var(--dashboard-muted))]">Veja seus recursos, compare opções e gerencie o plano da empresa com segurança.</p>
       </div>
 
-      <Card className="overflow-hidden rounded-lg border-slate-200 shadow-none">
-        <div className="h-1 w-full bg-blue-700" aria-hidden="true" />
-        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-6">
+      <Card className="overflow-hidden rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs">
+        <div className="h-1 w-full bg-[hsl(var(--dashboard-accent))]" aria-hidden="true" />
+        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-[hsl(var(--dashboard-border))] pb-6">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Plano atual</p>
-            <CardTitle aria-label={`Plano atual: ${planName}`} className="text-3xl font-semibold tracking-tight text-[#10244b]">{planName}</CardTitle>
-            <p className="mt-2 text-sm text-slate-600">O acesso aos recursos segue as permissões efetivas da empresa.</p>
+            <p className="mb-1 text-xs font-medium text-[hsl(var(--dashboard-muted))]">Plano atual</p>
+            <CardTitle aria-label={`Plano atual: ${planName}`} className="text-2xl lg:text-3xl font-bold tracking-tight text-[hsl(var(--dashboard-ink))]">{planName}</CardTitle>
+            <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">O acesso aos recursos segue as permissões efetivas da empresa.</p>
           </div>
-          <Badge variant="outline" className="rounded-sm border-slate-300 px-3 py-1 text-xs text-slate-700">{status}</Badge>
+          <Badge variant="outline" className="rounded-md border-[hsl(var(--dashboard-border))] px-3 py-1 text-xs text-[hsl(var(--dashboard-ink))]">{status}</Badge>
         </CardHeader>
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_auto]">
           <dl className="grid gap-5 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-slate-500">Vigência do período atual</dt>
-              <dd className="mt-1 font-semibold text-slate-900">{endDate || (planTier === 'free' ? 'Sem vencimento' : 'Não disponível')}</dd>
+              <dt className="text-xs text-[hsl(var(--dashboard-muted))]">Vigência do período atual</dt>
+              <dd className="mt-1 font-semibold text-[hsl(var(--dashboard-ink))]">{endDate || (planTier === 'free' ? 'Sem vencimento' : 'Não disponível')}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Cobrança</dt>
-              <dd className="mt-1 font-semibold text-slate-900">{subscription?.cancel_at_period_end
+              <dt className="text-xs text-[hsl(var(--dashboard-muted))]">Cobrança</dt>
+              <dd className="mt-1 font-semibold text-[hsl(var(--dashboard-ink))]">{subscription?.cancel_at_period_end
                 ? 'Cancelamento programado'
                 : billingAccess === 'restricted' ? 'Acesso restrito'
                   : billingAccess === 'available' ? 'Consulte o portal Stripe'
@@ -242,16 +242,16 @@ export default function PlanAndSubscription({
           </dl>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
             {cancellable && (
-              <Button variant="outline" className="min-h-11 rounded-sm border-blue-300 text-blue-800"
+              <Button variant="outline" className="min-h-10 rounded-lg border-[hsl(var(--dashboard-border))] text-xs font-medium text-[hsl(var(--dashboard-ink))] hover:bg-[hsl(var(--dashboard-surface))]"
                 disabled={portalLoading} onClick={() => void openBillingPortal()}>
                 {portalLoading ? 'Abrindo...' : 'Gerenciar pagamento'}
               </Button>
             )}
             {onOpenPlans && (
-              <Button className="min-h-11 rounded-sm bg-blue-700 text-white hover:bg-blue-800"
+              <Button className="min-h-10 rounded-lg bg-[hsl(var(--dashboard-accent))] text-white text-xs font-medium hover:bg-[hsl(var(--dashboard-accent))/0.9]"
                 onClick={onOpenPlans}>Ver opções de upgrade</Button>
             )}
-            <Button asChild variant="ghost" className="min-h-10 rounded-sm text-blue-700">
+            <Button asChild variant="ghost" className="min-h-10 rounded-lg text-xs font-medium text-[hsl(var(--dashboard-accent))]">
               <Link href="/pricing">Ver condições comerciais</Link>
             </Button>
           </div>
@@ -280,15 +280,15 @@ export default function PlanAndSubscription({
       <section aria-labelledby="features-heading" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 id="features-heading" className="text-xl font-semibold tracking-tight text-[#10244b]">Recursos do seu plano</h3>
-            <p className="mt-1 text-sm text-slate-600">Dados do motor de permissões; não são estimativas de consumo.</p>
+            <h3 id="features-heading" className="text-lg font-semibold tracking-tight text-[hsl(var(--dashboard-ink))]">Recursos do seu plano</h3>
+            <p className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">Dados do motor de permissões; não são estimativas de consumo.</p>
           </div>
-          <p className="text-sm font-medium text-slate-700">{enabledCount} recursos habilitados</p>
+          <p className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">{enabledCount} recursos habilitados</p>
         </div>
-        <Card className="rounded-lg border-slate-200 shadow-none">
+        <Card className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] shadow-xs">
           <CardContent className="p-0">
             {visibleFeatures.length ? (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-[hsl(var(--dashboard-border))]">
                 {visibleFeatures.map(([key, entry]) => {
                   const enabled = isFeatureEnabled(entry);
                   const isLimit = typeof entry.value === 'number';
@@ -298,18 +298,18 @@ export default function PlanAndSubscription({
                   return (
                     <div key={key} className="grid gap-2 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_170px] sm:items-center">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900">{featureLabel(key)}</p>
+                        <p className="text-xs font-semibold text-[hsl(var(--dashboard-ink))]">{featureLabel(key)}</p>
                         {isLimit && (
-                          <div className="mt-1 text-xs text-slate-600">
+                          <div className="mt-1 text-xs text-[hsl(var(--dashboard-muted))]">
                             Limite do plano: {limit} {hasUsage ? `· Utilizado: ${consumed}` : '· Consumo não disponível'}
                           </div>
                         )}
                         {isLimit && hasUsage && limit !== null && limit > 0 && (
-                          <Progress className="mt-2 h-1.5 max-w-xs" value={Math.min(100, Math.round((consumed / limit) * 100))} />
+                          <Progress className="mt-2 h-1.5 max-w-xs bg-[hsl(var(--dashboard-surface))]" value={Math.min(100, Math.round((consumed / limit) * 100))} />
                         )}
                       </div>
-                      <div className="text-sm font-medium sm:text-right">
-                        <span className={enabled ? 'text-blue-700' : 'text-slate-500'}>
+                      <div className="text-xs font-medium sm:text-right">
+                        <span className={enabled ? 'text-[hsl(var(--dashboard-accent))] font-semibold' : 'text-[hsl(var(--dashboard-muted))]'}>
                           {entry.state === 'unavailable' ? 'Consulta indisponível' : enabled ? isLimit ? 'Disponível' : 'Incluído' : entry.state === 'locked' ? 'Disponível no upgrade' : 'Indisponível'}
                         </span>
                       </div>
@@ -317,11 +317,11 @@ export default function PlanAndSubscription({
                   );
                 })}
               </div>
-            ) : <p className="p-6 text-sm text-slate-600">Nenhum recurso foi informado para esta empresa.</p>}
+            ) : <p className="p-6 text-xs text-[hsl(var(--dashboard-muted))]">Nenhum recurso foi informado para esta empresa.</p>}
             {features.length > 12 && (
-              <div className="border-t border-slate-200 p-4 text-center">
+              <div className="border-t border-[hsl(var(--dashboard-border))] p-4 text-center">
                 <Button variant="ghost" onClick={() => setShowAllFeatures(value => !value)}
-                  className="rounded-sm text-blue-700">
+                  className="rounded-lg text-xs font-medium text-[hsl(var(--dashboard-accent))]">
                   {showAllFeatures ? 'Mostrar menos recursos' : `Ver todos os ${features.length} recursos`}
                 </Button>
               </div>

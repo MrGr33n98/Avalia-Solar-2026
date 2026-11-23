@@ -52,13 +52,17 @@ const sectionAliasMap: Record<string, WorkspaceTab> = {
   overview: 'overview',
   journey: 'journey',
   visitors: 'visitors',
+  visitor: 'visitors',
   accounts: 'visitors',
+  account: 'visitors',
   setup: 'installation',
   install: 'installation',
   installation: 'installation',
   tag: 'installation',
   integrations: 'integrations',
+  integration: 'integrations',
   settings: 'settings',
+  setting: 'settings',
   utm_builder: 'utm_builder',
   utm: 'utm_builder',
 };
@@ -134,24 +138,23 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
   return (
     <main className="space-y-6" aria-labelledby="tracking-workspace-title">
       {/* Workspace Header & Shell Breadcrumb */}
-      <header className="rounded-2xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xs sm:p-7">
+      <header className="rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="max-w-3xl space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-[hsl(var(--dashboard-muted))]">
+              <span className="text-xs font-medium text-[hsl(var(--dashboard-muted))]">
                 Performance &gt;
               </span>
               <span className="text-xs font-semibold text-[hsl(var(--dashboard-ink))]">
                 Track Your Prospects
               </span>
               {company?.name && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs rounded-md">
                   {company.name}
                 </Badge>
               )}
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium">
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                Telemetria Auditável (Sem Mocks)
+              <span className="inline-flex items-center text-xs text-[hsl(var(--dashboard-accent))] font-medium">
+                Telemetria Auditável
               </span>
             </div>
 
@@ -179,7 +182,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
                   setPreset(opt);
                   setPage(1);
                 }}
-                className="h-8 rounded-xl text-xs"
+                className="h-8 rounded-lg text-xs"
               >
                 {opt}
               </Button>
@@ -191,7 +194,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
               variant="outline"
               onClick={() => query.refetch()}
               disabled={query.isFetching}
-              className="h-8 rounded-xl text-xs gap-1.5"
+              className="h-8 rounded-lg text-xs gap-1.5"
             >
               <RefreshCw
                 className={`h-3.5 w-3.5 ${query.isFetching ? 'animate-spin' : ''}`}
@@ -225,7 +228,7 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
                 onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                   isCurrent
-                    ? 'border-blue-600 text-blue-600 font-semibold'
+                    ? 'border-[hsl(var(--dashboard-accent))] text-[hsl(var(--dashboard-accent))] font-semibold'
                     : 'border-transparent text-[hsl(var(--dashboard-muted))] hover:text-[hsl(var(--dashboard-ink))]'
                 }`}
               >
@@ -243,17 +246,17 @@ export default function TrackingAttributionWorkspace({ companyId, company }: Pro
       ) : query.isLoading ? (
         <div className="space-y-4" aria-label="Carregando workspace">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
           </div>
-          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       ) : isUnavailable ? (
         <section
           role="alert"
-          className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6 text-sm space-y-3"
+          className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-6 text-sm space-y-3"
         >
           <h2 className="text-base font-semibold text-amber-700 dark:text-amber-400">
             Telemetria temporariamente indisponível

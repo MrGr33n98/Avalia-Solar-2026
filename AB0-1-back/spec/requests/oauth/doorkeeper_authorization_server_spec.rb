@@ -55,6 +55,30 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     }
   end
 
+  def confidential_client_and_grant
+    client = Doorkeeper::Application.create!(
+      name: 'Cliente MCP confidencial de teste',
+      redirect_uri: redirect_uri,
+      scopes: 'mcp:public:read',
+      confidential: true,
+      secret: nil
+    )
+    client_secret = client.plaintext_secret
+    grant = Doorkeeper::AccessGrant.create!(
+      resource_owner_id: user.id,
+      application_id: client.id,
+      token: SecureRandom.hex(32),
+      expires_in: 600,
+      redirect_uri: redirect_uri,
+      scopes: 'mcp:public:read',
+      code_challenge: code_challenge(code_verifier),
+      code_challenge_method: 'S256',
+      resource: ENV['MCP_OAUTH_RESOURCE'].presence || 'https://mcp.example.test/mcp'
+    )
+
+    [client, grant, client_secret]
+  end
+
   it 'mantém o registro público PKCE sem secret compartilhado' do
     expect(application).to be_persisted
     expect(application).not_to be_confidential
@@ -120,6 +144,32 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
+  it 'autentica clientes confidenciais por client_secret_post e client_secret_basic' do
+    %i[post basic].each do |auth_method|
+      client, grant, client_secret = confidential_client_and_grant
+      params = {
+        grant_type: 'authorization_code',
+        code: grant.plaintext_token,
+        redirect_uri: redirect_uri,
+        code_verifier: code_verifier,
+        resource: ENV['MCP_OAUTH_RESOURCE'].presence || 'https://mcp.example.test/mcp'
+      }
+      headers = {}
+
+      if auth_method == :post
+        params.merge!(client_id: client.uid, client_secret: client_secret)
+      else
+        credentials = Base64.strict_encode64("#{client.uid}:#{client_secret}")
+        headers['HTTP_AUTHORIZATION'] = "Basic #{credentials}"
+      end
+
+      post '/oauth/token', params: params, headers: headers
+
+      expect(response).to have_http_status(:ok), auth_method.to_s
+      expect(response.parsed_body['access_token']).to be_present
+    end
+  end
+
   it 'revoga um access token emitido' do
     grant = access_grant
     exchange(grant)
@@ -173,6 +223,37 @@ RSpec.describe 'Doorkeeper Authorization Server', type: :request do
         client_id: application.uid,
         requested_redirect_uri: redirect_uri
       )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(application.name)
+    end
+
+    it 'retoma a autorização OAuth pendente após o login Devise' do
+      sign_out user
+      requested_params = authorization_params(
+        client_id: application.uid,
+        requested_redirect_uri: redirect_uri
+      )
+
+      get '/oauth/authorize', params: requested_params
+
+      expect(response).to redirect_to(new_user_session_url)
+      expect(session['user_return_to']).to be_present
+
+      post user_session_path, params: {
+        user: { email: user.email, password: 'Password123' }
+      }
+
+      expect(response).to be_redirect
+      destination = URI(response.location)
+      expect(destination.path).to eq('/oauth/authorize')
+      expect(Rack::Utils.parse_nested_query(destination.query)).to include(
+        'client_id' => application.uid,
+        'redirect_uri' => redirect_uri,
+        'state' => 'oauth-redirect-test-state'
+      )
+
+      get destination.request_uri
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(application.name)

@@ -283,6 +283,8 @@ skills-lock.json
 
 # Skill/ferramenta local
 interface-design/
+unslop/
+scripts/auth/
 
 # Aider Desk - configurações e arquivos locais
 .aider-desk/

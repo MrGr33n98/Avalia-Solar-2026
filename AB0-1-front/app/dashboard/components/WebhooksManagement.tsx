@@ -285,43 +285,43 @@ export default function WebhooksManagement({ companyId }: WebhooksManagementProp
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-[#1A1F2C] border-white/10 text-white">
+        <DialogContent className="sm:max-w-[500px] rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] text-[hsl(var(--dashboard-ink))]">
           <DialogHeader>
-            <DialogTitle className="text-xl">{editingWebhook ? 'Editar Webhook' : 'Novo Webhook'}</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-[hsl(var(--dashboard-ink))]">{editingWebhook ? 'Editar Webhook' : 'Novo Webhook'}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             <div className="space-y-2">
-              <Label htmlFor="url" className="text-white/80">URL do Endpoint</Label>
+              <Label htmlFor="url" className="text-[hsl(var(--dashboard-ink))]">URL do Endpoint</Label>
               <Input
                 id="url"
                 placeholder="https://sua-api.com.br/webhooks/avalia"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="bg-black/20 border-white/10 text-white placeholder:text-white/20"
+                className="rounded-lg border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] text-[hsl(var(--dashboard-ink))] placeholder:text-[hsl(var(--dashboard-muted))]"
               />
-              <p className="text-xs text-white/40">Deve ser uma URL publicamente acessível iniciando com http:// ou https://</p>
+              <p className="text-xs text-[hsl(var(--dashboard-muted))]">Deve ser uma URL publicamente acessível iniciando com http:// ou https://</p>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-white/80">Eventos Inscritos</Label>
-              <div className="grid gap-2 border border-white/10 p-3 rounded-md bg-black/10 max-h-[250px] overflow-y-auto">
+              <Label className="text-[hsl(var(--dashboard-ink))]">Eventos Inscritos</Label>
+              <div className="grid gap-2 border border-[hsl(var(--dashboard-border))] p-3 rounded-lg bg-[hsl(var(--dashboard-surface))] max-h-[250px] overflow-y-auto">
                 {AVAILABLE_EVENTS.map((event) => (
                   <div key={event.id} className="flex items-start space-x-3 py-2">
                     <Checkbox 
                       id={`event-${event.id}`} 
                       checked={selectedEvents.includes(event.id)}
                       onCheckedChange={() => toggleEvent(event.id)}
-                      className="mt-1 border-white/20 data-[state=checked]:bg-primary"
+                      className="mt-1 border-[hsl(var(--dashboard-border))] data-[state=checked]:bg-[hsl(var(--dashboard-accent))]"
                     />
                     <div className="grid gap-1.5 leading-none">
                       <label 
                         htmlFor={`event-${event.id}`} 
-                        className="text-sm font-medium leading-none text-white cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none text-[hsl(var(--dashboard-ink))] cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {event.label} <span className="text-xs font-mono text-white/40 ml-1">({event.id})</span>
+                        {event.label} <span className="text-xs font-mono text-[hsl(var(--dashboard-muted))] ml-1">({event.id})</span>
                       </label>
-                      <p className="text-xs text-white/40">
+                      <p className="text-xs text-[hsl(var(--dashboard-muted))]">
                         {event.description}
                       </p>
                     </div>
@@ -330,10 +330,10 @@ export default function WebhooksManagement({ companyId }: WebhooksManagementProp
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-white/10 p-4 bg-black/10">
+            <div className="flex items-center justify-between rounded-lg border border-[hsl(var(--dashboard-border))] p-4 bg-[hsl(var(--dashboard-surface))]">
               <div className="space-y-0.5">
-                <Label className="text-white/80 text-base">Webhook Ativo</Label>
-                <p className="text-xs text-white/40">
+                <Label className="text-[hsl(var(--dashboard-ink))] text-base">Webhook Ativo</Label>
+                <p className="text-xs text-[hsl(var(--dashboard-muted))]">
                   Receber dados em tempo real
                 </p>
               </div>
@@ -345,10 +345,10 @@ export default function WebhooksManagement({ companyId }: WebhooksManagementProp
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal} className="border-white/10 text-white/80 hover:bg-white/5 hover:text-white">
+            <Button variant="outline" onClick={handleCloseModal} className="rounded-lg border-[hsl(var(--dashboard-border))] text-[hsl(var(--dashboard-muted))] hover:bg-[hsl(var(--dashboard-surface))] hover:text-[hsl(var(--dashboard-ink))]">
               Cancelar
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="rounded-lg bg-[hsl(var(--dashboard-accent))] hover:opacity-90 text-white">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingWebhook ? 'Salvar Alterações' : 'Criar Webhook'}
             </Button>

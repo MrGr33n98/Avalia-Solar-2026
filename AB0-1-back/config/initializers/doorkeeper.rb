@@ -27,6 +27,7 @@ Doorkeeper.configure do
     if user&.active_for_authentication?
       user
     else
+      store_location_for(:user, request.fullpath)
       redirect_to new_user_session_url
     end
   end

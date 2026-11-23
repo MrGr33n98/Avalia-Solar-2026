@@ -237,10 +237,10 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-[2rem] bg-slate-100 dark:bg-white/5" />
+            <Skeleton key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-white/5" />
           ))}
         </div>
-        <Skeleton className="h-[500px] w-full rounded-[3.5rem] bg-slate-100 dark:bg-white/5" />
+        <Skeleton className="h-[500px] w-full rounded-xl bg-slate-100 dark:bg-white/5" />
       </div>
     );
   }
@@ -254,7 +254,7 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
         className="no-print flex flex-wrap items-center gap-3"
       >
         <DateRangePicker value={timeRange} customRange={customDateRange} onChange={handleDateRangeChange} />
-        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-white/5 dark:bg-white/[0.03]">
+        <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-surface))] p-1">
           <ExportButton
             timeseriesData={timeseriesData}
             aggregatedData={
@@ -282,9 +282,9 @@ export default function PerformanceMetrics({ companyId, companyName = 'Empresa',
             companyName={companyName}
             rangeLabel={exportRangeLabel}
           />
-          <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/[0.05]">
+          <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-8 rounded-lg text-xs font-medium hover:bg-[hsl(var(--dashboard-panel))]">
             <Printer className="mr-2 h-4 w-4" />
-            Report Generation
+            Relatório
           </Button>
         </div>
         {freshnessLabel && (

@@ -48,13 +48,13 @@ export function PlansPricingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100vw-24px)] max-w-6xl overflow-y-auto rounded-lg border-slate-200 bg-white p-5 shadow-xl sm:p-8">
-        <DialogHeader className="border-b border-slate-100 pb-5 text-left">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-blue-700">Avalia Solar / Planos empresariais</p>
-          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight text-[#10244b] sm:text-3xl">
+      <DialogContent className="max-h-[90dvh] w-[calc(100vw-24px)] max-w-6xl overflow-y-auto rounded-xl border border-[hsl(var(--dashboard-border))] bg-[hsl(var(--dashboard-panel))] p-5 shadow-xl sm:p-8">
+        <DialogHeader className="border-b border-[hsl(var(--dashboard-border))] pb-5 text-left">
+          <p className="text-xs font-semibold text-[hsl(var(--dashboard-accent))]">Avalia Solar / Planos empresariais</p>
+          <DialogTitle className="mt-2 text-2xl font-semibold tracking-tight text-[hsl(var(--dashboard-ink))] sm:text-3xl">
             Escolha o plano ideal para sua empresa
           </DialogTitle>
-          <DialogDescription className="max-w-3xl text-sm leading-6 text-slate-600">
+          <DialogDescription className="max-w-3xl text-xs leading-6 text-[hsl(var(--dashboard-muted))]">
             Compare os planos oficiais e contrate com segurança. Os recursos são aplicados conforme o plano autorizado pelo servidor.
           </DialogDescription>
         </DialogHeader>

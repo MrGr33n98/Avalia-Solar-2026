@@ -149,4 +149,24 @@ describe('TrackYourProspectsWorkspace (PR 3)', () => {
     expect(screen.getByDisplayValue('G-ABC12345XX')).toBeInTheDocument();
     expect(screen.getByText(/identificadores customizados/i)).toBeInTheDocument();
   });
+
+  it('permite alternar para a aba de contas e visitantes com design unslop sem ícones genéricos', () => {
+    render(<TrackingAttributionWorkspace companyId="372" />);
+
+    const visitorsTab = screen.getByRole('tab', { name: /contas e visitantes/i });
+    fireEvent.click(visitorsTab);
+
+    expect(screen.getByText('Lista de Visitantes e Contas')).toBeInTheDocument();
+    expect(screen.getByText('Total de visitantes')).toBeInTheDocument();
+    expect(screen.getByText('Contas identificadas')).toBeInTheDocument();
+    expect(screen.getByText('Visitantes anônimos')).toBeInTheDocument();
+
+    // Tabela acessível com caption
+    expect(screen.getByText('Lista de visitantes e contas identificadas com dados de navegação')).toBeInTheDocument();
+
+    // Botão de ação sóbrio com texto claro
+    const detailBtn = screen.getByRole('button', { name: /ver detalhes da jornada de não identificado/i });
+    expect(detailBtn).toBeInTheDocument();
+    expect(detailBtn).toHaveTextContent('Detalhes');
+  });
 });
