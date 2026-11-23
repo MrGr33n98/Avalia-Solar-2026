@@ -444,6 +444,8 @@ jobs:
             __tests__/local-page-quality.test.ts \
             __tests__/company-api-error-semantics.spec.ts \
             --runInBand --no-coverage
+      - name: Run Home Category Ribbon unit regression
+        run: npx jest __tests__/components/home/HomeCategoryRibbon.test.tsx --runInBand --no-coverage
       - name: Typecheck Frontend
         run: npm run typecheck
       - name: Lint Category Discovery & SEO Modules (Strict)
@@ -641,6 +643,7 @@ jobs:
           tests/e2e/company-free-placeholder-responsive.spec.ts
           tests/e2e/reviewer-dashboard-viewport.spec.ts
           tests/e2e/compare-recommendations-compact.spec.ts
+          tests/e2e/home-horizontal-alignment.spec.ts
           && npx playwright test --project=chromium
           tests/e2e/category-seo.spec.ts --grep @critical
 
