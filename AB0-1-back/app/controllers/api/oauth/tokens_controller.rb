@@ -21,6 +21,7 @@ module Api
 
       def validate_mcp_canary_request!
         return unless ::Mcp::Canary::Configuration.enforced?
+        return if private_oauth_request?
         return render_canary_error unless params[:resource] == ::Mcp::Canary::Configuration.canonical_resource
 
         case params[:grant_type].to_s
@@ -33,6 +34,11 @@ module Api
         end
       rescue ActiveRecord::RecordNotFound
         render_canary_error
+      end
+
+      def private_oauth_request?
+        params[:resource] == ::Mcp::Oauth::Configuration.private_resource &&
+          ::Mcp::Oauth::Configuration.private_configured?
       end
 
       def validate_authorization_code_canary_request!

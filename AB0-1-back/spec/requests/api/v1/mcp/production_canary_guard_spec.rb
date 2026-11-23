@@ -148,8 +148,24 @@ RSpec.describe 'MCP production canary guard', type: :request do
     expect(response.body).not_to include('bulk_lead_export')
   end
 
-  it 'does not provide a legacy protocol bypass for tools/call' do
+  it 'executes authorized public tools under the legacy protocol in read-only phase' do
+    create(:company, name: 'Canary Solar Company', status: :active)
     _client, token = client_and_token(phase: 'read_only')
+    post '/mcp', params: {
+      jsonrpc: '2.0', id: 22, method: 'tools/call',
+      params: { name: 'list_integrators', arguments: { query: 'Canary', limit: 5 } }
+    }.to_json, headers: {
+      'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json, text/event-stream',
+      'MCP-Protocol-Version' => '2025-11-25', 'Host' => 'api.avaliasolar.com.br',
+      'Authorization' => "Bearer #{token}"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('result', 'isError')).to be(false)
+  end
+
+  it 'blocks legacy tools/call during discovery phase or for non-public tools without bypass' do
+    _client, token = client_and_token(phase: 'discovery')
     post '/mcp', params: {
       jsonrpc: '2.0', id: 22, method: 'tools/call',
       params: { name: 'list_integrators', arguments: {} }
@@ -159,8 +175,55 @@ RSpec.describe 'MCP production canary guard', type: :request do
       'Authorization' => "Bearer #{token}"
     }
 
-    expect(response).to have_http_status(:ok)
+    expect(response).to have_http_status(:forbidden)
     expect(response.parsed_body.dig('error', 'code')).to eq(-32_001)
+
+    _client2, token2 = client_and_token(phase: 'read_only')
+    post '/mcp', params: {
+      jsonrpc: '2.0', id: 23, method: 'tools/call',
+      params: { name: 'bulk_lead_export', arguments: {} }
+    }.to_json, headers: {
+      'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json, text/event-stream',
+      'MCP-Protocol-Version' => '2025-11-25', 'Host' => 'api.avaliasolar.com.br',
+      'Authorization' => "Bearer #{token2}"
+    }
+
+    expect(response).to have_http_status(:forbidden)
+    expect(response.parsed_body.dig('error', 'code')).to eq(-32_001)
+  end
+
+  it 'accepts notifications/initialized under canary guard for authorized clients' do
+    _client, token = client_and_token(phase: 'discovery')
+    post '/mcp', params: {
+      jsonrpc: '2.0', method: 'notifications/initialized'
+    }.to_json, headers: {
+      'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json, text/event-stream',
+      'MCP-Protocol-Version' => '2025-11-25', 'Host' => 'api.avaliasolar.com.br',
+      'Authorization' => "Bearer #{token}"
+    }
+
+    expect(response).to have_http_status(:accepted)
+    expect(response.body).to be_blank
+  end
+
+  it 'accepts modern notifications/initialized under canary guard for authorized clients' do
+    _client, token = client_and_token(phase: 'discovery')
+    post '/mcp', params: {
+      jsonrpc: '2.0', method: 'notifications/initialized',
+      params: {
+        _meta: {
+          'io.modelcontextprotocol/protocolVersion' => '2026-07-28',
+          'io.modelcontextprotocol/clientCapabilities' => {}
+        }
+      }
+    }.to_json, headers: {
+      'CONTENT_TYPE' => 'application/json', 'ACCEPT' => 'application/json, text/event-stream',
+      'MCP-Protocol-Version' => '2026-07-28', 'Mcp-Method' => 'notifications/initialized',
+      'Host' => 'api.avaliasolar.com.br', 'Authorization' => "Bearer #{token}"
+    }
+
+    expect(response).to have_http_status(:accepted)
+    expect(response.body).to be_blank
   end
 
   it 'rejects an invalid token before the canary guard' do

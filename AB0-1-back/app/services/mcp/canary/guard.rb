@@ -41,7 +41,7 @@ module Mcp
 
         validate_token_context!
         case method
-        when 'server/discover', 'initialize', 'ping', 'tools/list'
+        when 'server/discover', 'initialize', 'ping', 'tools/list', 'notifications/initialized'
           true
         when 'tools/call'
           unless Configuration.execution_enabled?

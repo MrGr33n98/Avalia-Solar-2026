@@ -60,6 +60,8 @@ module Api
             outcome = ::Mcp::ModernPreviewProtocol.new(
               headers: request.headers, message: message, auth_context: @mcp_auth_context
             ).response
+            return head :accepted if outcome[:status] == :accepted
+
             return render json: outcome.fetch(:body), status: outcome.fetch(:status)
           end
 
@@ -71,7 +73,7 @@ module Api
             return rpc_error(id, -32602, 'MCP-Protocol-Version header required.', :bad_request)
           end
 
-          canary_error = authorize_canary_legacy_request!(message['method'], params)
+          canary_error = authorize_canary_legacy_request!(message['method'], params, id: id)
           return canary_error if canary_error
 
           unless has_id
@@ -91,9 +93,7 @@ module Api
 
             rpc_result(id, { tools: ::Mcp::PublicToolRegistry.list })
           when 'tools/call'
-            # Transport-only phase: never invoke even an R0 tool before the
-            # external resource authorization and domain adapters are reviewed.
-            rpc_error(id, -32001, 'Tool execution is unavailable in transport preview.')
+            execute_legacy_tool(id, params)
           else
             rpc_error(id, -32601, 'Method not found.')
           end
@@ -232,7 +232,7 @@ module Api
           head :service_unavailable
         end
 
-        def authorize_canary_legacy_request!(method, params)
+        def authorize_canary_legacy_request!(method, params, id: nil)
           return nil unless ::Mcp::Canary::Configuration.enforced?
 
           ::Mcp::Canary::Guard.authorize!(
@@ -241,7 +241,64 @@ module Api
           nil
         rescue ::Mcp::Canary::Guard::Failure => e
           status = e.type == :unavailable ? :not_found : :forbidden
-          rpc_error(params['id'], -32001, 'MCP canary authorization denied.', status)
+          rpc_error(id, -32_001, 'MCP canary authorization denied.', status)
+        end
+
+        def execute_legacy_tool(id, params)
+          tool_name = params['name']
+          unless tool_name.is_a?(String) && tool_name.present?
+            return rpc_error(id, -32_602, 'Tool name is required.', :bad_request)
+          end
+
+          arguments = params['arguments'].is_a?(Hash) ? params['arguments'] : {}
+
+          unless legacy_execution_authorized?(params)
+            return rpc_error(id, -32_001, 'Tool execution is unavailable in transport preview.')
+          end
+
+          begin
+            data = ::Mcp::Public::Executor.call(
+              name: tool_name,
+              arguments: arguments,
+              principal: @mcp_auth_context.is_a?(Hash) ? @mcp_auth_context[:subject] : nil
+            )
+            data = ::Mcp::Public::OutputValidator.validate!(name: tool_name, payload: data)
+            rpc_result(id, {
+              content: [{ type: 'text', text: JSON.generate(data) }],
+              structuredContent: data,
+              isError: false
+            })
+          rescue ::Mcp::Public::Executor::NotAvailable
+            rpc_error(id, -32_001, 'Tool not yet available.')
+          rescue ::Mcp::Public::InputValidator::Invalid
+            rpc_error(id, -32_602, 'Invalid public tool arguments.', :bad_request)
+          rescue ::Mcp::Public::DirectoryService::NotFound
+            rpc_error(id, -32_602, 'Public company not found.', :not_found)
+          rescue ::Mcp::Public::OutputValidator::Invalid
+            rpc_error(id, -32_603, 'Public tool result validation failed.', :internal_server_error)
+          end
+        end
+
+        def legacy_execution_authorized?(params)
+          return false if ::Mcp::Canary::Configuration.enforced? && !legacy_canary_authorized?('tools/call', params)
+
+          ENV['MCP_PUBLIC_TOOLS_EXECUTION_ENABLED'] == 'true' &&
+            ENV['MCP_REMOTE_POLICY_ENABLED'] == 'true' &&
+            ENV['MCP_REMOTE_AUTH_MODE'] == 'oauth' &&
+            ENV['MCP_REMOTE_OAUTH_ENABLED'] == 'true' &&
+            @mcp_auth_context.is_a?(Hash) &&
+            @mcp_auth_context[:subject].present? &&
+            @mcp_auth_context[:client_id].present? &&
+            Array(@mcp_auth_context[:scopes]).include?('mcp:public:read')
+        end
+
+        def legacy_canary_authorized?(method, params)
+          ::Mcp::Canary::Guard.authorize!(
+            method: method, tool_name: params['name'], auth_context: @mcp_auth_context
+          )
+          true
+        rescue ::Mcp::Canary::Guard::Failure
+          false
         end
 
         def modern_request?(params)

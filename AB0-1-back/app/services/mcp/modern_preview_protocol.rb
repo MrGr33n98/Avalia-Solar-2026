@@ -20,6 +20,14 @@ module Mcp
     end
 
     def response
+      if @message['method'] == 'notifications/initialized' && !@message.key?('id')
+        params = @message['params'] || {}
+        canary_error = authorize_canary('notifications/initialized', params)
+        return canary_error if canary_error
+
+        return { status: :accepted, body: nil }
+      end
+
       id = @message['id']
       return error(nil, -32_600, 'Invalid JSON-RPC request.', :bad_request) unless @message.key?('id')
 

@@ -21,6 +21,7 @@ module Api
 
       def validate_mcp_canary_request!
         return unless ::Mcp::Canary::Configuration.enforced?
+        return if private_oauth_request?
         return head :forbidden unless params[:resource] == ::Mcp::Canary::Configuration.canonical_resource
         return unless respond_to?(:current_user) && current_user.present?
 
@@ -29,6 +30,11 @@ module Api
         return if ::Mcp::Canary::Guard.oauth_request_allowed?(client_id: client_id, subject: subject)
 
         head :forbidden
+      end
+
+      def private_oauth_request?
+        params[:resource] == ::Mcp::Oauth::Configuration.private_resource &&
+          ::Mcp::Oauth::Configuration.private_configured?
       end
     end
   end

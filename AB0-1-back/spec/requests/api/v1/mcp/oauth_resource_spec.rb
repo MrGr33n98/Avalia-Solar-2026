@@ -66,6 +66,15 @@ RSpec.describe 'MCP OAuth protected resource', type: :request do
       'bearer_methods_supported' => ['header']
     )
     expect(response.body).not_to include('PRIVATE KEY')
+
+    get '/.well-known/oauth-protected-resource'
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body).to eq(
+      'resource' => resource,
+      'authorization_servers' => [issuer],
+      'scopes_supported' => [valid_scope],
+      'bearer_methods_supported' => ['header']
+    )
   end
 
   it 'requires a bearer token and returns resource metadata link' do
