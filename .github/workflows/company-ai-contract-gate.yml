@@ -12,7 +12,11 @@ on:
       - 'AB0-1-back/db/migrate/*company_ai*'
       - 'AB0-1-back/spec/services/company_ai/**'
       - 'AB0-1-back/spec/requests/api/v1/company_ai/**'
+      - 'AB0-1-back/config/initializers/yabeda.rb'
       - 'AB0-1-front/app/dashboard/components/company-ai/**'
+      - 'AB0-1-front/app/companies/[id]/components/CompanyAiWidget.tsx'
+      - 'AB0-1-front/app/companies/[id]/components/CompanyAiWidget.spec.tsx'
+      - 'AB0-1-front/app/companies/[id]/components/CompanyProfileShell.tsx'
       - 'AB0-1-front/app/dashboard/components/EnterpriseDashboard.tsx'
       - 'AB0-1-front/config/navigation.ts'
       - 'AB0-1-front/lib/analytics/schema.ts'
@@ -99,4 +103,4 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
       - name: Company AI UI component tests
-        run: npx jest --runInBand --runTestsByPath app/dashboard/components/company-ai/CompanyAiStudio.spec.tsx app/dashboard/components/company-ai/CompanyAiTelemetry.spec.ts
+        run: npx jest --runInBand --runTestsByPath app/dashboard/components/company-ai/CompanyAiStudio.spec.tsx app/dashboard/components/company-ai/CompanyAiTelemetry.spec.ts app/companies/[id]/components/CompanyAiWidget.spec.tsx

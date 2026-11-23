@@ -18,7 +18,8 @@ module CompanyAi
           company: company, user: user, source_page: 'company_brand_page',
           vertical: 'company_ai', mode: 'bot_only', inbox_status: 'archived',
           metadata: { 'company_ai_assistant_id' => assistant.id,
-                      'company_ai_workflow_version_id' => version.id }
+                      'company_ai_workflow_version_id' => version.id,
+                      'company_ai_current_node_id' => version.definition.fetch('start_node_id') }
         )
         message = session.chat_messages.create!(
           role: 'assistant', safety_status: 'clean',

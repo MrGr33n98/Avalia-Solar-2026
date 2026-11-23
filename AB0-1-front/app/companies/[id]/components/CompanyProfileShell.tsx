@@ -28,6 +28,7 @@ const CompanyFinancing = dynamic(() => import('./CompanyFinancing'), { loading: 
 const FaqSection = dynamic(() => import('./FaqSection'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
 const ProjectsGallery = dynamic(() => import('./ProjectsGallery'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
 const MaterialsLibrary = dynamic(() => import('./MaterialsLibrary'), { loading: () => <div className="min-h-32 animate-pulse rounded-xl bg-slate-100" /> });
+const CompanyAiWidget = dynamic(() => import('./CompanyAiWidget'), { ssr: false });
 
 const MapProvider = dynamic(() => import('@/components/search/MapProvider'), { ssr: false });
 
@@ -127,6 +128,8 @@ export default function CompanyProfileShell({
               </CompanyIdentityCard>
             </div>
           </div>
+
+          <CompanyAiWidget companyId={Number(company.id)} companyName={company.name} />
 
           {/* Navegação por Abas Responsiva */}
           <CompanyProfileTabs

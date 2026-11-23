@@ -7,12 +7,19 @@ module CompanyAi
       result = WorkflowValidator.call(definition)
       raise ArgumentError, "INVALID_WORKFLOW: #{result.errors.join(',')}" unless result.valid?
 
+      @definition = definition
       @nodes = definition.fetch('nodes').index_by { |node| node.fetch('id') }
       @edges = definition.fetch('edges')
     end
 
+    attr_reader :definition
+
+    def node(node_id)
+      @nodes.fetch(node_id) { raise ArgumentError, 'UNKNOWN_NODE' }
+    end
+
     def next_node_id(current_node_id:, choice: nil, context: {})
-      node = @nodes.fetch(current_node_id) { raise ArgumentError, 'UNKNOWN_NODE' }
+      node = node(current_node_id)
       return nil if node['type'] == 'end'
 
       edges = @edges.select { |edge| edge['from'] == current_node_id }

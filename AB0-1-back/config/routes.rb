@@ -462,6 +462,7 @@ Rails.application.routes.draw do
           get :feature_access
           get :ai_capability, to: 'company_ai/capabilities#show'
           post :ai_sessions, to: 'company_ai/sessions#create'
+          post 'ai_sessions/:session_id/messages', to: 'company_ai/messages#create'
           post 'request_admin_access', to: 'companies#request_admin_access'
           get :categories
           get :catalog

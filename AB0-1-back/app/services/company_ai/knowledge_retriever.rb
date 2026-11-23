@@ -19,6 +19,13 @@ module CompanyAi
       return [] unless @company&.status == 'active'
 
       evidence = []
+      if @company.is_a?(Company)
+        evidence << {
+          id: "company:#{@company.id}", kind: 'profile', version: @company.updated_at&.iso8601,
+          name: @company.name.to_s.first(180), description: @company.description.to_s.first(1200),
+          city: @company.city.to_s.first(120), state: @company.state.to_s.first(80)
+        }
+      end
       @company.company_faqs.published_only.order(position: :asc).limit(MAX_FAQS).each do |faq|
         evidence << { id: "faq:#{faq.id}", kind: 'faq', version: faq.updated_at&.iso8601,
                       question: faq.question.to_s.first(200), answer: faq.answer.to_s.first(1200) }
