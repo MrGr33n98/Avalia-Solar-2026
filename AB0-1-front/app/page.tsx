@@ -250,8 +250,8 @@ export default async function Home() {
         </Suspense>
       </div>
 
-      {/* 3. Seis empresas em destaque com favorito e comparação */}
-      <div className="mx-auto max-w-[1320px]">
+      {/* 3. Empresas em destaque: mesmo grid horizontal do Header, da Ribbon e do Hero */}
+      <div className="mx-auto max-w-[1330px]" data-testid="home-featured-companies-layout">
         <Suspense
           fallback={<div className="h-44 w-full animate-pulse rounded-2xl bg-slate-50 mx-4 my-2" />}
         >
