@@ -32,6 +32,16 @@ Yabeda.configure do
             tags: [:status],
             comment: 'Total number of company access context requests by status'
 
+    counter :company_ai_requests_total,
+            tags: [:event, :outcome, :mode],
+            comment: 'Total de requests do Company AI por evento, resultado e modo'
+
+    histogram :company_ai_request_duration_seconds,
+              tags: [:event, :outcome],
+              unit: :seconds,
+              buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30],
+              comment: 'Latência do runtime Company AI'
+
     counter :banner_deliveries_total,
             tags: [:status, :position, :source],
             comment: 'Total de respostas de distribuição de banners'
@@ -262,6 +272,22 @@ ActiveSupport::Notifications.subscribe('mcp.quota.event') do |_name, _start, _fi
       mode: payload[:mode].to_s,
       result: payload[:result].to_s
     })
+  end
+end
+
+ActiveSupport::Notifications.subscribe('company_ai.request') do |_name, _start, _finish, _id, payload|
+  next unless defined?(Yabeda) && Yabeda.respond_to?(:ab0)
+
+  event = payload[:event].to_s
+  outcome = payload[:outcome].to_s
+  mode = payload[:mode].to_s
+  if Yabeda.ab0.respond_to?(:company_ai_requests_total)
+    Yabeda.ab0.company_ai_requests_total.increment(event:, outcome:, mode:)
+  end
+  if Yabeda.ab0.respond_to?(:company_ai_request_duration_seconds) && payload[:duration_ms]
+    Yabeda.ab0.company_ai_request_duration_seconds.measure(
+      { event:, outcome: }, payload[:duration_ms].to_f / 1_000
+    )
   end
 end
 

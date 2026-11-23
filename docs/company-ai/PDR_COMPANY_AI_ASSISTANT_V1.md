@@ -232,13 +232,13 @@ Critérios de aceite:
 - conteúdo da conversa não é enviado à telemetria;
 - estados loading, erro, vazio e handoff são compreensíveis.
 
-Estado: implementação inicial entregue; teste Jest e jornada Playwright ainda pendentes.
+Estado: widget, contrato Jest, ação de orçamento e arbitration de superfície implementados; jornada Playwright ainda pendente.
 
 ### RF-08 — Operação e auditoria
 
 O sistema deve permitir observar publicação, uso, quota, falhas, handoff e custo por empresa.
 
-Estado: auditoria e ledger básicos existem; outbox, dashboards e reconciliação assinada ainda pendentes.
+Estado: auditoria, ledger, telemetria de request/latência/fallback/quota e emissão no Outbox existente implementados; dashboard, consumidores específicos e reconciliação assinada ainda pendentes.
 
 ## 9. Requisitos não funcionais
 
@@ -352,19 +352,19 @@ Escala Fibonacci: 1, 2, 3, 5, 8, 13. Os pontos incluem implementação, testes e
 | SP-05 | Sessão pública e token assinado | Concluído | 5 |
 | SP-06 | Endpoint de mensagens, idempotência e quota | Concluído | 8 |
 | SP-07 | Retrieval público e resposta pelo gateway existente | Concluído | 8 |
-| SP-08 | Widget Brand Page e telemetria client-side | Concluído parcial | 8 |
-| SP-09 | Arbitration Company AI/MobiVolt | Pendente | 5 |
+| SP-08 | Widget Brand Page e telemetria client-side | Concluído | 8 |
+| SP-09 | Arbitration Company AI/MobiVolt | Concluído | 5 |
 | SP-10 | Reconciliação assinada de tokens e custo | Pendente | 8 |
 | SP-11 | Handoff completo com calendário e Live Inbox | Pendente | 8 |
 | SP-12 | Ingestão aprovada PDF/CSV/XLSX e provenance | Pendente | 13 |
-| SP-13 | Outbox, dashboards e eventos server-side | Pendente | 8 |
+| SP-13 | Outbox, dashboards e eventos server-side | Concluído parcial | 8 |
 | SP-14 | Hardening antiabuso, concorrência e red-team | Pendente | 8 |
 | SP-15 | Playwright responsivo e jornada autenticada | Pendente | 8 |
 | SP-16 | Load test, SLO, rollback drill e release evidence | Pendente | 8 |
-| SP-17 | Jest do widget e correção do ambiente de lockfile | Parcial | 3 |
+| SP-17 | Jest do widget e correção do ambiente de lockfile | Concluído | 3 |
 | SP-18 | Piloto, consentimento, retenção e revisão de privacidade | Pendente | 5 |
 
-Estimativa restante no quadro de story points, incluindo o item parcial: **74 SP**. É uma estimativa de backlog, não um prazo garantido. A task list abaixo decompõe esse trabalho e não deve ser somada novamente. A maior incerteza está em ingestão de documentos, reconciliação do provedor e operação do Live Inbox.
+Estimativa restante no quadro de story points após concluir SP-09 e SP-17: **58 SP**. SP-13 permanece parcial e não teve redução especulativa de pontos. É uma estimativa de backlog, não um prazo garantido. A task list abaixo decompõe esse trabalho e não deve ser somada novamente. A maior incerteza está em ingestão de documentos, reconciliação do provedor e operação do Live Inbox.
 
 ## 13. Backlog priorizado / task list
 
@@ -372,10 +372,10 @@ Estimativa restante no quadro de story points, incluindo o item parcial: **74 SP
 
 | ID | Tarefa | Dependência | SP | Aceite | Estado |
 |---|---|---|---:|---|---|
-| W0-01 | Corrigir/normalizar dependências SWC do frontend em ambiente CI | Maintainer/lockfile | 2 | Jest roda sem patch automático do Next | Pendente |
-| W0-02 | Criar teste Jest do widget para capability, sessão, header e primeira pergunta | W0-01 | 3 | Teste verde sem mock de produção | Parcial |
-| W0-03 | Implementar arbitration entre Company AI e chat geral | RF-01 | 5 | Nunca há dois widgets concorrentes; fallback geral permanece | Pendente |
-| W0-04 | Adicionar logs/metrics server-side de request, latency, fallback e quota | W0-06 | 5 | Dashboard técnico sem conteúdo de conversa | Pendente |
+| W0-01 | Corrigir/normalizar dependências SWC do frontend em ambiente CI | Maintainer/lockfile | 2 | Jest roda sem patch automático do Next | Concluído local; CI pendente |
+| W0-02 | Criar teste Jest do widget para capability, sessão, header e primeira pergunta | W0-01 | 3 | Teste verde sem mock de produção | Concluído |
+| W0-03 | Implementar arbitration entre Company AI e chat geral | RF-01 | 5 | Nunca há dois widgets concorrentes; fallback geral permanece | Concluído |
+| W0-04 | Adicionar logs/metrics server-side de request, latency, fallback e quota | W0-06 | 5 | Dashboard técnico sem conteúdo de conversa | Concluído parcial; dashboard pendente |
 | W0-05 | Definir consentimento, retenção e deleção de mensagens | Legal/Produto | 3 | Política aprovada e testes de retenção | Pendente |
 | W0-06 | Revisar segurança com threat model e red-team de prompt injection | W0-03 | 8 | Casos negativos documentados e zero vazamento | Pendente |
 
@@ -385,8 +385,8 @@ Estimativa restante no quadro de story points, incluindo o item parcial: **74 SP
 |---|---|---|---:|---|---|
 | W1-01 | Implementar reconciliação de tokens/custo assinada pelo provider | Gateway/contrato provider | 8 | Cada request tem custo verificável e não duplica cobrança | Pendente |
 | W1-02 | Finalizar handoff com disponibilidade real, agente e calendário | Live Inbox | 8 | Sessão chega ao agente e retorna estado auditável | Pendente |
-| W1-03 | Integrar ação de orçamento com evento/lead after-commit | Lead Wizard | 5 | `lead_created` relaciona sessão sem depender de PostHog | Pendente |
-| W1-04 | Criar outbox de eventos Company AI | Banco/worker | 8 | Retry, dedupe e entrega observável | Pendente |
+| W1-03 | Integrar ação de orçamento com evento/lead after-commit | Lead Wizard | 5 | `lead_created` relaciona sessão sem depender de PostHog | Parcial; wizard aberto, vínculo server-side pendente |
+| W1-04 | Criar outbox de eventos Company AI | Banco/worker | 8 | Retry, dedupe e entrega observável | Parcial; emissão usa Outbox existente, consumidores/dedupe específico pendentes |
 | W1-05 | Criar dashboard de funil e custo por empresa | W0-04/W1-04 | 5 | Viewed -> opened -> accepted -> answer -> quote -> lead | Pendente |
 
 ### Wave 2 — conhecimento e escala

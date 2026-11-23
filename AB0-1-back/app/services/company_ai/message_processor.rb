@@ -54,7 +54,13 @@ module CompanyAi
     end
 
     def call
-      with_usage_release { process_call }
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      result = with_usage_release { process_call }
+      CompanyAi::Telemetry.record_result(result:, session: @session, request_id: normalized_request_id, started_at:)
+      result
+    rescue StandardError => e
+      CompanyAi::Telemetry.record_error(error: e, session: @session, request_id: normalized_request_id, started_at:)
+      raise
     end
 
     def process_call
@@ -358,9 +364,7 @@ module CompanyAi
       UsageLedger.settle!(entry: @usage_entry, input_tokens:, output_tokens:, cost_usd: cost, model: response[:model])
     end
 
-    def monthly_limit
-      ENV.fetch('COMPANY_AI_MONTHLY_MESSAGE_LIMIT', DEFAULT_MONTHLY_LIMIT.to_s).to_i
-    end
+    def monthly_limit = ENV.fetch('COMPANY_AI_MONTHLY_MESSAGE_LIMIT', DEFAULT_MONTHLY_LIMIT.to_s).to_i
 
     def normalized_request_id
       return @request_id if @request_id.match?(/\A[a-zA-Z0-9_-]{8,100}\z/)
