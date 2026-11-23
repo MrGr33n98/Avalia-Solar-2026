@@ -183,6 +183,7 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
             NEXT_PUBLIC_ENABLE_ANALYTICS=false
             NEXT_PUBLIC_GROUPS_ENABLED=${{ vars.NEXT_PUBLIC_GROUPS_ENABLED || 'false' }}
+            NEXT_PUBLIC_COMPANY_AI_STUDIO_ENABLED=${{ vars.NEXT_PUBLIC_COMPANY_AI_STUDIO_ENABLED || 'false' }}
             NEXT_PUBLIC_ENABLE_REALTIME=${{ vars.STAGING_ENABLE_REALTIME || 'false' }}
             NEXT_PUBLIC_GTM_ID=
             NEXT_PUBLIC_BETTER_AUTH_URL=${{ vars.STAGING_SITE_URL || 'https://staging.avaliasolar.com.br' }}
