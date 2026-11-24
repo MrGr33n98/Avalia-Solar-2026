@@ -34,6 +34,12 @@ RUN rm -rf /usr/local/bundle && mv /usr/local/bundle_backup /usr/local/bundle
 # 3. Cópia do código fonte
 COPY AB0-1-back/ ./
 
+# 3b. Compilação dos widgets MCP Interactive UI (singlefile HTML estático em public/mcp-ui)
+COPY packages/mcp-ui/package.json packages/mcp-ui/package-lock.json /tmp/mcp-ui/
+RUN cd /tmp/mcp-ui && npm ci --no-audit --no-fund
+COPY packages/mcp-ui/ /tmp/mcp-ui/
+RUN cd /tmp/mcp-ui && MCP_UI_OUT_DIR=/app/public/mcp-ui npm run build && rm -rf /tmp/mcp-ui
+
 # 4. Compilação de Assets
 ENV RAILS_ENV=production \
     NODE_ENV=production \

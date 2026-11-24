@@ -213,6 +213,27 @@ jobs:
           bundler-cache: true
           working-directory: ./AB0-1-back
 
+      - name: Setup Node for MCP UI resource specs
+        if: >-
+          ${{ steps.rspec-scope.outputs.scope == 'full' ||
+              contains(steps.rspec-scope.outputs.specs, 'spec/requests/api/v1/mcp/ui_resources_spec.rb') ||
+              contains(steps.rspec-scope.outputs.specs, 'spec/services/mcp/ui/resource_registry_spec.rb') }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/mcp-ui/package-lock.json
+
+      - name: Build MCP UI bundles for RSpec
+        if: >-
+          ${{ steps.rspec-scope.outputs.scope == 'full' ||
+              contains(steps.rspec-scope.outputs.specs, 'spec/requests/api/v1/mcp/ui_resources_spec.rb') ||
+              contains(steps.rspec-scope.outputs.specs, 'spec/services/mcp/ui/resource_registry_spec.rb') }}
+        working-directory: packages/mcp-ui
+        run: |
+          npm ci
+          npm run build
+
       - name: Run RSpec
         if: steps.rspec-scope.outputs.scope != 'none'
         working-directory: ./AB0-1-back

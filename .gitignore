@@ -36,6 +36,10 @@ scratch/
 *.DISABLED_BACKUP
 infra/MCP_CONFIG.json
 AB0-1-front/public/_*.html
+AB0-1-back/public/mcp-ui/*.html
+AB0-1-back/public/mcp-ui/manifest.json
+packages/mcp-ui/test-results/
+packages/mcp-ui/playwright-report/
 
 # AI Agent Workspaces & Harnesses
 .adal/

@@ -38,7 +38,12 @@ on:
       - 'AB0-1-back/spec/services/mcp/remote_quota_policy_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_quota_spec.rb'
       - 'AB0-1-back/app/services/mcp/public/**'
+      - 'AB0-1-back/app/services/mcp/ui/**'
       - 'AB0-1-back/spec/services/mcp/public/**'
+      - 'AB0-1-back/spec/services/mcp/ui/**'
+      - 'AB0-1-back/spec/requests/api/v1/mcp/ui_resources_spec.rb'
+      - 'packages/mcp-ui/**'
+      - 'Dockerfile.backend'
       - 'AB0-1-back/spec/requests/api/v1/mcp/public_directory_execution_spec.rb'
       - 'AB0-1-back/app/services/mcp/remote_telemetry.rb'
       - 'AB0-1-back/spec/services/mcp/remote_telemetry_spec.rb'
@@ -98,6 +103,16 @@ jobs:
           ruby-version: '3.2.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ./packages/mcp-ui/package-lock.json
+      - name: Build and verify MCP Interactive UI bundles
+        working-directory: ./packages/mcp-ui
+        run: |
+          npm ci
+          npm run verify
       - name: Validate Ruby syntax
         run: |
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb
@@ -122,6 +137,8 @@ jobs:
           ruby -c app/services/mcp/canary/configuration.rb
           ruby -c app/services/mcp/canary/guard.rb
           ruby -c app/services/mcp/public/output_validator.rb
+          ruby -c app/services/mcp/ui/resource_registry.rb
+          ruby -c app/services/mcp/ui/text_summary_formatter.rb
           ruby -c ../.github/scripts/mcp_staging_smoke.rb
           ruby -c ../.github/scripts/mcp_private_staging_smoke.rb
           python3 -m py_compile ../scripts/mcp/interop/python_sdk_v2_smoke.py
@@ -152,6 +169,8 @@ jobs:
             spec/requests/api/v1/mcp/c4_oauth_end_to_end_spec.rb \
             spec/services/mcp/remote_quota_policy_spec.rb \
             spec/services/mcp/public/*_spec.rb \
+            spec/services/mcp/ui/*_spec.rb \
+            spec/requests/api/v1/mcp/ui_resources_spec.rb \
             spec/services/mcp/remote_telemetry_spec.rb \
             spec/services/mcp/private/telemetry_spec.rb \
             spec/services/mcp/canary/*_spec.rb \

@@ -43,6 +43,11 @@ module Mcp
         case method
         when 'server/discover', 'initialize', 'ping', 'tools/list', 'notifications/initialized'
           true
+        when 'resources/list', 'resources/read'
+          return true if ::Mcp::Ui::ResourceRegistry.enabled?
+
+          emit_security_event('canary_guard', 'method_not_allowed')
+          raise Failure, :method_not_allowed
         when 'tools/call'
           unless Configuration.execution_enabled?
             emit_security_event('canary_guard', 'execution_disabled')

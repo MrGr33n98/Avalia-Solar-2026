@@ -74,6 +74,13 @@ services:
       MCP_PRIVATE_ALLOWED_ORIGINS: ${MCP_STAGING_ALLOWED_ORIGINS:-}
       MCP_CANARY_ENABLED: "true"
       MCP_CANARY_PHASE: "read_only"
+      MCP_UI_ENABLED: "true"
+      MCP_UI_SEARCH_ENABLED: "true"
+      MCP_UI_PROFILE_ENABLED: "true"
+      MCP_UI_REPUTATION_ENABLED: "true"
+      MCP_UI_COMPARE_ENABLED: "true"
+      MCP_UI_CATEGORIES_ENABLED: "true"
+      MCP_UI_RESOURCE_DOMAINS: "https://mcp-staging.avaliasolar.com.br,https://www.avaliasolar.com.br"
       MCP_CANARY_ALLOWED_CLIENT_IDS: ${MCP_CANARY_ALLOWED_CLIENT_IDS:-OVJY8XT0x82_d8DuGF-Es4h-tbOWoHgsCRDYeGuvxpM}
       MCP_CANARY_ALLOWED_SUBJECTS: ${MCP_CANARY_ALLOWED_SUBJECTS:-user:1,user:2,user:3,user:4,user:5,user:6,user:7,user:8,user:9,user:10}
     depends_on:

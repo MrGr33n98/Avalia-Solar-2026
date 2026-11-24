@@ -30,7 +30,10 @@ module Mcp
         return nil unless entry
 
         # Prevent client callers from mutating canonical nested tool schemas.
-        JSON.parse(JSON.generate(entry.fetch('public')))
+        definition = JSON.parse(JSON.generate(entry.fetch('public')))
+        ui_meta = Mcp::Ui::ResourceRegistry.tool_meta(name)
+        definition['_meta'] = ui_meta if ui_meta
+        definition
       end
 
       def names

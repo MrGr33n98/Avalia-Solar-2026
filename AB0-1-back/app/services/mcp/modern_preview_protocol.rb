@@ -64,9 +64,10 @@ module Mcp
       when 'server/discover'
         return error(id, -32_602, 'Unexpected discovery parameters.', :bad_request) unless (params.keys - ['_meta']).empty?
 
+        capabilities = ::Mcp::Ui::ResourceRegistry.enabled? ? { tools: {}, resources: { listChanged: false } } : { tools: {} }
         success(id, {
           supportedVersions: [VERSION, LEGACY_VERSION],
-          capabilities: { tools: {} },
+          capabilities: capabilities,
           _meta: { 'io.modelcontextprotocol/serverInfo': { name: 'avalia-solar-mcp-preview', version: '0.2.0' } },
           instructions: 'Private preview only. Tool execution is disabled until OAuth authorization is implemented.',
           ttlMs: 0, cacheScope: 'private'
@@ -76,6 +77,10 @@ module Mcp
         return error(id, -32_602, 'Unsupported pagination cursor.', :bad_request) if params['cursor'].present?
 
         success(id, { tools: Mcp::PublicToolRegistry.list, ttlMs: 0, cacheScope: 'private' })
+      when 'resources/list'
+        handle_resources_list(id, params)
+      when 'resources/read'
+        handle_resources_read(id, params)
       when 'tools/call'
         return error(id, -32_001, 'Tool execution is unavailable in transport preview.') unless execution_authorized?
 
@@ -85,10 +90,14 @@ module Mcp
             principal: @auth_context.fetch(:subject)
           )
           data = ::Mcp::Public::OutputValidator.validate!(name: params['name'], payload: data)
-          success(id, {
-            content: [{ type: 'text', text: JSON.generate(data) }],
+          summary = ::Mcp::Ui::TextSummaryFormatter.call(name: params['name'], payload: data)
+          payload = {
+            content: [{ type: 'text', text: summary }],
             structuredContent: data, isError: false
-          })
+          }
+          ui_meta = ::Mcp::Ui::ResourceRegistry.tool_meta(params['name'])
+          payload[:_meta] = ui_meta if ui_meta
+          success(id, payload)
         rescue ::Mcp::Public::Executor::NotAvailable
           error(id, -32_001, 'Tool not yet available.')
         rescue ::Mcp::Public::InputValidator::Invalid
@@ -104,6 +113,27 @@ module Mcp
     end
 
     private
+
+    def handle_resources_list(id, params)
+      return error(id, -32_601, 'Method not found.', :not_found) unless ::Mcp::Ui::ResourceRegistry.enabled?
+      unless (params.keys - %w[_meta cursor]).empty?
+        return error(id, -32_602, 'Unexpected resources/list parameters.', :bad_request)
+      end
+
+      success(id, { resources: ::Mcp::Ui::ResourceRegistry.list, ttlMs: 0, cacheScope: 'private' })
+    end
+
+    def handle_resources_read(id, params)
+      return error(id, -32_601, 'Method not found.', :not_found) unless ::Mcp::Ui::ResourceRegistry.enabled?
+
+      uri = params['uri']
+      return error(id, -32_602, 'Resource URI is required.', :bad_request) unless uri.is_a?(String) && uri.present?
+
+      content = ::Mcp::Ui::ResourceRegistry.read(uri)
+      return error(id, -32_602, 'Resource not found.', :not_found) unless content
+
+      success(id, { contents: [content], ttlMs: 0, cacheScope: 'private' })
+    end
 
     def execution_authorized?
       return false if ::Mcp::Canary::Configuration.enforced? && !canary_authorized?('tools/call', @message.fetch('params', {}))

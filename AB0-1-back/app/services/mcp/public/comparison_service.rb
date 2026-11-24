@@ -41,6 +41,7 @@ module Mcp
               {
                 id: company.id, name: company.name, slug: company.slug,
                 profile_url: "#{PROFILE_ORIGIN}/companies/#{company.slug}",
+                logo_url: safe_logo_url(company),
                 verification_state: company.verified? ? 'platform_verified' : 'unverified'
               }
             end,
@@ -56,6 +57,13 @@ module Mcp
       end
 
       private
+
+      def safe_logo_url(company)
+        url = company.logo_url.to_s.strip
+        url.start_with?('https://') ? url : nil
+      rescue StandardError
+        nil
+      end
 
       def field_value(criterion, company)
         case criterion
