@@ -143,7 +143,7 @@ module Mcp
         private
 
         def profile_v2_enabled?
-          ENV['MCP_BRAND_PROFILE_HERO_ENABLED'] == 'true'
+          ENV['MCP_BRAND_PROFILE_HERO_ENABLED'] == 'true' || ENV['MCP_BRAND_PROFILE_PORTFOLIO_ENABLED'] == 'true'
         end
 
         def surface_for(name)

@@ -23,6 +23,7 @@ export interface ProfileViewProps {
   onRetry?: () => void;
   onBack?: () => void;
   hero?: React.ReactNode;
+  portfolio?: React.ReactNode;
   onOpenReputation?: (companyId: number, companyName: string, state: 'platform_verified' | 'unverified') => void;
   onOpenExternal?: (url: string, companyId: number) => void;
 }
@@ -34,6 +35,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onRetry,
   onBack,
   hero,
+  portfolio,
   onOpenReputation,
   onOpenExternal,
 }) => {
@@ -139,6 +141,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             ) : null}
           </div>
         ) : null}
+
+        {portfolio}
 
         {company.categories.length > 0 ? (
           <div className="as-stack" style={{ gap: '6px' }}>

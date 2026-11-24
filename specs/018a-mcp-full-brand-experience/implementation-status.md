@@ -17,3 +17,11 @@ Base: 93a8e2f55d7771e3c81e1ef3d33202b3cecde52e. Escopo exclusivamente público e
 - Flag conectada ao compose de produção, staging, .env.example e workflow CD, com padrão false. Ativação efetiva depende do ambiente e aprovação posterior. Não modifica o rollout comercial existente.
 - Testes de descoberta, leitura, kill switch e passagem da flag adicionados. CI deste incremento pendente.
 - Search e Categories estavam em 119,4/119,8 KiB. A paridade do hero nesses bundles permanece pendente até otimização comprovada, sem elevar o limite.
+
+## Incremento 3A — prévia pública de portfólio
+
+- Flag independente `MCP_BRAND_PROFILE_PORTFOLIO_ENABLED=false` com passagem em compose e CD. Quando ativa, a descoberta do perfil usa a URI v2.
+- Reuso de CompanyProject.published e DigitalAsset.published (status published + processing ready), gate projects_showcase, isolamento company_id, máximo 3 projetos com 1 imagem cada, ausência/falha/indisponibilidade distintas. URLs absolutas HTTPS somente nas origens configuradas no CSP.
+- Card standalone responsivo com capacidade, localização, tecnologia, descrição e fallback de imagem. Preview parseado separadamente para não invalidar o perfil básico.
+- Não equivale às tools list_company_projects/show_company_project: paginação, detalhes, galeria de cada projeto, busca interna, homologação e testes de imagem real seguem pendentes. Sem alterações em produção.
+- Novos RSpec/Vitest escritos. CI e orçamento de bundles ainda precisam ser confirmados.

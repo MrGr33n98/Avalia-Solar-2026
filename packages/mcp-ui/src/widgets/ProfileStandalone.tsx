@@ -8,6 +8,7 @@ import { useHostBridge } from '../bridge/host-adapter';
 import { recordMcpUiEvent } from '../analytics/telemetry';
 import { ProfileView } from './ProfileView';
 import { BrandHero } from './BrandHero';
+import { ProjectPortfolioPreview, readPortfolioPreview } from './ProjectPortfolioPreview';
 import { ReputationView } from './ReputationView';
 
 export const ProfileStandaloneView: React.FC = () => {
@@ -22,6 +23,8 @@ export const ProfileStandaloneView: React.FC = () => {
     const parsed = ShowIntegratorProfilePayloadSchema.safeParse(rawToolOutput);
     return parsed.success ? parsed.data : null;
   }, [rawToolOutput]);
+
+  const portfolio = useMemo(() => readPortfolioPreview(rawToolOutput), [rawToolOutput]);
 
   useEffect(() => {
     if (payload) {
@@ -51,6 +54,7 @@ export const ProfileStandaloneView: React.FC = () => {
       hero={payload?.data.integrator.hero_carousel ? (
         <BrandHero key={payload.data.integrator.id} carousel={payload.data.integrator.hero_carousel} />
       ) : undefined}
+      portfolio={portfolio ? <ProjectPortfolioPreview portfolio={portfolio} /> : undefined}
       loading={status === 'loading'}
       errorMessage={errorMessage}
       onOpenReputation={async (companyId, name, state) => {
