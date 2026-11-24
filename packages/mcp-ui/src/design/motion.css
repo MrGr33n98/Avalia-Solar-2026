@@ -1,0 +1,39 @@
+.as-transition {
+  transition: background-color 120ms ease-out, border-color 120ms ease-out, opacity 120ms ease-out;
+}
+
+.as-btn:active:not(:disabled) {
+  opacity: 0.88;
+}
+
+.as-expand-panel {
+  transition: opacity 160ms ease-out;
+}
+
+@keyframes as-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.as-skeleton-block {
+  background: var(--as-bg-muted);
+  border-radius: var(--as-radius-sm);
+  animation: as-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-transition,
+  .as-expand-panel {
+    transition: none;
+  }
+  .as-skeleton-block {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
