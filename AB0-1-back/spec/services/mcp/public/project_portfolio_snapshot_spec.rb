@@ -23,6 +23,7 @@ RSpec.describe Mcp::Public::ProjectPortfolioSnapshot do
     expect(result[:items].size).to eq(3)
     expect(result[:items].map { |item| item[:id] } - public_projects.map(&:id)).to be_empty
     expect(result[:items].map { |item| item[:cover_url] }).to eq([nil, nil, nil])
+    expect(result[:items].map { |item| item[:gallery_images] }).to eq([[], [], []])
   end
 
   it 'returns an empty ready state for an eligible company with no projects' do

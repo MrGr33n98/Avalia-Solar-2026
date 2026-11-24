@@ -9,6 +9,7 @@ import { recordMcpUiEvent } from '../analytics/telemetry';
 import { ProfileView } from './ProfileView';
 import { BrandHero } from './BrandHero';
 import { ProjectPortfolioPreview, readPortfolioPreview } from './ProjectPortfolioPreview';
+import { PublicMediaGallery, readGalleryPreview } from './PublicMediaGallery';
 import { ReputationView } from './ReputationView';
 
 export const ProfileStandaloneView: React.FC = () => {
@@ -25,6 +26,7 @@ export const ProfileStandaloneView: React.FC = () => {
   }, [rawToolOutput]);
 
   const portfolio = useMemo(() => readPortfolioPreview(rawToolOutput), [rawToolOutput]);
+  const gallery = useMemo(() => readGalleryPreview(rawToolOutput), [rawToolOutput]);
 
   useEffect(() => {
     if (payload) {
@@ -54,7 +56,12 @@ export const ProfileStandaloneView: React.FC = () => {
       hero={payload?.data.integrator.hero_carousel ? (
         <BrandHero key={payload.data.integrator.id} carousel={payload.data.integrator.hero_carousel} />
       ) : undefined}
-      portfolio={portfolio ? <ProjectPortfolioPreview portfolio={portfolio} /> : undefined}
+      portfolio={
+        <>
+          {portfolio ? <ProjectPortfolioPreview key={payload?.data.integrator.id} portfolio={portfolio} /> : null}
+          {gallery ? <PublicMediaGallery key={payload?.data.integrator.id} gallery={gallery} /> : null}
+        </>
+      }
       loading={status === 'loading'}
       errorMessage={errorMessage}
       onOpenReputation={async (companyId, name, state) => {

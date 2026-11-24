@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 import { sanitizeExternalHttpsUrl } from '../bridge/capabilities';
+import { GalleryImages } from './PublicMediaGallery';
 
 const ProjectSchema = z.object({
   id: z.number().int().positive(),
@@ -13,6 +14,7 @@ const ProjectSchema = z.object({
   capacity_value: z.number().positive().nullable(),
   capacity_unit: z.string(),
   cover_url: z.string().nullable(),
+  gallery_images: z.array(z.string()).max(4).optional(),
 });
 
 export const PortfolioPreviewSchema = z.object({
@@ -66,6 +68,12 @@ export function ProjectPortfolioPreview({ portfolio }: { portfolio: Portfolio })
               ) : null}
               {project.technology ? <span className="as-meta as-break">{project.technology}</span> : null}
               {project.summary ? <p className="as-meta as-break" style={{ margin: 0 }}>{project.summary}</p> : null}
+              {project.gallery_images?.length ? (
+                <details>
+                  <summary className="as-meta" style={{ cursor: 'pointer', minHeight: 44 }}>Fotos do projeto</summary>
+                  <GalleryImages images={project.gallery_images} />
+                </details>
+              ) : null}
             </article>
           ))}
         </div>

@@ -25,3 +25,11 @@ Base: 93a8e2f55d7771e3c81e1ef3d33202b3cecde52e. Escopo exclusivamente público e
 - Card standalone responsivo com capacidade, localização, tecnologia, descrição e fallback de imagem. Preview parseado separadamente para não invalidar o perfil básico.
 - Não equivale às tools list_company_projects/show_company_project: paginação, detalhes, galeria de cada projeto, busca interna, homologação e testes de imagem real seguem pendentes. Sem alterações em produção.
 - Novos RSpec/Vitest escritos. CI e orçamento de bundles ainda precisam ser confirmados.
+
+## Incremento 3B/4A — galerias limitadas
+
+- Gate MCP de bc54d0d aprovado: 229 exemplos sem falhas; perfil 117,3 KiB gzip.
+- Prévia de cada projeto passa a oferecer até 4 fotos publicadas/ready da própria empresa, com ampliação local. Não inclui ainda detalhe completo ou tools paginadas.
+- Galeria institucional opcional: até 6 fotos do accessor público e 3 vídeos YouTube publicados, link externo via host; sem iframe de terceiros.
+- Flag MCP_BRAND_PROFILE_GALLERY_ENABLED default false, integrada a compose/CD. URI v2 quando qualquer flag 018A estiver ativa.
+- Allowlist de mídia HTTPS compartilhada, testes de estado/publicação/URLs/expansão escritos. CI deste commit pendente. Search/Categories não foram ampliados.
