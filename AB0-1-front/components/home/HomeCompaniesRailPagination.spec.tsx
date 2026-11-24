@@ -4,11 +4,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Company } from '@/lib/api';
 import { HomeCompaniesRail } from './HomeCompaniesRail';
 import { publicCompaniesApi } from '@/lib/api-public';
+import { LocationProvider } from '@/contexts/LocationContext';
+import { companiesApiSafe } from '@/lib/api-client';
 
 jest.mock('@/lib/api-public', () => ({
   publicCompaniesApi: {
     getAllPaginated: jest.fn(),
   },
+}));
+
+jest.mock('@/lib/api-client', () => ({
+  ...jest.requireActual('@/lib/api-client'),
+  companiesApiSafe: { ...jest.requireActual('@/lib/api-client').companiesApiSafe, getCities: jest.fn() },
 }));
 
 jest.mock('@/lib/analytics/consolidated', () => ({
@@ -211,5 +218,87 @@ describe('HomeCompaniesRail - Paginação de Empresas em Destaque', () => {
     expect(
       screen.queryByRole('navigation', { name: 'Navegação entre páginas de empresas em destaque' })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('HomeCompaniesRail — filtros geográficos PWA', () => {
+  const originalMatchMedia = window.matchMedia;
+  const originalUrl = window.location.pathname + window.location.search;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    window.localStorage.clear();
+    document.cookie = 'user_state=; path=/; max-age=0';
+    document.cookie = 'user_city=; path=/; max-age=0';
+    window.history.replaceState({}, '', '/');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true, writable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 639px)', media: query,
+        addEventListener: jest.fn(), removeEventListener: jest.fn(),
+      })),
+    });
+    (companiesApiSafe.getCities as jest.Mock).mockImplementation(async (state: string) =>
+      state === 'MT' ? ['Cuiabá', 'Rondonópolis'] : ['Florianópolis', 'Joinville']
+    );
+    (publicCompaniesApi.getAllPaginated as jest.Mock).mockImplementation(async (params) => ({
+      data: params.state === 'SC' && params.city === 'Florianópolis' ? [] : [makeCompany(42, 'Solar MT', 'MT')],
+      meta: { pagination: { page: 1, total_pages: 1, total: 1 } },
+    }));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: originalMatchMedia });
+    window.localStorage.clear();
+    document.cookie = 'user_state=; path=/; max-age=0';
+    document.cookie = 'user_city=; path=/; max-age=0';
+    window.history.replaceState({}, '', originalUrl);
+  });
+
+  it('aplica UF/cidade, limpa a cidade ao trocar UF e preserva os filtros em Ver todas, sem fallback nacional', async () => {
+    renderWithClient(
+      <LocationProvider defaultState="MT">
+        <HomeCompaniesRail companies={[makeCompany(42, 'Solar MT', 'MT')]} />
+      </LocationProvider>
+    );
+    const bar = screen.getByTestId('home-geo-filter-bar');
+    expect(bar).toHaveClass('row-start-2', 'h-8', 'sm:hidden');
+    expect(companiesApiSafe.getCities).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecionar estado' }));
+    const state = screen.getByRole('combobox', { name: 'Estado' });
+    const city = screen.getByRole('combobox', { name: 'Cidade' });
+    await screen.findByRole('option', { name: 'Cuiabá' });
+    fireEvent.change(city, { target: { value: 'Cuiabá' } });
+    fireEvent.change(state, { target: { value: 'SC' } });
+    expect(city).toHaveValue('');
+    expect(screen.queryByRole('option', { name: 'Cuiabá' })).not.toBeInTheDocument();
+    await screen.findByRole('option', { name: 'Florianópolis' });
+    fireEvent.change(city, { target: { value: 'Florianópolis' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }));
+
+    await waitFor(() => {
+      expect(publicCompaniesApi.getAllPaginated).toHaveBeenCalledWith(
+        expect.objectContaining({ state: 'SC', city: 'Florianópolis', page: 1 }),
+        expect.anything()
+      );
+    });
+    expect(await screen.findByText('Nenhuma empresa encontrada nesta localização. Altere os filtros.')).toBeInTheDocument();
+    expect(screen.queryByTitle('Solar MT')).not.toBeInTheDocument();
+    const href = screen.getByRole('link', { name: /Ver todas/i }).getAttribute('href') || '';
+    const url = new URL(href, window.location.origin);
+    expect(url.searchParams.get('state')).toBe('SC');
+    expect(url.searchParams.get('city')).toBe('Florianópolis');
+    expect(window.localStorage.getItem('user_city')).toBe('Florianópolis');
+    expect(screen.getByRole('button', { name: 'Selecionar cidade' })).toHaveTextContent('Florianópolis');
+  });
+
+  it('não consulta cidades nem abre o seletor antes da interação', () => {
+    renderWithClient(
+      <LocationProvider defaultState="MT">
+        <HomeCompaniesRail companies={[makeCompany(42, 'Solar MT', 'MT')]} />
+      </LocationProvider>
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(companiesApiSafe.getCities).not.toHaveBeenCalled();
   });
 });
