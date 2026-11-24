@@ -59,8 +59,31 @@ RSpec.describe Mcp::Ui::ResourceRegistry do
     allow(ENV).to receive(:[]).with('MCP_UI_COMPARE_ENABLED').and_return('false')
 
     search_meta = described_class.tool_meta('list_integrators')
-    expect(search_meta).to include('ui' => { 'resourceUri' => 'ui://avalia-solar/search/v1.html' })
+    expect(search_meta).to include(
+      'ui' => { 'resourceUri' => 'ui://avalia-solar/search/v1.html', 'visibility' => %w[model app] },
+      'ui/resourceUri' => 'ui://avalia-solar/search/v1.html',
+      'openai/outputTemplate' => 'ui://avalia-solar/search/v1.html',
+      'openai/widgetAccessible' => true,
+      'openai/widgetPrefersBorder' => true
+    )
+    expect(search_meta['openai/widgetDescription']).to be_present
     expect(described_class.tool_meta('compare_integrators')).to be_nil
     expect(described_class.read('ui://avalia-solar/compare/v1.html')).to be_nil
+  end
+
+  it 'builds MCP UI server capabilities only when UI is enabled' do
+    allow(ENV).to receive(:[]).with('MCP_UI_ENABLED').and_return('false')
+    expect(described_class.server_capabilities).to eq({ tools: {} })
+
+    allow(ENV).to receive(:[]).with('MCP_UI_ENABLED').and_return('true')
+    expect(described_class.server_capabilities).to eq(
+      tools: {},
+      resources: { listChanged: false },
+      extensions: {
+        'io.modelcontextprotocol/ui' => {
+          mimeTypes: ['text/html;profile=mcp-app']
+        }
+      }
+    )
   end
 end

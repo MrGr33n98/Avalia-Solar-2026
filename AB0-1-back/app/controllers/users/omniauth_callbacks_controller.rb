@@ -36,26 +36,38 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def handle_oauth(provider_name)
     @user = User.from_omniauth(request.env['omniauth.auth'])
-
-    unless @user.persisted?
-      message = CGI.escape("Falha ao autenticar com #{provider_name}.")
-      return redirect_to "#{frontend_url}/auth/callback?status=error&message=#{message}",
-                         allow_other_host: true
-    end
-
-    if @user.company_user? && !@user.approved_by_admin?
-      return redirect_to "#{frontend_url}/auth/callback?status=pending_approval",
-                         allow_other_host: true
-    end
-
-    unless @user.active?
-      reason = CGI.escape(@user.status.to_s)
-      return redirect_to "#{frontend_url}/auth/callback?status=inactive&reason=#{reason}",
-                         allow_other_host: true
-    end
+    blocked_url = blocked_oauth_redirect_url(@user, provider_name)
+    return redirect_to(blocked_url, allow_other_host: true) if blocked_url
 
     issue_oauth_tokens(@user, provider_name)
+    return_to = stored_location_for(:user)
+    if oauth_authorize_return_to?(return_to)
+      sign_in(:user, @user)
+      return redirect_to(return_to, allow_other_host: false)
+    end
+
     redirect_to "#{frontend_url}/auth/callback?status=success", allow_other_host: true
+  end
+
+  def blocked_oauth_redirect_url(user, provider_name)
+    unless user.persisted?
+      message = CGI.escape("Falha ao autenticar com #{provider_name}.")
+      return "#{frontend_url}/auth/callback?status=error&message=#{message}"
+    end
+    return "#{frontend_url}/auth/callback?status=pending_approval" if user.company_user? && !user.approved_by_admin?
+    return nil if user.active? && user.active_for_authentication?
+
+    reason = CGI.escape(user.status.to_s)
+    "#{frontend_url}/auth/callback?status=inactive&reason=#{reason}"
+  end
+
+  def oauth_authorize_return_to?(location)
+    return false unless location.is_a?(String) && location.start_with?('/oauth/authorize')
+
+    uri = URI.parse(location)
+    uri.scheme.nil? && uri.host.nil? && uri.path == '/oauth/authorize'
+  rescue URI::InvalidURIError
+    false
   end
 
   def issue_oauth_tokens(user, provider_name)

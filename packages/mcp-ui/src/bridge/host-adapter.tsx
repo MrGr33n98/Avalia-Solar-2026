@@ -93,6 +93,7 @@ export const HostProvider: React.FC<HostProviderProps> = ({
   const [displayMode, setDisplayMode] = useState<DisplayMode>(
     () => harness?.displayMode ?? oa?.displayMode ?? 'inline'
   );
+  const [openAiVersion, setOpenAiVersion] = useState(0);
 
   const latestRequestIdRef = useRef(0);
 
@@ -149,11 +150,41 @@ export const HostProvider: React.FC<HostProviderProps> = ({
   }, [app, isConnected]);
 
   useEffect(() => {
-    if (error && embedded && !rawToolOutput && !oa?.toolOutput) {
+    const currentOpenAi = typeof window !== 'undefined' ? window.openai : undefined;
+    if (error && embedded && !rawToolOutput && !currentOpenAi?.toolOutput) {
       setStatus('error');
       setErrorMessage(toUserReadableError(error));
     }
-  }, [error, embedded, rawToolOutput, oa?.toolOutput]);
+  }, [error, embedded, rawToolOutput, openAiVersion]);
+
+  useEffect(() => {
+    const syncOpenAiGlobals = () => {
+      const currentOpenAi = typeof window !== 'undefined' ? window.openai : undefined;
+      if (!currentOpenAi) return;
+
+      if (currentOpenAi.toolInput) {
+        setToolInput(currentOpenAi.toolInput);
+      }
+      if (currentOpenAi.toolOutput !== undefined) {
+        setRawToolOutput(currentOpenAi.toolOutput);
+        setStatus('ready');
+        setErrorMessage(null);
+      }
+      if (
+        currentOpenAi.displayMode === 'inline' ||
+        currentOpenAi.displayMode === 'fullscreen' ||
+        currentOpenAi.displayMode === 'pip'
+      ) {
+        setDisplayMode(currentOpenAi.displayMode);
+      }
+      setOpenAiVersion((prev) => prev + 1);
+    };
+
+    window.addEventListener('openai:set_globals', syncOpenAiGlobals);
+    return () => {
+      window.removeEventListener('openai:set_globals', syncOpenAiGlobals);
+    };
+  }, []);
 
   useEffect(() => {
     const onOnline = () => setStatus((prev) => (prev === 'offline' ? (rawToolOutput ? 'ready' : 'loading') : prev));
@@ -166,11 +197,11 @@ export const HostProvider: React.FC<HostProviderProps> = ({
     };
   }, [rawToolOutput]);
 
-  const theme = useMemo(() => resolveTheme(hostContext), [hostContext]);
-  const safeArea = useMemo(() => resolveSafeArea(hostContext), [hostContext]);
+  const theme = useMemo(() => resolveTheme(hostContext), [hostContext, openAiVersion]);
+  const safeArea = useMemo(() => resolveSafeArea(hostContext), [hostContext, openAiVersion]);
   const capabilities = useMemo(
     () => detectHostCapabilities(app, isConnected, hostContext),
-    [app, isConnected, hostContext]
+    [app, isConnected, hostContext, openAiVersion]
   );
 
   useEffect(() => {

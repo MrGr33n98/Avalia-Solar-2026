@@ -88,7 +88,9 @@ module Api
           when 'ping'
             rpc_result(id, {})
           when 'tools/list'
-            return rpc_error(id, -32602, 'Unsupported tools/list parameters.', :bad_request) if params.keys.any? { |key| key != 'cursor' }
+            if (params.keys - %w[cursor _meta]).any?
+              return rpc_error(id, -32602, 'Unsupported tools/list parameters.', :bad_request)
+            end
             return rpc_error(id, -32602, 'Unknown tools/list cursor.', :bad_request) if params['cursor'].present?
 
             rpc_result(id, { tools: ::Mcp::PublicToolRegistry.list })
@@ -322,7 +324,7 @@ module Api
             return rpc_error(id, -32602, 'Invalid initialize parameters.', :bad_request)
           end
 
-          capabilities = ::Mcp::Ui::ResourceRegistry.enabled? ? { tools: {}, resources: { listChanged: false } } : { tools: {} }
+          capabilities = ::Mcp::Ui::ResourceRegistry.server_capabilities
           rpc_result(id, {
             protocolVersion: PROTOCOL_VERSION,
             capabilities: capabilities,
@@ -333,7 +335,9 @@ module Api
 
         def handle_resources_list(id, params)
           return rpc_error(id, -32601, 'Method not found.') unless ::Mcp::Ui::ResourceRegistry.enabled?
-          return rpc_error(id, -32602, 'Unsupported resources/list parameters.', :bad_request) if params.keys.any? { |k| k != 'cursor' }
+          if (params.keys - %w[cursor _meta]).any?
+            return rpc_error(id, -32602, 'Unsupported resources/list parameters.', :bad_request)
+          end
 
           rpc_result(id, { resources: ::Mcp::Ui::ResourceRegistry.list })
         end
