@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Building2, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, MapPin, SlidersHorizontal, Star } from 'lucide-react';
 
 import ComparisonToggleButton from '@/components/ComparisonToggleButton';
 import { CompanyVerifiedBadge } from '@/components/company/CompanyVerifiedBadge';
@@ -13,6 +13,7 @@ import { buildCompanyPath } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 import { CompanyDirectoryRow } from '@/components/companies/CompanyDirectoryRow';
 import { track } from '@/lib/analytics/consolidated';
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 interface HomeCompaniesRailProps {
   companies: Company[];
@@ -292,13 +293,58 @@ export function HomeCompaniesRail({
   const contextClient = React.useContext(QueryClientContext);
   const activeQueryClient = contextClient || getFallbackQueryClient();
 
-  const { selectedState, stateLabel } = useLocation();
+  const { selectedState, selectedCity, stateLabel, location, setState, setCity } = useLocation();
   const effectiveState = (stateCode || selectedState || '').trim();
   const normalizedState = effectiveState.toUpperCase();
   const resolvedStateLabel =
     (!stateCode && stateLabel) || STATE_LABELS[normalizedState] || stateLabel || normalizedState;
 
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [mobile, setMobile] = React.useState(false);
+  const [geoOpen, setGeoOpen] = React.useState(false);
+  const [draftState, setDraftState] = React.useState('');
+  const [draftCity, setDraftCity] = React.useState('');
+  const geoTrigger = React.useRef<HTMLButtonElement | null>(null);
+  const allowGeo = !title && !stateCode;
+  const strictGeo = allowGeo && mobile && location?.status === 'confirmed';
+  const effectiveCity = strictGeo ? (selectedCity || '') : '';
+
+  React.useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 639px)');
+    const sync = () => {
+      const small = media?.matches ?? window.innerWidth < 640;
+      setMobile(small);
+      if (!small) setGeoOpen(false);
+    };
+    sync();
+    media?.addEventListener?.('change', sync);
+    window.addEventListener('resize', sync);
+    return () => {
+      media?.removeEventListener?.('change', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, []);
+
+  const openGeo = (event: React.MouseEvent<HTMLButtonElement>) => {
+    geoTrigger.current = event.currentTarget;
+    setDraftState(normalizedState || 'SC');
+    setDraftCity(selectedCity || '');
+    setGeoOpen(true);
+  };
+
+  const citiesQuery = useQuery({
+    queryKey: ['home-geo-cities', draftState],
+    enabled: geoOpen && mobile && Boolean(draftState),
+    queryFn: async () => {
+      const { companiesApiSafe } = await import('@/lib/api-client');
+      const cities = await companiesApiSafe.getCities(draftState);
+      return Array.from(new Set(cities.filter((city) => typeof city === 'string' && city.trim()).map((city) => city.trim())))
+        .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    },
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  }, activeQueryClient);
+
 
   React.useEffect(() => {
     try {
@@ -340,7 +386,7 @@ export function HomeCompaniesRail({
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [normalizedState]);
+  }, [normalizedState, effectiveCity, strictGeo]);
 
   const isPageAdvanced = currentPage > 1;
   const needsQuery = Boolean(normalizedState || isPageAdvanced);
@@ -351,11 +397,11 @@ export function HomeCompaniesRail({
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['home-companies', normalizedState || 'national', 'page', currentPage, 'v3'],
+    queryKey: ['home-companies', normalizedState || 'national', effectiveCity, strictGeo, 'page', currentPage, 'v4'],
     queryFn: async ({ signal }) => {
       const res = await publicCompaniesApi.getAllPaginated(
         {
-          ...(normalizedState ? { serves_state: normalizedState } : { featured: true }),
+          ...(normalizedState ? (strictGeo ? { state: normalizedState, ...(effectiveCity ? { city: effectiveCity } : {}) } : { serves_state: normalizedState }) : { featured: true }),
           status: 'active',
           page: currentPage,
           per_page: 9,
@@ -368,7 +414,10 @@ export function HomeCompaniesRail({
       return res;
     },
     enabled: needsQuery,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey[1] === (normalizedState || 'national') &&
+      previousQuery?.queryKey[2] === effectiveCity &&
+      previousQuery?.queryKey[3] === strictGeo ? previousData : undefined,
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
   }, activeQueryClient);
@@ -377,6 +426,9 @@ export function HomeCompaniesRail({
   const paginationMeta = (paginatedResponse?.meta as { pagination?: PaginationMeta } | undefined)?.pagination;
 
   const { visibleCompanies, hasLocalMatches } = React.useMemo(() => {
+    if (strictGeo) {
+      return { visibleCompanies: (queryCompanies || []).slice(0, 9), hasLocalMatches: Boolean(queryCompanies?.length) };
+    }
     if (needsQuery) {
       if (queryCompanies !== undefined) {
         if (queryCompanies.length > 0) {
@@ -408,7 +460,7 @@ export function HomeCompaniesRail({
     }
 
     return { visibleCompanies: companies.slice(0, 9), hasLocalMatches: false };
-  }, [companies, normalizedState, needsQuery, queryCompanies, localSsrMatches, currentPage]);
+  }, [companies, normalizedState, needsQuery, queryCompanies, localSsrMatches, currentPage, strictGeo]);
 
   const totalPages = React.useMemo(() => {
     if (paginationMeta?.total_pages) {
@@ -462,10 +514,20 @@ export function HomeCompaniesRail({
 
   const effectiveViewAll =
     viewAllHref === '/companies'
-      ? `/companies?state=${encodeURIComponent(normalizedState)}`
+      ? `/companies?${new URLSearchParams({ state: normalizedState, ...(effectiveCity ? { city: effectiveCity } : {}) }).toString()}`
       : viewAllHref;
 
-  if (!companies || companies.length === 0 || visibleCompanies.length === 0) return null;
+  const applyGeo = () => {
+    if (!STATE_LABELS[draftState]) return;
+    if (draftCity && !citiesQuery.data?.includes(draftCity)) return;
+    setCurrentPage(1);
+    setState(draftState);
+    setCity(draftCity || null);
+    setGeoOpen(false);
+    track('home_geo_filter_applied', { state: draftState, city: draftCity || null, source: 'home_rail' });
+  };
+
+  if ((!allowGeo || !mobile) && (!companies || companies.length === 0 || visibleCompanies.length === 0)) return null;
 
   return (
     <section
@@ -495,11 +557,31 @@ export function HomeCompaniesRail({
             {locationSubtitle ? (
               <p
                 data-testid="home-companies-location-subtitle"
-                className="col-start-1 row-start-2 min-w-0 truncate text-xs font-medium leading-4 text-slate-500 sm:col-auto sm:row-auto sm:text-sm"
+                className={cn('col-start-1 row-start-2 min-w-0 truncate text-xs font-medium leading-4 text-slate-500 sm:col-auto sm:row-auto sm:text-sm', allowGeo && 'hidden sm:block')}
               >
                 {locationSubtitle}
               </p>
             ) : null}
+            {allowGeo && (
+              <div data-testid="home-geo-filter-bar" className="col-start-1 row-start-2 flex h-8 min-w-0 items-center gap-1.5 sm:hidden">
+                <button type="button" onClick={openGeo} aria-label="Selecionar estado" aria-haspopup="dialog" aria-expanded={geoOpen}
+                  className="inline-flex h-8 min-h-0 min-w-0 flex-1 items-center gap-1 rounded-full border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate min-[375px]:hidden">{normalizedState || 'UF'}</span>
+                  <span className="hidden min-w-0 truncate min-[375px]:inline">{resolvedStateLabel || 'Estado'}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+                </button>
+                <button type="button" onClick={openGeo} aria-label="Selecionar cidade" aria-haspopup="dialog" aria-expanded={geoOpen}
+                  className={cn('inline-flex h-8 min-h-0 min-w-0 flex-1 items-center justify-between gap-1 rounded-full border px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500', effectiveCity ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700')}>
+                  <span className="truncate">{effectiveCity || 'Cidade'}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+                </button>
+                <button type="button" onClick={openGeo} aria-label="Filtros geográficos" aria-haspopup="dialog" aria-expanded={geoOpen}
+                  className="inline-flex h-8 w-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            )}
           </div>
           <div
             data-testid="home-companies-actions"
@@ -559,7 +641,7 @@ export function HomeCompaniesRail({
             </Link>
           </div>
         </div>
-        {!hasLocalMatches && normalizedState && queryCompanies !== undefined && (
+        {!strictGeo && !hasLocalMatches && normalizedState && queryCompanies !== undefined && (
           <p className="text-xs text-slate-500">
             Ainda não há empresas com sede cadastrada em {resolvedStateLabel}. Exibindo empresas em destaque com atuação nacional.
           </p>
@@ -567,7 +649,7 @@ export function HomeCompaniesRail({
         {isError && needsQuery && (
           <div className="mt-2 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/70 px-3.5 py-2">
             <p className="text-xs font-medium text-red-800">
-              Não foi possível carregar empresas para {resolvedStateLabel}.
+              Não foi possível carregar empresas para {effectiveCity || resolvedStateLabel}.
             </p>
             <button
               type="button"
@@ -579,6 +661,51 @@ export function HomeCompaniesRail({
           </div>
         )}
       </div>
+
+      {allowGeo && (
+        <Sheet open={geoOpen && mobile} onOpenChange={setGeoOpen}>
+          <SheetContent side="bottom" overlayClassName="bg-black/40"
+            className="max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-white px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] data-[state=open]:duration-200 data-[state=closed]:duration-200 motion-reduce:animate-none"
+            onCloseAutoFocus={(event) => { event.preventDefault(); geoTrigger.current?.focus(); }}>
+            <SheetTitle className="pr-10 text-lg font-semibold leading-6">Filtrar empresas</SheetTitle>
+            <SheetDescription className="sr-only">Escolha o estado e a cidade da sede cadastrada.</SheetDescription>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="min-w-0 space-y-1 text-xs font-medium text-slate-700">
+                <span>Estado</span>
+                <select value={draftState} onChange={(event) => { setDraftState(event.target.value); setDraftCity(''); }}
+                  className="h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900">
+                  {Object.entries(STATE_LABELS).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                </select>
+              </label>
+              <label className="min-w-0 space-y-1 text-xs font-medium text-slate-700">
+                <span>Cidade</span>
+                <select value={draftCity} onChange={(event) => setDraftCity(event.target.value)}
+                  disabled={citiesQuery.isFetching || citiesQuery.isError}
+                  className="h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 disabled:opacity-60">
+                  <option value="">{citiesQuery.isFetching ? 'Carregando…' : 'Todas as cidades'}</option>
+                  {draftCity && !citiesQuery.data?.includes(draftCity) && <option value={draftCity}>{draftCity}</option>}
+                  {citiesQuery.data?.map((city) => <option key={city} value={city}>{city}</option>)}
+                </select>
+              </label>
+            </div>
+            {citiesQuery.isError && (
+              <div role="alert" className="mt-2 flex items-center justify-between gap-2 text-xs text-red-700">
+                Não foi possível carregar as cidades.
+                <button type="button" className="underline" onClick={() => citiesQuery.refetch()}>Tentar carregar cidades novamente</button>
+              </div>
+            )}
+            {citiesQuery.isSuccess && !citiesQuery.data.length && <p className="mt-2 text-xs text-slate-500">Nenhuma cidade cadastrada para este estado.</p>}
+            <p className="mt-3 text-xs text-slate-500">Resultados pela sede cadastrada da empresa.</p>
+            <div className="mt-4 flex items-center gap-3">
+              <button type="button" onClick={() => setDraftCity('')} className="min-h-11 shrink-0 px-2 text-sm font-medium text-slate-600">Limpar cidade</button>
+              <button type="button" onClick={applyGeo} disabled={!draftState || Boolean(draftCity && !citiesQuery.data?.includes(draftCity))}
+                className="min-h-11 flex-1 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white disabled:opacity-50">Aplicar filtros</button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+      {strictGeo && isFetching && !queryCompanies && <p role="status" className="py-4 text-center text-xs text-slate-500">Carregando empresas…</p>}
+      {strictGeo && !isFetching && !isError && queryCompanies?.length === 0 && <p role="status" className="rounded-lg border border-slate-200 py-4 text-center text-xs text-slate-500">Nenhuma empresa encontrada nesta localização. Altere os filtros.</p>}
 
       {/*
         Grid responsivo:
