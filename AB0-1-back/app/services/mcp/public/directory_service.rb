@@ -93,6 +93,9 @@ module Mcp
           if ENV['MCP_BRAND_PROFILE_GALLERY_ENABLED'] == 'true'
             result[:gallery_preview] = CompanyGallerySnapshot.call(company)
           end
+          if ENV['MCP_BRAND_PROFILE_CATALOG_ENABLED'] == 'true'
+            result[:catalog_preview] = CatalogPreviewSnapshot.call(company)
+          end
           result[:description] = ActionController::Base.helpers.strip_tags(company.description.to_s).first(1200)
           result[:services] = Array(company.services_offered).select { |item| item.is_a?(String) }
                                                .map { |item| item.first(120) }.first(20)

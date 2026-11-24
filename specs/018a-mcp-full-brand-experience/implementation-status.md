@@ -33,3 +33,11 @@ Base: 93a8e2f55d7771e3c81e1ef3d33202b3cecde52e. Escopo exclusivamente público e
 - Galeria institucional opcional: até 6 fotos do accessor público e 3 vídeos YouTube publicados, link externo via host; sem iframe de terceiros.
 - Flag MCP_BRAND_PROFILE_GALLERY_ENABLED default false, integrada a compose/CD. URI v2 quando qualquer flag 018A estiver ativa.
 - Allowlist de mídia HTTPS compartilhada, testes de estado/publicação/URLs/expansão escritos. CI deste commit pendente. Search/Categories não foram ampliados.
+
+## Incremento 5A/6A — prévia de catálogo público
+
+- Reutiliza Catalog::ShowcaseQuery, fonte existente da vitrine pública Web: até três produtos ativos próprios/vinculados e três serviços ativos.
+- DTO reduzido a nome, descrição curta, categoria, imagem autorizada e link público validado. Não expõe preços, ofertas, contatos nem dados internos. Links de serviços restritos ao slug da empresa.
+- Cards de produtos/serviços no perfil standalone, links para detalhes no Web, imagens com fallback. Flag MCP_BRAND_PROFILE_CATALOG_ENABLED=false.
+- Prévia não substitui tools dedicadas de listagem/detalhes, paginação, galerias de produto/serviço ou filtros. Validar paridade de entitlements e catálogo público em staging antes de ativar.
+- Testes adicionados; novo CI e limite 120 KiB ainda pendentes. Sem merge/deploy.

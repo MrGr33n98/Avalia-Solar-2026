@@ -10,6 +10,7 @@ import { ProfileView } from './ProfileView';
 import { BrandHero } from './BrandHero';
 import { ProjectPortfolioPreview, readPortfolioPreview } from './ProjectPortfolioPreview';
 import { PublicMediaGallery, readGalleryPreview } from './PublicMediaGallery';
+import { CatalogPreview, readCatalogPreview } from './CatalogPreview';
 import { ReputationView } from './ReputationView';
 
 export const ProfileStandaloneView: React.FC = () => {
@@ -27,6 +28,7 @@ export const ProfileStandaloneView: React.FC = () => {
 
   const portfolio = useMemo(() => readPortfolioPreview(rawToolOutput), [rawToolOutput]);
   const gallery = useMemo(() => readGalleryPreview(rawToolOutput), [rawToolOutput]);
+  const catalog = useMemo(() => readCatalogPreview(rawToolOutput), [rawToolOutput]);
 
   useEffect(() => {
     if (payload) {
@@ -59,6 +61,7 @@ export const ProfileStandaloneView: React.FC = () => {
       portfolio={
         <>
           {portfolio ? <ProjectPortfolioPreview key={`portfolio:${payload?.data.integrator.id}`} portfolio={portfolio} /> : null}
+          {catalog ? <CatalogPreview key={`catalog:${payload?.data.integrator.id}`} catalog={catalog} /> : null}
           {gallery ? <PublicMediaGallery key={`gallery:${payload?.data.integrator.id}`} gallery={gallery} /> : null}
         </>
       }
