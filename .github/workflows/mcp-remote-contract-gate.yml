@@ -51,12 +51,16 @@ on:
       - 'AB0-1-back/spec/services/mcp/canary/**'
       - 'AB0-1-back/spec/requests/api/v1/mcp/production_canary_guard_spec.rb'
       - '.env.example'
+      - 'docker-compose.yml'
       - 'AB0-1-back/app/services/mcp/public_tool_registry.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/remote_transport_spec.rb'
       - 'AB0-1-back/spec/requests/api/v1/mcp/modern_transport_spec.rb'
       - 'AB0-1-back/spec/services/mcp/public_tool_registry_spec.rb'
       - '.github/scripts/test_mcp_c4_sdk_workflow.rb'
+      - '.github/scripts/test_mcp_deployment_flags.py'
       - '.github/workflows/mcp-remote-contract-gate.yml'
+      - '.github/workflows/cd-production.yml'
+      - '.github/workflows/cd-mcp-staging.yml'
   workflow_dispatch:
 
 permissions:
@@ -153,6 +157,8 @@ jobs:
           python3 -m py_compile ../scripts/mcp/load_test/staging_load_test.py
       - name: Enforce MCP workflow secret isolation
         run: ruby ../.github/scripts/test_mcp_c4_sdk_workflow.rb
+      - name: Verify MCP Canary and UI deployment flags
+        run: python3 ../.github/scripts/test_mcp_deployment_flags.py
       - name: Prepare test database
         run: bundle exec rails db:create db:schema:load db:migrate
       - name: Run legacy, modern and public tool contract specs

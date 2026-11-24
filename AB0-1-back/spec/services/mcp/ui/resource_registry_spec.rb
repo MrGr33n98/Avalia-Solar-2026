@@ -18,7 +18,9 @@ RSpec.describe Mcp::Ui::ResourceRegistry do
 
   it 'lists all five versioned MCP Apps resources with strict CSP when enabled' do
     allow(ENV).to receive(:[]).with('MCP_UI_ENABLED').and_return('true')
-    allow(ENV).to receive(:[]).with('MCP_UI_RESOURCE_DOMAINS').and_return('https://www.avaliasolar.com.br,http://insecure.local,*')
+    allow(ENV).to receive(:[]).with('MCP_UI_RESOURCE_DOMAINS').and_return(
+      'https://www.avaliasolar.com.br,https://avalia-solar-assets.nyc3.cdn.digitaloceanspaces.com,http://insecure.local,*'
+    )
 
     resources = described_class.list
     expect(resources.length).to eq(5)
@@ -33,7 +35,10 @@ RSpec.describe Mcp::Ui::ResourceRegistry do
     search = resources.find { |r| r['uri'] == 'ui://avalia-solar/search/v1.html' }
     expect(search['mimeType']).to eq('text/html;profile=mcp-app')
     expect(search.dig('_meta', 'ui', 'csp', 'connectDomains')).to eq([])
-    expect(search.dig('_meta', 'ui', 'csp', 'resourceDomains')).to eq(['https://www.avaliasolar.com.br'])
+    expect(search.dig('_meta', 'ui', 'csp', 'resourceDomains')).to eq([
+      'https://www.avaliasolar.com.br',
+      'https://avalia-solar-assets.nyc3.cdn.digitaloceanspaces.com'
+    ])
     expect(search.dig('_meta', 'openai/ui', 'availableDisplayModes')).to eq(%w[inline fullscreen])
   end
 

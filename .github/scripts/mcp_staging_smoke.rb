@@ -36,8 +36,11 @@ class McpStagingSmoke
 
     list = post('tools/list', {})
     require_success!(list, 'catalog')
-    found = list.fetch('result').fetch('tools').map { |tool| tool.fetch('name') }
+    tools = list.fetch('result').fetch('tools')
+    found = tools.map { |tool| tool.fetch('name') }
     raise 'Public allowlist mismatch' unless found == PUBLIC_NAMES
+
+    verify_ui_resources!(discover, tools)
 
     categories = public_tool('list_solar_categories', {})
     require_array(categories, 'categories')
@@ -120,6 +123,35 @@ class McpStagingSmoke
   def require_success!(response, label)
     raise "#{label} protocol failure" unless response.fetch('result', nil).is_a?(Hash) &&
                                              response.dig('result', 'resultType') == 'complete'
+  end
+
+  def verify_ui_resources!(discover, tools)
+    resources_cap = discover.dig('result', 'capabilities', 'resources')
+    return unless resources_cap || ENV['MCP_SMOKE_VERIFY_UI'] == 'true'
+
+    expected_uris = %w[
+      ui://avalia-solar/search/v1.html
+      ui://avalia-solar/profile/v1.html
+      ui://avalia-solar/reputation/v1.html
+      ui://avalia-solar/compare/v1.html
+      ui://avalia-solar/categories/v1.html
+    ]
+
+    tools.each do |tool|
+      uri = tool.dig('_meta', 'ui', 'resourceUri')
+      raise "Missing _meta.ui.resourceUri on #{tool['name']}" unless expected_uris.include?(uri)
+    end
+
+    res_list = post('resources/list', {})
+    require_success!(res_list, 'resources/list')
+    listed_uris = res_list.fetch('result').fetch('resources').map { |r| r.fetch('uri') }
+    raise 'Incomplete MCP UI resources list' unless expected_uris.all? { |u| listed_uris.include?(u) }
+
+    res_read = post('resources/read', { 'uri' => 'ui://avalia-solar/search/v1.html' })
+    require_success!(res_read, 'resources/read')
+    content = res_read.fetch('result').fetch('contents').first
+    raise 'Invalid MCP App MIME type' unless content['mimeType'] == 'text/html;profile=mcp-app'
+    raise 'Missing HTML bundle payload' unless content['text'].to_s.match?(/<!doctype html>/i)
   end
 end
 

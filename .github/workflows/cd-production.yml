@@ -475,9 +475,33 @@ jobs:
           GIT_SHA: ${{ env.RELEASE_SHA }}
           GH_REPOSITORY: ${{ github.repository }}
           PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR }}
+          MCP_STAGING_DEPLOY_DIR: ${{ vars.MCP_STAGING_DEPLOY_DIR || '' }}
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE || 'worker' }}
           GROUPS_ENABLED: true
           NEXT_PUBLIC_GROUPS_ENABLED: true
+          MCP_REMOTE_TRANSPORT_ENABLED: ${{ vars.MCP_REMOTE_TRANSPORT_ENABLED || 'true' }}
+          MCP_REMOTE_PRODUCTION_ENABLED: ${{ vars.MCP_REMOTE_PRODUCTION_ENABLED || 'true' }}
+          MCP_REMOTE_AUTH_MODE: ${{ vars.MCP_REMOTE_AUTH_MODE || 'oauth' }}
+          MCP_REMOTE_OAUTH_ENABLED: ${{ vars.MCP_REMOTE_OAUTH_ENABLED || 'true' }}
+          MCP_REMOTE_POLICY_ENABLED: ${{ vars.MCP_REMOTE_POLICY_ENABLED || 'true' }}
+          MCP_PUBLIC_TOOLS_EXECUTION_ENABLED: ${{ vars.MCP_PUBLIC_TOOLS_EXECUTION_ENABLED || 'true' }}
+          MCP_OAUTH_TOKEN_FORMAT: ${{ vars.MCP_OAUTH_TOKEN_FORMAT || 'opaque' }}
+          MCP_OAUTH_ISSUER: ${{ vars.MCP_OAUTH_ISSUER || 'https://api.avaliasolar.com.br' }}
+          MCP_OAUTH_RESOURCE: ${{ vars.MCP_OAUTH_RESOURCE || 'https://api.avaliasolar.com.br/mcp' }}
+          MCP_REMOTE_ALLOWED_HOSTS: ${{ vars.MCP_REMOTE_ALLOWED_HOSTS || 'api.avaliasolar.com.br' }}
+          MCP_REMOTE_ALLOWED_ORIGINS: ${{ vars.MCP_REMOTE_ALLOWED_ORIGINS || 'https://chatgpt.com,https://chat.openai.com' }}
+          MCP_CANARY_ENABLED: ${{ vars.MCP_CANARY_ENABLED || 'true' }}
+          MCP_CANARY_PHASE: ${{ vars.MCP_CANARY_PHASE || 'read_only' }}
+          MCP_CANARY_ALLOWED_CLIENT_IDS: ${{ vars.MCP_CANARY_ALLOWED_CLIENT_IDS || secrets.MCP_CANARY_ALLOWED_CLIENT_IDS || '' }}
+          MCP_CANARY_ALLOWED_SUBJECTS: ${{ vars.MCP_CANARY_ALLOWED_SUBJECTS || secrets.MCP_CANARY_ALLOWED_SUBJECTS || '' }}
+          MCP_UI_ENABLED: ${{ vars.MCP_UI_ENABLED || 'true' }}
+          MCP_UI_SEARCH_ENABLED: ${{ vars.MCP_UI_SEARCH_ENABLED || 'true' }}
+          MCP_UI_PROFILE_ENABLED: ${{ vars.MCP_UI_PROFILE_ENABLED || 'true' }}
+          MCP_UI_REPUTATION_ENABLED: ${{ vars.MCP_UI_REPUTATION_ENABLED || 'true' }}
+          MCP_UI_COMPARE_ENABLED: ${{ vars.MCP_UI_COMPARE_ENABLED || 'true' }}
+          MCP_UI_CATEGORIES_ENABLED: ${{ vars.MCP_UI_CATEGORIES_ENABLED || 'true' }}
+          MCP_UI_RESOURCE_DOMAINS: ${{ vars.MCP_UI_RESOURCE_DOMAINS || 'https://www.avaliasolar.com.br,https://api.avaliasolar.com.br,https://nyc3.digitaloceanspaces.com,https://avalia-solar-assets.nyc3.digitaloceanspaces.com,https://avalia-solar-assets.nyc3.cdn.digitaloceanspaces.com' }}
+          MCP_UI_ORIGIN: ${{ vars.MCP_UI_ORIGIN || '' }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -485,7 +509,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || '22' }}
           command_timeout: 30m
           script_stop: false
-          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,WORKER_SERVICE,GROUPS_ENABLED,NEXT_PUBLIC_GROUPS_ENABLED
+          envs: DOCKER_USER,DOCKER_TOKEN,GIT_SHA,GH_REPOSITORY,PRODUCTION_DEPLOY_DIR,MCP_STAGING_DEPLOY_DIR,WORKER_SERVICE,GROUPS_ENABLED,NEXT_PUBLIC_GROUPS_ENABLED,MCP_REMOTE_TRANSPORT_ENABLED,MCP_REMOTE_PRODUCTION_ENABLED,MCP_REMOTE_AUTH_MODE,MCP_REMOTE_OAUTH_ENABLED,MCP_REMOTE_POLICY_ENABLED,MCP_PUBLIC_TOOLS_EXECUTION_ENABLED,MCP_OAUTH_TOKEN_FORMAT,MCP_OAUTH_ISSUER,MCP_OAUTH_RESOURCE,MCP_REMOTE_ALLOWED_HOSTS,MCP_REMOTE_ALLOWED_ORIGINS,MCP_CANARY_ENABLED,MCP_CANARY_PHASE,MCP_CANARY_ALLOWED_CLIENT_IDS,MCP_CANARY_ALLOWED_SUBJECTS,MCP_UI_ENABLED,MCP_UI_SEARCH_ENABLED,MCP_UI_PROFILE_ENABLED,MCP_UI_REPUTATION_ENABLED,MCP_UI_COMPARE_ENABLED,MCP_UI_CATEGORIES_ENABLED,MCP_UI_RESOURCE_DOMAINS,MCP_UI_ORIGIN
           script: |
             set -Eeuo pipefail
 
@@ -948,6 +972,30 @@ jobs:
             export BACKEND_IMAGE FRONTEND_IMAGE
             export GROUPS_ENABLED
             export NEXT_PUBLIC_GROUPS_ENABLED
+            export MCP_REMOTE_TRANSPORT_ENABLED
+            export MCP_REMOTE_PRODUCTION_ENABLED
+            export MCP_REMOTE_AUTH_MODE
+            export MCP_REMOTE_OAUTH_ENABLED
+            export MCP_REMOTE_POLICY_ENABLED
+            export MCP_PUBLIC_TOOLS_EXECUTION_ENABLED
+            export MCP_OAUTH_TOKEN_FORMAT
+            export MCP_OAUTH_ISSUER
+            export MCP_OAUTH_RESOURCE
+            export MCP_REMOTE_ALLOWED_HOSTS
+            export MCP_REMOTE_ALLOWED_ORIGINS
+            export MCP_CANARY_ENABLED
+            export MCP_CANARY_PHASE
+            export MCP_UI_ENABLED
+            export MCP_UI_SEARCH_ENABLED
+            export MCP_UI_PROFILE_ENABLED
+            export MCP_UI_REPUTATION_ENABLED
+            export MCP_UI_COMPARE_ENABLED
+            export MCP_UI_CATEGORIES_ENABLED
+            export MCP_UI_RESOURCE_DOMAINS
+            # Nao sobrescrever allowlists ou origin definidos no .env da VPS caso vars do GitHub estejam vazias
+            if [ -n "${MCP_CANARY_ALLOWED_CLIENT_IDS:-}" ]; then export MCP_CANARY_ALLOWED_CLIENT_IDS; else unset MCP_CANARY_ALLOWED_CLIENT_IDS; fi
+            if [ -n "${MCP_CANARY_ALLOWED_SUBJECTS:-}" ]; then export MCP_CANARY_ALLOWED_SUBJECTS; else unset MCP_CANARY_ALLOWED_SUBJECTS; fi
+            if [ -n "${MCP_UI_ORIGIN:-}" ]; then export MCP_UI_ORIGIN; else unset MCP_UI_ORIGIN; fi
             if [ "$GROUPS_ENABLED" != "true" ]; then
               echo "!! ERRO: GROUPS_ENABLED deve ser explicitamente true em produção"
               exit 1
@@ -1235,6 +1283,57 @@ jobs:
             mkdir -p .deploy
             printf 'GIT_SHA=%s\nBACKEND_IMAGE=%s\nFRONTEND_IMAGE=%s\n' "$GIT_SHA" "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > .deploy/current.env.tmp
             mv .deploy/current.env.tmp .deploy/current.env
+
+            echo "?? Validando MCP UI Resources e status Canary em producao..."
+            if ! docker compose exec -T backend bundle exec rails runner '
+              abort("MCP_UI_DISABLED") unless Mcp::Ui::ResourceRegistry.enabled?
+              uris = Mcp::Ui::ResourceRegistry.list.map { |r| r["uri"] }
+              abort("MCP_UI_COUNT_MISMATCH=#{uris.length}") unless uris.length == 5
+              puts "MCP_PROD_UI_OK uris=#{uris.length} oauth_configured=#{Mcp::Oauth::Configuration.configured?} canary_configured=#{Mcp::Canary::Configuration.configured?}"
+              warn "AVISO: MCP_CANARY_ALLOWED_CLIENT_IDS ou MCP_CANARY_ALLOWED_SUBJECTS ainda vazio em producao." unless Mcp::Canary::Configuration.configured?
+            '; then
+              echo "!! ERRO CRITICO: MCP Interactive UI bundles/flags invalidos no backend de producao!"
+              rollback_apps
+              exit 1
+            fi
+
+            echo "?? Sincronizando stack isolada avalia-solar-mcp-staging (se presente na VPS)..."
+            MCP_STAGING_PROJECT="avalia-solar-mcp-staging"
+            MCP_STAGING_CID=$(docker ps -aq --filter "label=com.docker.compose.project=${MCP_STAGING_PROJECT}" | head -n 1 || true)
+            MCP_STAGING_DIR="${MCP_STAGING_DEPLOY_DIR:-}"
+            if [ -z "$MCP_STAGING_DIR" ] && [ -n "$MCP_STAGING_CID" ]; then
+              MCP_STAGING_DIR=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$MCP_STAGING_CID" 2>/dev/null || true)
+            fi
+            if [ -z "$MCP_STAGING_DIR" ]; then
+              for CANDIDATE_DIR in "${HOME:-}/avalia-solar-mcp-staging" "${HOME:-}/mcp-staging" "/opt/avalia-solar-mcp-staging"; do
+                if [ -f "${CANDIDATE_DIR}/.env" ]; then
+                  MCP_STAGING_DIR="$CANDIDATE_DIR"
+                  break
+                fi
+              done
+            fi
+
+            if [ -n "$MCP_STAGING_DIR" ] && [ -f "${MCP_STAGING_DIR}/.env" ] && [ -f "${DEPLOY_DIR}/infra/mcp-staging/compose.yml" ]; then
+              echo "?? Atualizando ${MCP_STAGING_PROJECT} em ${MCP_STAGING_DIR} com ${BACKEND_IMAGE}..."
+              if (
+                export MCP_STAGING_BACKEND_IMAGE="$BACKEND_IMAGE"
+                docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "${DEPLOY_DIR}/infra/mcp-staging/compose.yml" up -d --no-build --wait --wait-timeout 120 postgres redis
+                docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "${DEPLOY_DIR}/infra/mcp-staging/compose.yml" run --rm --no-deps rails bundle exec rails db:migrate
+                docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "${DEPLOY_DIR}/infra/mcp-staging/compose.yml" up -d --no-deps --no-build --wait --wait-timeout 180 rails
+                docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "${DEPLOY_DIR}/infra/mcp-staging/compose.yml" exec -T rails bundle exec rails runner '
+                  abort("MCP_STAGING_UI_DISABLED") unless Mcp::Ui::ResourceRegistry.enabled? && Mcp::Ui::ResourceRegistry.list.length == 5
+                  puts "MCP_STAGING_UI_OK"
+                '
+                curl -fsS http://127.0.0.1:3101/health/liveness >/dev/null
+                curl -fsS http://127.0.0.1:3101/.well-known/oauth-protected-resource/mcp >/dev/null
+              ); then
+                echo "?? Stack ${MCP_STAGING_PROJECT} atualizada com sucesso!"
+              else
+                echo "!! Aviso: falha ao sincronizar ${MCP_STAGING_PROJECT}; producao principal segue integra."
+              fi
+            else
+              echo "?? Stack ${MCP_STAGING_PROJECT} nao detectada localmente com .env; pulando sync automatico."
+            fi
 
             docker container prune -f >/dev/null 2>&1 || true
             docker image prune -f >/dev/null 2>&1 || true
