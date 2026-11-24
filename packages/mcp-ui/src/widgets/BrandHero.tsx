@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Integrator } from '../contracts/schemas';
 import { sanitizeExternalHttpsUrl } from '../bridge/capabilities';
 import { Button } from '../design/primitives';
