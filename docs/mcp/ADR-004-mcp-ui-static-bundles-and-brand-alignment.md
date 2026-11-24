@@ -26,3 +26,4 @@
 
 * **Contexto:** `.specify/scripts/python/{resolve_template,setup_plan}.py` e `.specify/memory/constitution.md` não existem no repositório.
 * **Decisão:** Executar o ciclo Spec Kit completo criando os artefatos diretamente em `specs/018-mcp-interactive-ui/` e atualizando `.specify/feature.json`, preservando integralmente `AGENTS.md`, `docs/mcp/` e todos os workflows existentes.
+

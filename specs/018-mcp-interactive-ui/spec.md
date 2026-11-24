@@ -51,3 +51,4 @@ Consumidores B2C residenciais, rurais e comerciais procuram empresas integradora
 * **FR06:** Nunca atribuir nota a empresa com 0 avaliações; nunca inferir cobertura pela sede; nunca apresentar `sort=rating` ou `review_count` como "ranking oficial".
 * **FR07:** Todo tool result continua emitindo `content` textual humano-legível e `structuredContent` validado por `Mcp::Public::OutputValidator` (<= 64 KB, sem PII).
 * **FR08:** Manter todas as flags `MCP_UI_*` e `MCP_REMOTE_PRODUCTION_ENABLED` desabilitadas (`false`) em produção.
+

@@ -26,3 +26,4 @@ Todos os tools mantêm o envelope canônico:
 }
 ```
 Adição retrocompatível em `public_company`: campo opcional `logo_url` (`string | null`, validado HTTPS ou `null`), mantendo todos os campos privados (`email`, `phone`, `cpf`, `cnpj`, `user_id`, `tenant_id`, `buyer_intent`) bloqueados por `OutputValidator::PRIVATE_KEYS`.
+

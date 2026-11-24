@@ -29,3 +29,4 @@ Durante auditoria ao vivo no ambiente staging (`mcp-staging.avaliasolar.com.br`)
 - `@openai/apps-sdk-ui`: `0.2.2` (via `npm view`)
 - `node`: `v22.23.5`, `npm`: `10.9.9`
 - Ruby/Rails backend: Ruby `3.2.2`, Rails `7.0.8` (sem gem MCP em runtime; transporte custom JSON-RPC).
+

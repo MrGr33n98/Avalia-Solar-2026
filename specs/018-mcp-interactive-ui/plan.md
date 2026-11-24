@@ -67,3 +67,4 @@ Rails 7 MCP Server (AB0-1-back)
   * Render inicial do widget p95 < 150 ms.
 * **Telemetria sem PII:** `Mcp::RemoteTelemetry` registra `resources/list` e `resources/read` além de `tools/call`; nunca registra tokens, argumentos brutos, queries livres ou IDs pessoais.
 * **Rollback:** Setar `MCP_UI_ENABLED=false` no ambiente restaura instantaneamente resposta 100% textual sem redeploy; rollback completo restaura tag Docker anterior (`5babce764`).
+
