@@ -41,3 +41,11 @@ Base: 93a8e2f55d7771e3c81e1ef3d33202b3cecde52e. Escopo exclusivamente público e
 - Cards de produtos/serviços no perfil standalone, links para detalhes no Web, imagens com fallback. Flag MCP_BRAND_PROFILE_CATALOG_ENABLED=false.
 - Prévia não substitui tools dedicadas de listagem/detalhes, paginação, galerias de produto/serviço ou filtros. Validar paridade de entitlements e catálogo público em staging antes de ativar.
 - Testes adicionados; novo CI e limite 120 KiB ainda pendentes. Sem merge/deploy.
+
+## Incremento 7/8A — navegação e confiança
+
+- Base 1a657cc aprovada em três pipelines; 232 exemplos MCP sem falhas e perfil 118,2 KiB gzip.
+- Navegação local por seções do perfil standalone, sem chamadas adicionais; oculta módulos ausentes e preserva a visão geral.
+- FAQ publicada conforme gate da Brand Page, selos ativos atribuídos (texto no MVP), flag MCP_BRAND_PROFILE_TRUST_ENABLED=false.
+- Reputação agregada continua pela tool existente; não alterar a proibição de expor identidade ou corpo de review. Achievements específicos do ledger, reviews individuais e materiais ficam para fase posterior com revisão de contrato/privacidade.
+- Testes escritos; CI e orçamento de bundle devem ser revalidados antes de qualquer publicação. Sem merge/deploy.

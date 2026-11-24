@@ -145,7 +145,7 @@ module Mcp
         def profile_v2_enabled?
           %w[
             MCP_BRAND_PROFILE_HERO_ENABLED MCP_BRAND_PROFILE_PORTFOLIO_ENABLED
-            MCP_BRAND_PROFILE_GALLERY_ENABLED MCP_BRAND_PROFILE_CATALOG_ENABLED
+            MCP_BRAND_PROFILE_GALLERY_ENABLED MCP_BRAND_PROFILE_CATALOG_ENABLED MCP_BRAND_PROFILE_TRUST_ENABLED
           ]
             .any? { |flag| ENV[flag] == 'true' }
         end
