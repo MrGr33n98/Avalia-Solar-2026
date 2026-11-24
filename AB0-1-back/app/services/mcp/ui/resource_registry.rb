@@ -16,6 +16,7 @@ module Mcp
           file: 'search.v1.html',
           uri: 'ui://avalia-solar/search/v1.html',
           name: 'Avalia Solar Search',
+          description: 'Grade interativa com empresas integradoras, notas, cidade/UF e verificação no Avalia Solar.',
           flag: 'MCP_UI_SEARCH_ENABLED',
           display_modes: %w[inline fullscreen]
         }.freeze,
@@ -24,6 +25,7 @@ module Mcp
           file: 'profile.v1.html',
           uri: 'ui://avalia-solar/profile/v1.html',
           name: 'Avalia Solar Profile',
+          description: 'Perfil completo do integrador solar com serviços, região atendida e selo de verificação.',
           flag: 'MCP_UI_PROFILE_ENABLED',
           display_modes: %w[inline fullscreen]
         }.freeze,
@@ -32,6 +34,7 @@ module Mcp
           file: 'reputation.v1.html',
           uri: 'ui://avalia-solar/reputation/v1.html',
           name: 'Avalia Solar Reputation',
+          description: 'Painel de reputação do integrador com média de notas, total de avaliações e distribuição.',
           flag: 'MCP_UI_REPUTATION_ENABLED',
           display_modes: %w[inline fullscreen]
         }.freeze,
@@ -40,6 +43,7 @@ module Mcp
           file: 'compare.v1.html',
           uri: 'ui://avalia-solar/compare/v1.html',
           name: 'Avalia Solar Compare',
+          description: 'Tabela comparativa lado a lado entre 2 ou 3 empresas integradoras.',
           flag: 'MCP_UI_COMPARE_ENABLED',
           display_modes: %w[fullscreen inline]
         }.freeze,
@@ -48,6 +52,7 @@ module Mcp
           file: 'categories.v1.html',
           uri: 'ui://avalia-solar/categories/v1.html',
           name: 'Avalia Solar Categories',
+          description: 'Diretório interativo de categorias solares e filtro rápido para pesquisar integradores.',
           flag: 'MCP_UI_CATEGORIES_ENABLED',
           display_modes: %w[inline fullscreen]
         }.freeze
@@ -62,6 +67,20 @@ module Mcp
 
         def surface_enabled?(entry)
           enabled? && entry.present? && ENV[entry[:flag]] != 'false'
+        end
+
+        def server_capabilities
+          return { tools: {} } unless enabled?
+
+          {
+            tools: {},
+            resources: { listChanged: false },
+            extensions: {
+              'io.modelcontextprotocol/ui' => {
+                mimeTypes: [MIME_TYPE]
+              }
+            }
+          }
         end
 
         def list
@@ -101,8 +120,15 @@ module Mcp
           return nil unless surface_enabled?(entry) && safe_bundle_path(entry)
 
           {
-            'ui' => { 'resourceUri' => entry[:uri] },
-            'openai/outputTemplate' => entry[:uri]
+            'ui' => {
+              'resourceUri' => entry[:uri],
+              'visibility' => %w[model app]
+            },
+            'ui/resourceUri' => entry[:uri],
+            'openai/outputTemplate' => entry[:uri],
+            'openai/widgetAccessible' => true,
+            'openai/widgetPrefersBorder' => true,
+            'openai/widgetDescription' => entry[:description]
           }
         end
 
@@ -141,7 +167,9 @@ module Mcp
 
           {
             'ui' => ui_meta,
-            'openai/ui' => { 'availableDisplayModes' => entry[:display_modes] }
+            'openai/ui' => { 'availableDisplayModes' => entry[:display_modes] },
+            'openai/widgetPrefersBorder' => true,
+            'openai/widgetDescription' => entry[:description]
           }
         end
 

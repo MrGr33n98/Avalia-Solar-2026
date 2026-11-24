@@ -64,7 +64,7 @@ module Mcp
       when 'server/discover'
         return error(id, -32_602, 'Unexpected discovery parameters.', :bad_request) unless (params.keys - ['_meta']).empty?
 
-        capabilities = ::Mcp::Ui::ResourceRegistry.enabled? ? { tools: {}, resources: { listChanged: false } } : { tools: {} }
+        capabilities = ::Mcp::Ui::ResourceRegistry.server_capabilities
         success(id, {
           supportedVersions: [VERSION, LEGACY_VERSION],
           capabilities: capabilities,

@@ -127,5 +127,49 @@ describe('MCP Bridge & Design Primitives', () => {
     expect(results).toContainEqual(['second', FIXTURE_INTEGRATORS]);
     expect(results).toContainEqual(['first', null]);
   });
+
+  it('hydrates asynchronously when ChatGPT dispatches openai:set_globals after mount', async () => {
+    delete window.openai;
+
+    const StatusProbe: React.FC = () => {
+      const { status, rawToolOutput, toolInput, theme } = useHostBridge();
+      return (
+        <div>
+          <span data-testid="status">{status}</span>
+          <span data-testid="theme">{theme}</span>
+          <span data-testid="count">
+            {rawToolOutput ? 'loaded' : 'empty'}
+          </span>
+          <span data-testid="query">{String(toolInput.query ?? '')}</span>
+        </div>
+      );
+    };
+
+    render(
+      <HostProvider appName="probe-globals">
+        <StatusProbe />
+      </HostProvider>
+    );
+
+    expect(screen.getByTestId('status')).toHaveTextContent('loading');
+    expect(screen.getByTestId('count')).toHaveTextContent('empty');
+
+    window.openai = {
+      toolInput: { query: 'GoodWe' },
+      toolOutput: FIXTURE_INTEGRATORS,
+      theme: 'dark',
+      displayMode: 'inline',
+    };
+    window.dispatchEvent(new CustomEvent('openai:set_globals'));
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('ready');
+      expect(screen.getByTestId('count')).toHaveTextContent('loaded');
+      expect(screen.getByTestId('query')).toHaveTextContent('GoodWe');
+      expect(screen.getByTestId('theme')).toHaveTextContent('dark');
+    });
+
+    delete window.openai;
+  });
 });
 

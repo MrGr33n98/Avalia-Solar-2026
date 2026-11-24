@@ -25,9 +25,16 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
 
   # 3. URL and Asset Host Options
-  app_host = ENV.fetch('APP_HOST', 'localhost:3000')
-  protocol = Rails.env.production? ? 'https' : 'http'
-  
+  raw_app_host = ENV.fetch('APP_HOST', 'localhost:3000').to_s.strip
+  parsed_app_uri = begin
+    URI.parse(raw_app_host.match?(%r{\Ahttps?://}i) ? raw_app_host : "#{Rails.env.production? ? 'https' : 'http'}://#{raw_app_host}")
+  rescue URI::InvalidURIError
+    nil
+  end
+  app_host = parsed_app_uri&.host || raw_app_host
+  app_host = "#{app_host}:#{parsed_app_uri.port}" if parsed_app_uri&.port && ![80, 443].include?(parsed_app_uri.port)
+  protocol = parsed_app_uri&.scheme || (Rails.env.production? ? 'https' : 'http')
+
   config.action_mailer.default_url_options = { host: app_host, protocol: protocol }
   config.action_mailer.asset_host = ENV.fetch('MAILER_ASSET_HOST', "#{protocol}://#{app_host}")
 

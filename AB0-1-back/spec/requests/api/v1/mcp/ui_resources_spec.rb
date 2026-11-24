@@ -67,13 +67,23 @@ RSpec.describe 'MCP UI Resources and Tool UI Metadata', type: :request do
          headers: headers
   end
 
-  it 'advertises resources capability, lists and reads HTML bundles over legacy 2025-11-25 transport' do
+  it 'advertises resources and UI extension on 2025-11-25 initialize and 2026-07-28 server/discover' do
     legacy_rpc(
       'initialize',
       params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'chatgpt', version: '1.0' } }
     )
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.dig('result', 'capabilities', 'resources')).to eq('listChanged' => false)
+    expect(response.parsed_body.dig('result', 'capabilities', 'extensions', 'io.modelcontextprotocol/ui')).to eq(
+      'mimeTypes' => ['text/html;profile=mcp-app']
+    )
+
+    modern_rpc('server/discover')
+    expect(response).to have_http_status(:ok)
+    expect(response.parsed_body.dig('result', 'capabilities', 'resources')).to eq('listChanged' => false)
+    expect(response.parsed_body.dig('result', 'capabilities', 'extensions', 'io.modelcontextprotocol/ui')).to eq(
+      'mimeTypes' => ['text/html;profile=mcp-app']
+    )
 
     legacy_rpc('resources/list')
     expect(response).to have_http_status(:ok)
@@ -87,17 +97,20 @@ RSpec.describe 'MCP UI Resources and Tool UI Metadata', type: :request do
     expect(content['text']).to include('<!doctype html>').or include('<!DOCTYPE html>')
   end
 
-  it 'attaches _meta.ui.resourceUri and readable Portuguese fallback text on tools/call' do
+  it 'attaches UI metadata and readable Portuguese fallback text on tools/call' do
     company = create(:company, status: :active, name: 'Solar UI Test LTDA', city: 'Florianópolis', state: 'SC')
 
     legacy_rpc('tools/list')
     list_tool = response.parsed_body.dig('result', 'tools').find { |t| t['name'] == 'list_integrators' }
     expect(list_tool.dig('_meta', 'ui', 'resourceUri')).to eq('ui://avalia-solar/search/v1.html')
+    expect(list_tool.dig('_meta', 'ui/resourceUri')).to eq('ui://avalia-solar/search/v1.html')
+    expect(list_tool.dig('_meta', 'openai/widgetAccessible')).to be(true)
 
     legacy_rpc('tools/call', params: { name: 'list_integrators', arguments: { query: 'Solar UI Test' } })
     expect(response).to have_http_status(:ok)
     result = response.parsed_body.fetch('result')
     expect(result.dig('_meta', 'ui', 'resourceUri')).to eq('ui://avalia-solar/search/v1.html')
+    expect(result.dig('_meta', 'openai/outputTemplate')).to eq('ui://avalia-solar/search/v1.html')
     expect(result.dig('structuredContent', 'data', 'integrators').first['id']).to eq(company.id)
     expect(result.dig('content', 0, 'text')).to include('Solar UI Test LTDA')
   end
