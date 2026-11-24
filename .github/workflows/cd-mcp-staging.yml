@@ -1,0 +1,118 @@
+name: CD — MCP Staging Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: 'Commit SHA da branch main (ou vazio para usar HEAD de main)'
+        required: false
+        type: string
+      staging_dir:
+        description: 'Diretório da stack isolada na VPS (opcional; autodetectado via Docker se vazio)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-mcp-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy-mcp-staging:
+    name: Deploy isolated MCP Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_sha || 'main' }}
+
+      - name: Validate secrets
+        run: |
+          MISSING=()
+          [ -z "${{ secrets.SSH_HOST }}" ] && MISSING+=("SSH_HOST")
+          [ -z "${{ secrets.SSH_USER }}" ] && MISSING+=("SSH_USER")
+          [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && MISSING+=("SSH_PRIVATE_KEY")
+          if [ ${#MISSING[@]} -ne 0 ]; then
+            echo "::error::Secrets ausentes: ${MISSING[*]}"
+            exit 1
+          fi
+
+      - name: Deploy avalia-solar-mcp-staging via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        env:
+          DOCKER_USER: ${{ github.actor }}
+          DOCKER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: ${{ github.event.inputs.release_sha || github.sha }}
+          PRODUCTION_DEPLOY_DIR: ${{ vars.PRODUCTION_DEPLOY_DIR || '' }}
+          MCP_STAGING_DEPLOY_DIR: ${{ github.event.inputs.staging_dir || vars.MCP_STAGING_DEPLOY_DIR || '' }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          command_timeout: 15m
+          envs: DOCKER_USER,DOCKER_TOKEN,GH_REPOSITORY,TARGET_SHA,PRODUCTION_DEPLOY_DIR,MCP_STAGING_DEPLOY_DIR
+          script: |
+            set -Eeuo pipefail
+            REPO_LOWER=$(printf '%s' "$GH_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+            DEPLOY_DIR="${PRODUCTION_DEPLOY_DIR:-${HOME:-}/Avalia-Solar-2026}"
+            BACKEND_IMAGE="ghcr.io/${REPO_LOWER}-backend:${TARGET_SHA}"
+
+            DOCKER_CONFIG=$(mktemp -d)
+            export DOCKER_CONFIG
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true; rm -rf "$DOCKER_CONFIG"' EXIT
+            printf '%s' "$DOCKER_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin
+
+            if ! docker image inspect "$BACKEND_IMAGE" >/dev/null 2>&1; then
+              docker pull -q "$BACKEND_IMAGE" || {
+                BACKEND_IMAGE="ghcr.io/${REPO_LOWER}-backend:latest"
+                docker pull -q "$BACKEND_IMAGE"
+              }
+            fi
+
+            MCP_STAGING_PROJECT="avalia-solar-mcp-staging"
+            MCP_STAGING_CID=$(docker ps -aq --filter "label=com.docker.compose.project=${MCP_STAGING_PROJECT}" | head -n 1 || true)
+            MCP_STAGING_DIR="${MCP_STAGING_DEPLOY_DIR:-}"
+            if [ -z "$MCP_STAGING_DIR" ] && [ -n "$MCP_STAGING_CID" ]; then
+              MCP_STAGING_DIR=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$MCP_STAGING_CID" 2>/dev/null || true)
+            fi
+            if [ -z "$MCP_STAGING_DIR" ]; then
+              for CANDIDATE_DIR in "${HOME:-}/avalia-solar-mcp-staging" "${HOME:-}/mcp-staging" "/opt/avalia-solar-mcp-staging"; do
+                if [ -f "${CANDIDATE_DIR}/.env" ]; then
+                  MCP_STAGING_DIR="$CANDIDATE_DIR"
+                  break
+                fi
+              done
+            fi
+
+            if [ -z "$MCP_STAGING_DIR" ] || [ ! -f "${MCP_STAGING_DIR}/.env" ]; then
+              echo "::error::Diretorio staging com .env nao encontrado (${MCP_STAGING_DIR:-vazio})."
+              exit 1
+            fi
+
+            cd "$DEPLOY_DIR"
+            git fetch origin main --quiet || true
+            git checkout --force "$TARGET_SHA" 2>/dev/null || true
+
+            COMPOSE_FILE="${DEPLOY_DIR}/infra/mcp-staging/compose.yml"
+            [ -f "$COMPOSE_FILE" ] || { echo "::error::Arquivo compose staging ausente: $COMPOSE_FILE"; exit 1; }
+
+            export MCP_STAGING_BACKEND_IMAGE="$BACKEND_IMAGE"
+            docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "$COMPOSE_FILE" up -d --no-build --wait --wait-timeout 120 postgres redis
+            docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "$COMPOSE_FILE" run --rm --no-deps rails bundle exec rails db:migrate
+            docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "$COMPOSE_FILE" up -d --no-deps --no-build --wait --wait-timeout 180 rails
+
+            docker compose --project-directory "$MCP_STAGING_DIR" --env-file "${MCP_STAGING_DIR}/.env" -f "$COMPOSE_FILE" exec -T rails bundle exec rails runner '
+              abort("MCP_STAGING_UI_DISABLED") unless Mcp::Ui::ResourceRegistry.enabled? && Mcp::Ui::ResourceRegistry.list.length == 5
+              puts "MCP_STAGING_UI_OK uris=#{Mcp::Ui::ResourceRegistry.list.map { |r| r["uri"] }.join(",")}"
+            '
+            curl -fsS http://127.0.0.1:3101/health/liveness >/dev/null
+            curl -fsS http://127.0.0.1:3101/.well-known/oauth-protected-resource/mcp >/dev/null
+            echo "MCP Staging atualizado com sucesso para ${BACKEND_IMAGE}"
+

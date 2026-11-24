@@ -73,6 +73,9 @@ namespace :mcp do
       puts "Canonical Issuer:   #{config.canonical_issuer}"
       puts "Allowed Clients:    #{config.allowlisted_client_ids.inspect}"
       puts "Allowed Subjects:   #{config.allowlisted_subjects.inspect}"
+      puts "UI Enabled:         #{Mcp::Ui::ResourceRegistry.enabled?}"
+      puts "UI Surfaces Active: #{Mcp::Ui::ResourceRegistry.list.map { |r| r['uri'] }.inspect}"
+      puts "UI ResourceDomains: #{ENV['MCP_UI_RESOURCE_DOMAINS'].to_s}"
       puts '=================================================='
     end
   end
