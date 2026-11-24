@@ -103,7 +103,7 @@ jobs:
           ruby-version: '3.2.2'
           bundler-cache: true
           working-directory: ./AB0-1-back
-      - uses: actions/setup-node@49933ea5288caeca864211e84afebf7f7d6113b2 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
