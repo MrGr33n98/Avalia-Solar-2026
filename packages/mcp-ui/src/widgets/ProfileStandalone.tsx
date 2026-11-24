@@ -58,8 +58,8 @@ export const ProfileStandaloneView: React.FC = () => {
       ) : undefined}
       portfolio={
         <>
-          {portfolio ? <ProjectPortfolioPreview key={payload?.data.integrator.id} portfolio={portfolio} /> : null}
-          {gallery ? <PublicMediaGallery key={payload?.data.integrator.id} gallery={gallery} /> : null}
+          {portfolio ? <ProjectPortfolioPreview key={`portfolio:${payload?.data.integrator.id}`} portfolio={portfolio} /> : null}
+          {gallery ? <PublicMediaGallery key={`gallery:${payload?.data.integrator.id}`} gallery={gallery} /> : null}
         </>
       }
       loading={status === 'loading'}
