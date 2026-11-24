@@ -45,7 +45,7 @@ module Mcp
       end
 
       def active_scope
-        Company.active.includes(:categories)
+        Company.active.preload(:categories)
       end
 
       def company_reference(args)
