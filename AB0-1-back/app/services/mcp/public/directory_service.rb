@@ -44,6 +44,13 @@ module Mcp
         }
       end
 
+      def safe_logo_url(company)
+        url = company.logo_url.to_s.strip
+        url.start_with?('https://') ? url : nil
+      rescue StandardError
+        nil
+      end
+
       def active_scope
         Company.active.preload(:categories)
       end
@@ -65,6 +72,7 @@ module Mcp
         result = {
           id: company.id, name: company.name.to_s.first(160),
           slug: company.slug, profile_url: "#{PROFILE_ORIGIN}/companies/#{company.slug}",
+          logo_url: safe_logo_url(company),
           headquarters: { city: company.city, state: company.state },
           declared_coverage: {
             states: company.coverage_state_list.first(27),

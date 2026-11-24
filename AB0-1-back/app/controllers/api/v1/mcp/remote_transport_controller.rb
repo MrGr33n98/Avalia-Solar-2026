@@ -92,6 +92,10 @@ module Api
             return rpc_error(id, -32602, 'Unknown tools/list cursor.', :bad_request) if params['cursor'].present?
 
             rpc_result(id, { tools: ::Mcp::PublicToolRegistry.list })
+          when 'resources/list'
+            handle_resources_list(id, params)
+          when 'resources/read'
+            handle_resources_read(id, params)
           when 'tools/call'
             execute_legacy_tool(id, params)
           else
@@ -263,11 +267,15 @@ module Api
               principal: @mcp_auth_context.is_a?(Hash) ? @mcp_auth_context[:subject] : nil
             )
             data = ::Mcp::Public::OutputValidator.validate!(name: tool_name, payload: data)
-            rpc_result(id, {
-              content: [{ type: 'text', text: JSON.generate(data) }],
+            summary = ::Mcp::Ui::TextSummaryFormatter.call(name: tool_name, payload: data)
+            result_payload = {
+              content: [{ type: 'text', text: summary }],
               structuredContent: data,
               isError: false
-            })
+            }
+            ui_meta = ::Mcp::Ui::ResourceRegistry.tool_meta(tool_name)
+            result_payload[:_meta] = ui_meta if ui_meta
+            rpc_result(id, result_payload)
           rescue ::Mcp::Public::Executor::NotAvailable
             rpc_error(id, -32_001, 'Tool not yet available.')
           rescue ::Mcp::Public::InputValidator::Invalid
@@ -314,12 +322,32 @@ module Api
             return rpc_error(id, -32602, 'Invalid initialize parameters.', :bad_request)
           end
 
+          capabilities = ::Mcp::Ui::ResourceRegistry.enabled? ? { tools: {}, resources: { listChanged: false } } : { tools: {} }
           rpc_result(id, {
             protocolVersion: PROTOCOL_VERSION,
-            capabilities: { tools: {} },
+            capabilities: capabilities,
             serverInfo: { name: 'avalia-solar-mcp-preview', version: '0.1.0' },
             instructions: 'Preview only. No tools can be executed until external authorization is implemented.'
           })
+        end
+
+        def handle_resources_list(id, params)
+          return rpc_error(id, -32601, 'Method not found.') unless ::Mcp::Ui::ResourceRegistry.enabled?
+          return rpc_error(id, -32602, 'Unsupported resources/list parameters.', :bad_request) if params.keys.any? { |k| k != 'cursor' }
+
+          rpc_result(id, { resources: ::Mcp::Ui::ResourceRegistry.list })
+        end
+
+        def handle_resources_read(id, params)
+          return rpc_error(id, -32601, 'Method not found.') unless ::Mcp::Ui::ResourceRegistry.enabled?
+
+          uri = params['uri']
+          return rpc_error(id, -32602, 'Resource URI is required.', :bad_request) unless uri.is_a?(String) && uri.present?
+
+          content = ::Mcp::Ui::ResourceRegistry.read(uri)
+          return rpc_error(id, -32602, 'Resource not found.', :not_found) unless content
+
+          rpc_result(id, { contents: [content] })
         end
 
         def rpc_result(id, result)

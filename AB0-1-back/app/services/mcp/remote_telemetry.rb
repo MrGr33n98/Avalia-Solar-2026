@@ -7,7 +7,7 @@ module Mcp
   # separate SRE configuration and release gate.
   class RemoteTelemetry
     EVENT_NAME = 'mcp.remote.request'
-    OPERATIONS = %w[initialize ping server/discover tools/list tools/call].freeze
+    OPERATIONS = %w[initialize ping server/discover tools/list tools/call resources/list resources/read].freeze
     OUTCOMES = %w[completed rejected error].freeze
 
     class << self

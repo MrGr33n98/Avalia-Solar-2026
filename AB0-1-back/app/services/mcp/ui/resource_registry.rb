@@ -1,0 +1,174 @@
+# frozen_string_literal: true
+
+require 'uri'
+
+module Mcp
+  module Ui
+    # Allowlisted registry and static HTML bundle reader for MCP Apps UI surfaces.
+    # Feature-flagged OFF by default in production; never accepts arbitrary file paths.
+    class ResourceRegistry
+      MIME_TYPE = 'text/html;profile=mcp-app'
+      UI_FLAG = 'MCP_UI_ENABLED'
+
+      SURFACES = {
+        'list_integrators' => {
+          key: 'search',
+          file: 'search.v1.html',
+          uri: 'ui://avalia-solar/search/v1.html',
+          name: 'Avalia Solar Search',
+          flag: 'MCP_UI_SEARCH_ENABLED',
+          display_modes: %w[inline fullscreen]
+        }.freeze,
+        'show_integrator_profile' => {
+          key: 'profile',
+          file: 'profile.v1.html',
+          uri: 'ui://avalia-solar/profile/v1.html',
+          name: 'Avalia Solar Profile',
+          flag: 'MCP_UI_PROFILE_ENABLED',
+          display_modes: %w[inline fullscreen]
+        }.freeze,
+        'get_integrator_reputation' => {
+          key: 'reputation',
+          file: 'reputation.v1.html',
+          uri: 'ui://avalia-solar/reputation/v1.html',
+          name: 'Avalia Solar Reputation',
+          flag: 'MCP_UI_REPUTATION_ENABLED',
+          display_modes: %w[inline fullscreen]
+        }.freeze,
+        'compare_integrators' => {
+          key: 'compare',
+          file: 'compare.v1.html',
+          uri: 'ui://avalia-solar/compare/v1.html',
+          name: 'Avalia Solar Compare',
+          flag: 'MCP_UI_COMPARE_ENABLED',
+          display_modes: %w[fullscreen inline]
+        }.freeze,
+        'list_solar_categories' => {
+          key: 'categories',
+          file: 'categories.v1.html',
+          uri: 'ui://avalia-solar/categories/v1.html',
+          name: 'Avalia Solar Categories',
+          flag: 'MCP_UI_CATEGORIES_ENABLED',
+          display_modes: %w[inline fullscreen]
+        }.freeze
+      }.freeze
+
+      URI_INDEX = SURFACES.values.index_by { |entry| entry[:uri] }.freeze
+
+      class << self
+        def enabled?
+          ENV[UI_FLAG] == 'true'
+        end
+
+        def surface_enabled?(entry)
+          enabled? && entry.present? && ENV[entry[:flag]] != 'false'
+        end
+
+        def list
+          return [] unless enabled?
+
+          SURFACES.values.filter_map do |entry|
+            next unless surface_enabled?(entry) && safe_bundle_path(entry)
+
+            {
+              'uri' => entry[:uri],
+              'name' => entry[:name],
+              'mimeType' => MIME_TYPE,
+              '_meta' => resource_meta(entry)
+            }
+          end
+        end
+
+        def read(uri)
+          return nil unless enabled? && uri.is_a?(String)
+
+          entry = URI_INDEX[uri]
+          return nil unless surface_enabled?(entry)
+
+          path = safe_bundle_path(entry)
+          return nil unless path
+
+          {
+            'uri' => entry[:uri],
+            'mimeType' => MIME_TYPE,
+            'text' => File.binread(path).force_encoding('UTF-8'),
+            '_meta' => resource_meta(entry)
+          }
+        end
+
+        def tool_meta(tool_name)
+          entry = SURFACES[tool_name.to_s]
+          return nil unless surface_enabled?(entry) && safe_bundle_path(entry)
+
+          {
+            'ui' => { 'resourceUri' => entry[:uri] },
+            'openai/outputTemplate' => entry[:uri]
+          }
+        end
+
+        private
+
+        def base_dir
+          raw = ENV['MCP_UI_DIST_DIR'].to_s.strip
+          Pathname.new(raw.presence || Rails.root.join('public', 'mcp-ui').to_s)
+        end
+
+        def safe_bundle_path(entry)
+          dir = base_dir
+          return nil unless File.directory?(dir)
+
+          real_dir = File.realpath(dir)
+          candidate = File.join(real_dir, entry[:file])
+          return nil unless File.file?(candidate)
+
+          real_file = File.realpath(candidate)
+          real_file.start_with?("#{real_dir}/") ? real_file : nil
+        rescue SystemCallError
+          nil
+        end
+
+        def resource_meta(entry)
+          ui_meta = {
+            'prefersBorder' => true,
+            'csp' => {
+              'connectDomains' => [],
+              'resourceDomains' => allowed_resource_domains,
+              'frameDomains' => []
+            }
+          }
+          origin = safe_https_origin(ENV.fetch('MCP_UI_ORIGIN', nil))
+          ui_meta['domain'] = origin if origin
+
+          {
+            'ui' => ui_meta,
+            'openai/ui' => { 'availableDisplayModes' => entry[:display_modes] }
+          }
+        end
+
+        def allowed_resource_domains
+          ENV['MCP_UI_RESOURCE_DOMAINS'].to_s.split(',').filter_map do |raw|
+            safe_https_origin(raw)
+          end.uniq
+        end
+
+        def safe_https_origin(raw)
+          value = raw.to_s.strip
+          return nil if value.empty? || value.include?('*')
+
+          uri = URI.parse(value)
+          return nil unless uri.is_a?(URI::HTTPS) && uri.host.present?
+
+          format_https_origin(uri)
+        rescue URI::InvalidURIError
+          nil
+        end
+
+        def format_https_origin(uri)
+          return "https://#{uri.host}" if uri.port.nil? || uri.port == 443
+
+          "https://#{uri.host}:#{uri.port}"
+        end
+      end
+    end
+  end
+end
