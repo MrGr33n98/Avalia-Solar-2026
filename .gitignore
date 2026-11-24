@@ -274,6 +274,10 @@ agent/
 !docs/crm/
 !docs/crm/*
 
+# MCP documentation artifacts
+!docs/mcp/
+!docs/mcp/**
+
 
 # PDRs de produto versionados
 !docs/product/

@@ -3,10 +3,16 @@
 module Api
   module Oauth
     class TokensController < Doorkeeper::TokensController
-      before_action :validate_mcp_resource!, only: :create
+      before_action :set_and_validate_mcp_resource!, only: :create
       before_action :validate_mcp_canary_request!, only: :create
 
       private
+
+      def set_and_validate_mcp_resource!
+        res = resolved_resource
+        params[:resource] = res if res.present? && params[:resource].blank?
+        validate_mcp_resource!
+      end
 
       def validate_mcp_resource!
         configuration = ::Mcp::Oauth::Configuration
@@ -39,6 +45,25 @@ module Api
       def private_oauth_request?
         params[:resource] == ::Mcp::Oauth::Configuration.private_resource &&
           ::Mcp::Oauth::Configuration.private_configured?
+      end
+
+      def resolved_resource
+        case params[:grant_type].to_s
+        when 'authorization_code'
+          grant = Doorkeeper::AccessGrant.by_token(params[:code].to_s)
+          grant_resource = grant&.resource if grant.respond_to?(:resource)
+          return nil if grant_resource.present? && params[:resource].present? && params[:resource] != grant_resource
+
+          params[:resource].presence || grant_resource
+        when 'refresh_token'
+          token = Doorkeeper::AccessToken.by_refresh_token(params[:refresh_token].to_s)
+          token_resource = token&.resource if token.respond_to?(:resource)
+          return nil if token_resource.present? && params[:resource].present? && params[:resource] != token_resource
+
+          params[:resource].presence || token_resource
+        else
+          params[:resource]
+        end
       end
 
       def validate_authorization_code_canary_request!

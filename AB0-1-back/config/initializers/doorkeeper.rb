@@ -28,7 +28,7 @@ Doorkeeper.configure do
       user
     else
       store_location_for(:user, request.fullpath)
-      redirect_to new_user_session_url
+      redirect_to new_user_session_path
     end
   end
 

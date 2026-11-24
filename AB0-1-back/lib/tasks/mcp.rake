@@ -5,12 +5,23 @@ namespace :mcp do
     desc 'Registra ou atualiza um cliente OAuth Doorkeeper para integrações MCP (ChatGPT, Claude Desktop, SDKs)'
     task :register, %i[name redirect_uri scopes confidential] => :environment do |_t, args|
       name = args[:name].presence || 'ChatGPT Avalia Solar MCP'
-      redirect_uri = args[:redirect_uri].presence || 'https://chat.openai.com/aip/plugin-mcp/oauth/callback'
       scopes = args[:scopes].presence || 'mcp:public:read'
       confidential = args[:confidential].to_s == 'true'
 
+      default_uris = [
+        'https://chatgpt.com/connector/oauth/iwgnUmlxR3DA',
+        'https://chatgpt.com/connector/oauth',
+        'https://chat.openai.com/aip/plugin-mcp/oauth/callback'
+      ]
+      raw_uri = args[:redirect_uri].presence
+      redirect_uris = if raw_uri.present?
+                        raw_uri.split(/[\s,]+/).reject(&:blank?)
+                      else
+                        default_uris
+                      end
+
       app = Doorkeeper::Application.find_or_initialize_by(name: name)
-      app.redirect_uri = redirect_uri
+      app.redirect_uri = redirect_uris.join("\n")
       app.scopes = scopes
       app.confidential = confidential
       app.save!
