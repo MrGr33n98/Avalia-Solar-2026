@@ -7,6 +7,7 @@ import {
 import { useHostBridge } from '../bridge/host-adapter';
 import { recordMcpUiEvent } from '../analytics/telemetry';
 import { ProfileView } from './ProfileView';
+import { BrandHero } from './BrandHero';
 import { ReputationView } from './ReputationView';
 
 export const ProfileStandaloneView: React.FC = () => {
@@ -47,6 +48,9 @@ export const ProfileStandaloneView: React.FC = () => {
   return (
     <ProfileView
       payload={payload}
+      hero={payload?.data.integrator.hero_carousel ? (
+        <BrandHero key={payload.data.integrator.id} carousel={payload.data.integrator.hero_carousel} />
+      ) : undefined}
       loading={status === 'loading'}
       errorMessage={errorMessage}
       onOpenReputation={async (companyId, name, state) => {

@@ -33,6 +33,27 @@ RSpec.describe Mcp::Public::DirectoryService do
     expect(public_data.fetch(:headquarters)).to be_a(Hash)
   end
 
+  it 'preserves the legacy profile contract when the new hero flag is off' do
+    allow(ENV).to receive(:[]).and_call_original
+    allow(ENV).to receive(:[]).with('MCP_BRAND_PROFILE_HERO_ENABLED').and_return('false')
+    company = create(:company, status: :active)
+    expect(Mcp::Public::BrandHeroSnapshot).not_to receive(:call)
+    result = service.call(name: 'show_integrator_profile', arguments: { 'company_id' => company.id })
+    expect(result.dig(:data, :integrator)).not_to have_key(:hero_carousel)
+  end
+
+  it 'uses the shared public hero snapshot when enabled and does not expand search results' do
+    allow(ENV).to receive(:[]).and_call_original
+    allow(ENV).to receive(:[]).with('MCP_BRAND_PROFILE_HERO_ENABLED').and_return('true')
+    company = create(:company, status: :active, name: 'Hero MCP Teste')
+    snapshot = { version: 1, enabled: false, slides: [] }
+    expect(Mcp::Public::BrandHeroSnapshot).to receive(:call).with(company).once.and_return(snapshot)
+    result = service.call(name: 'show_integrator_profile', arguments: { 'company_id' => company.id })
+    expect(result.dig(:data, :integrator, :hero_carousel)).to eq(snapshot)
+    search = service.call(name: 'list_integrators', arguments: { 'query' => 'Hero MCP Teste' })
+    expect(search.dig(:data, :integrators).first).not_to have_key(:hero_carousel)
+  end
+
   it 'returns an empty result for unknown search terms without relaxing filters' do
     result = service.call(name: 'list_integrators', arguments: { 'query' => 'zz_unmatched_nonexistent_2026' })
     expect(result.fetch(:data).fetch(:integrators)).to eq([])

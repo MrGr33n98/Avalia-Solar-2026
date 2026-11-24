@@ -84,6 +84,9 @@ module Mcp
           categories: categories
         }
         if detailed
+          if ENV['MCP_BRAND_PROFILE_HERO_ENABLED'] == 'true'
+            result[:hero_carousel] = BrandHeroSnapshot.call(company)
+          end
           result[:description] = ActionController::Base.helpers.strip_tags(company.description.to_s).first(1200)
           result[:services] = Array(company.services_offered).select { |item| item.is_a?(String) }
                                                .map { |item| item.first(120) }.first(20)
