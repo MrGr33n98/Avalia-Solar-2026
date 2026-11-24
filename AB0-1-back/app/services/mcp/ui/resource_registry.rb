@@ -58,6 +58,9 @@ module Mcp
         }.freeze
       }.freeze
 
+      PROFILE_V2 = SURFACES.fetch('show_integrator_profile').merge(
+        uri: 'ui://avalia-solar/profile/v2.html'
+      ).freeze
       URI_INDEX = SURFACES.values.index_by { |entry| entry[:uri] }.freeze
 
       class << self
@@ -86,7 +89,8 @@ module Mcp
         def list
           return [] unless enabled?
 
-          SURFACES.values.filter_map do |entry|
+          SURFACES.keys.filter_map do |name|
+            entry = surface_for(name)
             next unless surface_enabled?(entry) && safe_bundle_path(entry)
 
             {
@@ -101,7 +105,11 @@ module Mcp
         def read(uri)
           return nil unless enabled? && uri.is_a?(String)
 
-          entry = URI_INDEX[uri]
+          entry = if uri == PROFILE_V2[:uri] && profile_v2_enabled?
+                    PROFILE_V2
+                  else
+                    URI_INDEX[uri]
+                  end
           return nil unless surface_enabled?(entry)
 
           path = safe_bundle_path(entry)
@@ -116,7 +124,7 @@ module Mcp
         end
 
         def tool_meta(tool_name)
-          entry = SURFACES[tool_name.to_s]
+          entry = surface_for(tool_name.to_s)
           return nil unless surface_enabled?(entry) && safe_bundle_path(entry)
 
           {
@@ -133,6 +141,16 @@ module Mcp
         end
 
         private
+
+        def profile_v2_enabled?
+          ENV['MCP_BRAND_PROFILE_HERO_ENABLED'] == 'true'
+        end
+
+        def surface_for(name)
+          return PROFILE_V2 if name == 'show_integrator_profile' && profile_v2_enabled?
+
+          SURFACES[name]
+        end
 
         def base_dir
           raw = ENV['MCP_UI_DIST_DIR'].to_s.strip
