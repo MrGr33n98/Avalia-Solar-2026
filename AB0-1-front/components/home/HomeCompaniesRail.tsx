@@ -527,7 +527,7 @@ export function HomeCompaniesRail({
     track('home_geo_filter_applied', { state: draftState, city: draftCity || null, source: 'home_rail' });
   };
 
-  if (!allowGeo && (!companies || companies.length === 0 || visibleCompanies.length === 0)) return null;
+  if ((!allowGeo || !mobile) && (!companies || companies.length === 0 || visibleCompanies.length === 0)) return null;
 
   return (
     <section
@@ -565,19 +565,19 @@ export function HomeCompaniesRail({
             {allowGeo && (
               <div data-testid="home-geo-filter-bar" className="col-start-1 row-start-2 flex h-8 min-w-0 items-center gap-1.5 sm:hidden">
                 <button type="button" onClick={openGeo} aria-label="Selecionar estado" aria-haspopup="dialog" aria-expanded={geoOpen}
-                  className="inline-flex h-8 min-w-0 flex-1 items-center gap-1 rounded-full border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  className="inline-flex h-8 min-h-0 min-w-0 flex-1 items-center gap-1 rounded-full border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                   <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate min-[375px]:hidden">{normalizedState || 'UF'}</span>
                   <span className="hidden min-w-0 truncate min-[375px]:inline">{resolvedStateLabel || 'Estado'}</span>
                   <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
                 </button>
                 <button type="button" onClick={openGeo} aria-label="Selecionar cidade" aria-haspopup="dialog" aria-expanded={geoOpen}
-                  className={cn('inline-flex h-8 min-w-0 flex-1 items-center justify-between gap-1 rounded-full border px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500', effectiveCity ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700')}>
+                  className={cn('inline-flex h-8 min-h-0 min-w-0 flex-1 items-center justify-between gap-1 rounded-full border px-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500', effectiveCity ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700')}>
                   <span className="truncate">{effectiveCity || 'Cidade'}</span>
                   <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
                 </button>
                 <button type="button" onClick={openGeo} aria-label="Filtros geográficos" aria-haspopup="dialog" aria-expanded={geoOpen}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                  className="inline-flex h-8 w-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                   <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
@@ -649,7 +649,7 @@ export function HomeCompaniesRail({
         {isError && needsQuery && (
           <div className="mt-2 flex items-center justify-between rounded-xl border border-red-200 bg-red-50/70 px-3.5 py-2">
             <p className="text-xs font-medium text-red-800">
-              Não foi possível carregar empresas para {resolvedStateLabel}.
+              Não foi possível carregar empresas para {effectiveCity || resolvedStateLabel}.
             </p>
             <button
               type="button"
@@ -691,7 +691,7 @@ export function HomeCompaniesRail({
             {citiesQuery.isError && (
               <div role="alert" className="mt-2 flex items-center justify-between gap-2 text-xs text-red-700">
                 Não foi possível carregar as cidades.
-                <button type="button" className="underline" onClick={() => citiesQuery.refetch()}>Tentar novamente</button>
+                <button type="button" className="underline" onClick={() => citiesQuery.refetch()}>Tentar carregar cidades novamente</button>
               </div>
             )}
             {citiesQuery.isSuccess && !citiesQuery.data.length && <p className="mt-2 text-xs text-slate-500">Nenhuma cidade cadastrada para este estado.</p>}
