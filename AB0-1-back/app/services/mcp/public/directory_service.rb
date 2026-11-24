@@ -8,6 +8,8 @@ module Mcp
       class NotFound < StandardError; end
 
       PROFILE_ORIGIN = 'https://www.avaliasolar.com.br'
+      PROFILE_PREVIEW_BUDGET = 32 * 1024
+      OPTIONAL_PROFILE_FIELDS = %i[gallery_preview catalog_preview trust_preview portfolio_preview hero_carousel].freeze
       ORDERS = {
         'relevance' => 'companies.name ASC, companies.id ASC',
         'rating' => 'companies.rating_avg DESC NULLS LAST, companies.id ASC',
@@ -145,11 +147,24 @@ module Mcp
 
       def show_integrator_profile(args)
         company = company_reference(args)
-        envelope(
+        payload = envelope(
           source_type: 'company_declared',
           data: { integrator: public_company(company, detailed: true) },
           limitations: ['Cobertura geográfica informada pela empresa, não necessariamente verificada.']
         )
+        enforce_preview_budget(payload)
+      end
+
+      def enforce_preview_budget(payload)
+        integrator = payload.fetch(:data).fetch(:integrator)
+        OPTIONAL_PROFILE_FIELDS.each do |field|
+          break if JSON.generate(payload).bytesize <= PROFILE_PREVIEW_BUDGET
+          next unless integrator.key?(field)
+
+          integrator.delete(field)
+          payload[:limitations] << "Prévia #{field} omitida pelo limite de tamanho; consulte o perfil oficial."
+        end
+        payload
       end
 
       def list_solar_categories(args)

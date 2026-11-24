@@ -11,9 +11,10 @@ module Mcp
       def self.public_image_url(attachment)
         return unless attachment.attached?
 
-        Rails.application.routes.url_helpers.rails_storage_proxy_url(
+        url = Rails.application.routes.url_helpers.rails_storage_proxy_url(
           attachment, host: 'api.avaliasolar.com.br', protocol: 'https'
         )
+        MediaUrl.allowed(url)
       end
 
       private_class_method :public_image_url

@@ -49,3 +49,9 @@ Base: 93a8e2f55d7771e3c81e1ef3d33202b3cecde52e. Escopo exclusivamente público e
 - FAQ publicada conforme gate da Brand Page, selos ativos atribuídos (texto no MVP), flag MCP_BRAND_PROFILE_TRUST_ENABLED=false.
 - Reputação agregada continua pela tool existente; não alterar a proibição de expor identidade ou corpo de review. Achievements específicos do ledger, reviews individuais e materiais ficam para fase posterior com revisão de contrato/privacidade.
 - Testes escritos; CI e orçamento de bundle devem ser revalidados antes de qualquer publicação. Sem merge/deploy.
+
+## Incremento 9A — proteção do payload e gate do MVP
+
+- Limite alvo de 32 KiB para prévias opcionais, com degradação explícita; mantém limite rígido original de 64 KiB. Hero passa a usar allowlist de origens do CSP.
+- Teste integrado via transporte com todas as flags ON e teste de degradação escritos. Checklist mvp-acceptance.md adicionado.
+- Não homologado em staging/host; CI final pendente. Sem merge/deploy/ativação.
