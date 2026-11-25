@@ -44,6 +44,8 @@ async function run() {
         minify: 'esbuild',
         sourcemap: false,
         cssCodeSplit: false,
+        // Singlefile não tem chunks para pré-carregar; o polyfill era código morto (Spec 021).
+        modulePreload: { polyfill: false },
         rollupOptions: {
           input: path.join(PKG_ROOT, surface.entry),
         },
