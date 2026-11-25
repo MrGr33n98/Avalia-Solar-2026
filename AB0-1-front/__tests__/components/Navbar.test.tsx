@@ -194,8 +194,8 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Como funciona' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Conteúdo' })).toBeInTheDocument();
 
-    // Check for new components
-    expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
+    // Check for new components (ticker desabilitado temporariamente acima da navbar)
+    expect(screen.queryByTestId('company-registration-ticker')).not.toBeInTheDocument();
     expect(screen.getByTestId('navbar-search')).toBeInTheDocument();
     expect(screen.getAllByTestId('location-search')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /Categorias/i })).toBeInTheDocument();
@@ -273,14 +273,14 @@ describe('Navbar', () => {
     expect(screen.getByRole('link', { name: 'Empresas' })).toBeInTheDocument();
   });
 
-  it('oculta ticker empresarial no painel comprador e preserva no marketplace público', () => {
+  it('mantém ticker empresarial desabilitado acima da navbar (reservado para AS Watch)', () => {
     mockUsePathname.mockReturnValue('/review-dashboard/proposals');
     const { rerender } = render(<Navbar />);
     expect(screen.queryByTestId('company-registration-ticker')).not.toBeInTheDocument();
 
     mockUsePathname.mockReturnValue('/');
     rerender(<Navbar />);
-    expect(screen.getByTestId('company-registration-ticker')).toBeInTheDocument();
+    expect(screen.queryByTestId('company-registration-ticker')).not.toBeInTheDocument();
   });
 
   it('keeps /f routes without global chrome', () => {
