@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Integrator } from '../contracts/schemas';
 
 export function DeclaredCoverage({ coverage }: { coverage: Integrator['declared_coverage'] }) {
