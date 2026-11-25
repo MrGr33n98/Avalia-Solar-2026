@@ -52,6 +52,19 @@ export const IntegratorSchema = z.object({
   categories: z.array(CategoryTagSchema),
   description: z.string().optional(),
   services: z.array(z.string()).optional(),
+  hero_carousel: z.object({
+    version: z.number().int().positive(),
+    enabled: z.boolean(),
+    slides: z.array(z.object({
+      id: z.number().int().positive(),
+      slot: z.number().int().min(1).max(3),
+      position: z.number().int(),
+      image_url: z.string(),
+      width: z.number().int().positive().nullable().optional(),
+      height: z.number().int().positive().nullable().optional(),
+      alt_text: z.string(),
+    })).max(3),
+  }).optional(),
 });
 
 export const ListIntegratorsPayloadSchema = createEnvelopeSchema(

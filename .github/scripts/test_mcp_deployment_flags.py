@@ -37,6 +37,11 @@ def main() -> None:
         value = str(backend_env.get(key, ""))
         assert value == f"${{{key}:-true}}", f"docker-compose.yml {key} expected default true, got {value!r}"
 
+    assert backend_env.get("MCP_BRAND_PROFILE_HERO_ENABLED") == "${MCP_BRAND_PROFILE_HERO_ENABLED:-false}"
+    assert backend_env.get("MCP_BRAND_PROFILE_PORTFOLIO_ENABLED") == "${MCP_BRAND_PROFILE_PORTFOLIO_ENABLED:-false}"
+    assert backend_env.get("MCP_BRAND_PROFILE_GALLERY_ENABLED") == "${MCP_BRAND_PROFILE_GALLERY_ENABLED:-false}"
+    assert backend_env.get("MCP_BRAND_PROFILE_CATALOG_ENABLED") == "${MCP_BRAND_PROFILE_CATALOG_ENABLED:-false}"
+    assert backend_env.get("MCP_BRAND_PROFILE_TRUST_ENABLED") == "${MCP_BRAND_PROFILE_TRUST_ENABLED:-false}"
     assert backend_env.get("MCP_REMOTE_AUTH_MODE") == "${MCP_REMOTE_AUTH_MODE:-oauth}"
     assert backend_env.get("MCP_CANARY_PHASE") == "${MCP_CANARY_PHASE:-read_only}"
     assert backend_env.get("MCP_OAUTH_ISSUER") == "${MCP_OAUTH_ISSUER:-https://api.avaliasolar.com.br}"
@@ -69,6 +74,11 @@ def main() -> None:
         "MCP_UI_CATEGORIES_ENABLED",
     ):
         assert str(staging_env.get(key)) == "true", f"staging {key} must be true"
+    assert staging_env.get("MCP_BRAND_PROFILE_HERO_ENABLED") == "${MCP_BRAND_PROFILE_HERO_ENABLED:-false}"
+    assert staging_env.get("MCP_BRAND_PROFILE_PORTFOLIO_ENABLED") == "${MCP_BRAND_PROFILE_PORTFOLIO_ENABLED:-false}"
+    assert staging_env.get("MCP_BRAND_PROFILE_GALLERY_ENABLED") == "${MCP_BRAND_PROFILE_GALLERY_ENABLED:-false}"
+    assert staging_env.get("MCP_BRAND_PROFILE_CATALOG_ENABLED") == "${MCP_BRAND_PROFILE_CATALOG_ENABLED:-false}"
+    assert staging_env.get("MCP_BRAND_PROFILE_TRUST_ENABLED") == "${MCP_BRAND_PROFILE_TRUST_ENABLED:-false}"
     assert "https://chatgpt.com" in str(staging_env.get("MCP_REMOTE_ALLOWED_ORIGINS", ""))
     assert "digitaloceanspaces.com" in str(staging_env.get("MCP_UI_RESOURCE_DOMAINS", ""))
 
@@ -93,6 +103,21 @@ def main() -> None:
     ):
         assert key in ssh_env, f"cd-production.yml SSH step missing {key}"
         assert key in ssh_step["with"]["envs"], f"cd-production.yml SSH envs missing {key}"
+    assert ssh_env.get("MCP_BRAND_PROFILE_HERO_ENABLED") == "${{ vars.MCP_BRAND_PROFILE_HERO_ENABLED || 'false' }}"
+    assert ssh_env.get("MCP_BRAND_PROFILE_PORTFOLIO_ENABLED") == "${{ vars.MCP_BRAND_PROFILE_PORTFOLIO_ENABLED || 'false' }}"
+    assert ssh_env.get("MCP_BRAND_PROFILE_GALLERY_ENABLED") == "${{ vars.MCP_BRAND_PROFILE_GALLERY_ENABLED || 'false' }}"
+    assert ssh_env.get("MCP_BRAND_PROFILE_CATALOG_ENABLED") == "${{ vars.MCP_BRAND_PROFILE_CATALOG_ENABLED || 'false' }}"
+    assert ssh_env.get("MCP_BRAND_PROFILE_TRUST_ENABLED") == "${{ vars.MCP_BRAND_PROFILE_TRUST_ENABLED || 'false' }}"
+    assert "MCP_BRAND_PROFILE_HERO_ENABLED" in ssh_step["with"]["envs"].split(",")
+    assert "MCP_BRAND_PROFILE_PORTFOLIO_ENABLED" in ssh_step["with"]["envs"].split(",")
+    assert "MCP_BRAND_PROFILE_GALLERY_ENABLED" in ssh_step["with"]["envs"].split(",")
+    assert "MCP_BRAND_PROFILE_CATALOG_ENABLED" in ssh_step["with"]["envs"].split(",")
+    assert "MCP_BRAND_PROFILE_TRUST_ENABLED" in ssh_step["with"]["envs"].split(",")
+    assert "export MCP_BRAND_PROFILE_HERO_ENABLED" in ssh_step["with"]["script"]
+    assert "export MCP_BRAND_PROFILE_PORTFOLIO_ENABLED" in ssh_step["with"]["script"]
+    assert "export MCP_BRAND_PROFILE_GALLERY_ENABLED" in ssh_step["with"]["script"]
+    assert "export MCP_BRAND_PROFILE_CATALOG_ENABLED" in ssh_step["with"]["script"]
+    assert "export MCP_BRAND_PROFILE_TRUST_ENABLED" in ssh_step["with"]["script"]
     assert "avalia-solar-mcp-staging" in ssh_step["with"]["script"], (
         "cd-production.yml must sync isolated avalia-solar-mcp-staging when present on droplet"
     )

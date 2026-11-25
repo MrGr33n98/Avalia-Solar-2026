@@ -125,6 +125,23 @@ RSpec.describe 'MCP UI Resources and Tool UI Metadata', type: :request do
     expect(response.parsed_body.dig('result', 'contents', 0, 'uri')).to eq('ui://avalia-solar/categories/v1.html')
   end
 
+  it 'delivers the full optional 018A preview through the actual public transport with flags enabled' do
+    %w[HERO PORTFOLIO GALLERY CATALOG TRUST].each do |module_name|
+      allow(ENV).to receive(:[]).with("MCP_BRAND_PROFILE_#{module_name}_ENABLED").and_return('true')
+    end
+    company = create(:company, status: :active, name: 'Solar MVP 018A')
+    legacy_rpc('tools/call', params: { name: 'show_integrator_profile', arguments: { company_id: company.id } })
+    expect(response).to have_http_status(:ok)
+    result = response.parsed_body.fetch('result')
+    expect(result['isError']).not_to eq(true)
+    expect(result.dig('_meta', 'ui', 'resourceUri')).to eq('ui://avalia-solar/profile/v2.html')
+    integrator = result.dig('structuredContent', 'data', 'integrator')
+    expect(integrator.keys).to include('hero_carousel', 'portfolio_preview', 'gallery_preview', 'catalog_preview', 'trust_preview')
+    expect(integrator.keys).not_to include('email', 'phone', 'buyer_intent', 'internal_notes')
+    expect(JSON.generate(result.fetch('structuredContent')).bytesize).to be <= 32_768
+    expect(result.dig('content', 0, 'text')).to include('Solar MVP 018A')
+  end
+
   it 'keeps resources hidden when MCP_UI_ENABLED is false' do
     allow(ENV).to receive(:[]).with('MCP_UI_ENABLED').and_return('false')
 

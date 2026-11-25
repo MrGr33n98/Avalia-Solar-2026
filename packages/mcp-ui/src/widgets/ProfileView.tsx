@@ -22,6 +22,8 @@ export interface ProfileViewProps {
   errorMessage?: string | null;
   onRetry?: () => void;
   onBack?: () => void;
+  hero?: React.ReactNode;
+  portfolio?: React.ReactNode;
   onOpenReputation?: (companyId: number, companyName: string, state: 'platform_verified' | 'unverified') => void;
   onOpenExternal?: (url: string, companyId: number) => void;
 }
@@ -32,6 +34,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   errorMessage = null,
   onRetry,
   onBack,
+  hero,
+  portfolio,
   onOpenReputation,
   onOpenExternal,
 }) => {
@@ -86,6 +90,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       />
 
       <div className="as-card as-stack" style={{ gap: '12px' }}>
+        {hero}
         <div className="as-row" style={{ alignItems: 'flex-start', gap: '12px' }}>
           <LogoAvatar name={company.name} logoUrl={company.logo_url} size={56} />
           <div className="as-stack" style={{ gap: '4px', flex: 1, minWidth: 0 }}>
@@ -136,6 +141,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             ) : null}
           </div>
         ) : null}
+
+        {portfolio}
 
         {company.categories.length > 0 ? (
           <div className="as-stack" style={{ gap: '6px' }}>

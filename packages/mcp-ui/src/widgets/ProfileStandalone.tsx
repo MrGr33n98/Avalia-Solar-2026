@@ -7,6 +7,12 @@ import {
 import { useHostBridge } from '../bridge/host-adapter';
 import { recordMcpUiEvent } from '../analytics/telemetry';
 import { ProfileView } from './ProfileView';
+import { BrandHero } from './BrandHero';
+import { ProjectPortfolioPreview, readPortfolioPreview } from './ProjectPortfolioPreview';
+import { PublicMediaGallery, readGalleryPreview } from './PublicMediaGallery';
+import { CatalogPreview, readCatalogPreview } from './CatalogPreview';
+import { BrandSections } from './BrandSections';
+import { TrustPreview, readTrustPreview } from './TrustPreview';
 import { ReputationView } from './ReputationView';
 
 export const ProfileStandaloneView: React.FC = () => {
@@ -21,6 +27,11 @@ export const ProfileStandaloneView: React.FC = () => {
     const parsed = ShowIntegratorProfilePayloadSchema.safeParse(rawToolOutput);
     return parsed.success ? parsed.data : null;
   }, [rawToolOutput]);
+
+  const portfolio = useMemo(() => readPortfolioPreview(rawToolOutput), [rawToolOutput]);
+  const gallery = useMemo(() => readGalleryPreview(rawToolOutput), [rawToolOutput]);
+  const catalog = useMemo(() => readCatalogPreview(rawToolOutput), [rawToolOutput]);
+  const trust = useMemo(() => readTrustPreview(rawToolOutput), [rawToolOutput]);
 
   useEffect(() => {
     if (payload) {
@@ -47,6 +58,17 @@ export const ProfileStandaloneView: React.FC = () => {
   return (
     <ProfileView
       payload={payload}
+      hero={payload?.data.integrator.hero_carousel ? (
+        <BrandHero key={payload.data.integrator.id} carousel={payload.data.integrator.hero_carousel} />
+      ) : undefined}
+      portfolio={<BrandSections key={payload?.data.integrator.id} sections={[
+        { id: 'projects', label: 'Projetos', content: portfolio && portfolio.state !== 'unavailable' ? <ProjectPortfolioPreview portfolio={portfolio} /> : null },
+        { id: 'products', label: 'Produtos', content: catalog && catalog.products.length ? <CatalogPreview catalog={{ ...catalog, services: [] }} /> : null },
+        { id: 'services', label: 'Serviços', content: catalog && catalog.services.length ? <CatalogPreview catalog={{ ...catalog, products: [] }} /> : null },
+        { id: 'catalog-error', label: 'Catálogo', content: catalog?.state === 'error' ? <CatalogPreview catalog={catalog} /> : null },
+        { id: 'gallery', label: 'Galeria', content: gallery && (gallery.state === 'error' || gallery.images.length || gallery.videos.length) ? <PublicMediaGallery gallery={gallery} /> : null },
+        { id: 'trust', label: 'Selos e FAQ', content: trust && (trust.state === 'error' || trust.badges.length || trust.faqs.length) ? <TrustPreview trust={trust} /> : null },
+      ]} />}
       loading={status === 'loading'}
       errorMessage={errorMessage}
       onOpenReputation={async (companyId, name, state) => {
