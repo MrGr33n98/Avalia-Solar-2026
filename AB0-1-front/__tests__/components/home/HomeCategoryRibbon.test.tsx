@@ -66,6 +66,10 @@ describe('HomeCategoryRibbon', () => {
     const tudoLink = screen.getByRole('link', { name: /tudo/i });
     expect(tudoLink).toHaveAttribute('href', '/');
     expect(tudoLink).toHaveAttribute('aria-current', 'page');
+    expect(tudoLink.querySelector('img, svg')).toBeNull();
+    expect(screen.getByAltText('Ícone de Categorias').getAttribute('src')).toContain(
+      'avalia-solar-categorias.webp'
+    );
   });
 
   it('renders all canonical 3D category shortcuts in order', () => {

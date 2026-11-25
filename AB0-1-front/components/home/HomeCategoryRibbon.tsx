@@ -258,7 +258,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
           >
             <div className="relative h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center shrink-0">
               <Image
-                src="/icones/icone_categorias_avalia_solar.png"
+                src="/icones/avalia-solar-categorias.webp"
                 alt="Ícone de Categorias"
                 width={36}
                 height={36}
@@ -314,16 +314,8 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
                 "after:content-[''] after:absolute after:-bottom-[12px] after:left-1 after:right-1 after:h-[2.5px] after:bg-slate-950 after:rounded-full"
             )}
           >
-            <div className="relative h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center shrink-0">
-              <Image
-                src="/icones/icone_destaques_avalia_solar.png"
-                alt="Ícone Tudo"
-                width={36}
-                height={36}
-                priority
-                className="object-contain drop-shadow-sm group-hover:scale-105 transition-transform duration-150"
-              />
-            </div>
+            {/* Reserva a altura da fileira de ícones sem renderizar uma imagem. */}
+            <div aria-hidden="true" className="h-8 w-8 sm:h-9 sm:w-9 shrink-0" />
             <span
               className={cn(
                 'mt-1 text-[11px] sm:text-xs font-semibold leading-tight text-slate-700 group-hover:text-blue-700 transition-colors',
