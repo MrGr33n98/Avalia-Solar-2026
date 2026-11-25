@@ -64,7 +64,8 @@ class JwtBlacklistService
       return false unless jti
 
       result = RedisHelper.with_redis do |redis|
-        redis.exists?("#{REDIS_PREFIX}#{jti}") == 1
+        # redis-rb 5.x returns a Boolean from exists?, not an integer count.
+        redis.exists?("#{REDIS_PREFIX}#{jti}")
       end
 
       result || false

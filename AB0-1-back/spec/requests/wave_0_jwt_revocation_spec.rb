@@ -43,7 +43,8 @@ RSpec.describe 'Wave 0: JWT Authentication & Revocation Contract Specs', type: :
       token = jwt_token_for(user)
 
       # Revoke token
-      JwtBlacklistService.revoke_token(token)
+      expect(JwtBlacklistService.revoke_token(token)).to be(true)
+      expect(JwtBlacklistService.revoked?(token)).to be(true)
 
       # Attempt request with revoked token
       get '/api/v1/auth/me', headers: { 'Authorization' => "Bearer #{token}", 'Accept' => 'application/json' }

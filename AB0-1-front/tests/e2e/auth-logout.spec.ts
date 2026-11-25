@@ -63,6 +63,11 @@ test.describe('JWT Revocation and Logout', () => {
 
     // Rails signs the browser cookie; use the actual JWT issued by the login API.
     const token = issuedToken;
+    // A separate request context must accept the raw bearer before logout.
+    const beforeLogout = await request.get('/api/v1/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(beforeLogout.status(), 'Bearer must be valid before revocation').toBe(200);
 
     // Logout (revoke token)
     await page.goto('/logout');
@@ -75,8 +80,9 @@ test.describe('JWT Revocation and Logout', () => {
       },
     });
 
-    // Should return 401 unauthorized
+    // Require explicit revocation, not merely an invalid or missing token.
     expect(response.status()).toBe(401);
+    expect((await response.json()).code).toBe('TOKEN_REVOKED');
   });
 
   test('logout from all devices', async ({ page, browser }) => {
