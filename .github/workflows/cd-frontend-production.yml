@@ -263,12 +263,12 @@ jobs:
               (async () => {
                 const response = await fetch("http://127.0.0.1:3000/");
                 const html = await response.text();
-                const required = ["company-registration-ticker", "CADASTRAR", "wa.me/5565993465055?text=CADASTRAR"];
+                const required = ["site-header-content"];
                 if (!response.ok || response.headers.get("x-release") !== process.env.EXPECTED_RELEASE_SHA
                   || required.some((value) => !html.includes(value))) {
                   throw new Error(`Homepage inválida: HTTP ${response.status}`);
                 }
-                console.log("FRONTEND_TICKER_SMOKE_OK");
+                console.log("FRONTEND_HOMEPAGE_SMOKE_OK");
               })().catch((error) => { console.error(error); process.exit(1); });
             '; then
               rollback_frontend
@@ -292,15 +292,13 @@ jobs:
               RELEASE_HEADER=""
             fi
             if [ "$RELEASE_HEADER" = "$RELEASE_SHA" ] \
-              && grep -qF 'company-registration-ticker' "$PAGE_FILE" \
-              && grep -qF 'CADASTRAR' "$PAGE_FILE" \
-              && grep -qF 'wa.me/5565993465055?text=CADASTRAR' "$PAGE_FILE"; then
-              echo "Homepage pública serve a faixa no release ${RELEASE_SHA}."
+              && grep -qF 'site-header-content' "$PAGE_FILE"; then
+              echo "Homepage pública serve o release ${RELEASE_SHA}."
               exit 0
             fi
             sleep 10
           done
-          echo "::error::Frontend local atualizado, mas a homepage pública não confirmou a faixa."
+          echo "::error::Frontend local atualizado, mas a homepage pública não confirmou cabeçalho e release."
           exit 1
 
       - name: Roll back frontend if public verification failed

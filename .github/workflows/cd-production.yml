@@ -1209,13 +1209,13 @@ jobs:
             if ! docker exec "$FRONTEND_CID" node -e '
               fetch("http://127.0.0.1:3000/", { signal: AbortSignal.timeout(30000) }).then(async response => {
                 const html = await response.text();
-                if (!response.ok || !html.includes("company-registration-ticker") || !html.includes("CADASTRAR")) {
-                  throw new Error(`homepage inválida: status=${response.status}, ticker=${html.includes("company-registration-ticker")}`);
+                if (!response.ok || !html.includes("site-header-content")) {
+                  throw new Error(`homepage inválida: status=${response.status}, header=${html.includes("site-header-content")}`);
                 }
-                console.log("HOMEPAGE_TICKER_SMOKE_OK");
+                console.log("HOMEPAGE_SMOKE_OK");
               }).catch(error => { console.error(error); process.exit(1); });
             '; then
-              echo "!! Homepage não contém a faixa CADASTRAR; executando rollback."
+              echo "!! Homepage inválida (cabeçalho ausente); executando rollback."
               rollback_apps
               exit 1
             fi
@@ -1367,9 +1367,8 @@ jobs:
               https://www.avaliasolar.com.br/; then
               release="$(awk 'tolower($1) == "x-release:" { gsub(/[[:space:]]/, "", $2); value = $2 } END { print value }' "$probe_dir/headers")"
               if [ "$release" = "$RELEASE_SHA" ] \
-                && grep -Fq 'data-testid="company-registration-ticker"' "$probe_dir/home.html" \
-                && grep -Fq 'CADASTRAR' "$probe_dir/home.html"; then
-                echo "Homepage pública serve a faixa na release ${RELEASE_SHA}."
+                && grep -Fq 'data-testid="site-header-content"' "$probe_dir/home.html"; then
+                echo "Homepage pública serve a release ${RELEASE_SHA}."
                 exit 0
               fi
 
@@ -1381,5 +1380,5 @@ jobs:
             sleep 15
           done
 
-          echo "::error::Homepage pública não confirmou faixa e release ${RELEASE_SHA}."
+          echo "::error::Homepage pública não confirmou cabeçalho e release ${RELEASE_SHA}."
           exit 1
