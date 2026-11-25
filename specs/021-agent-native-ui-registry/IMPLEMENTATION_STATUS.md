@@ -5,6 +5,11 @@
 
 Legenda: **PASS** (executado e verde) · **FAIL** · **BLOCKED** (impedido por acesso ou ambiente) · **NOT RUN** (não executado) · **PARTIAL** (parte entregue, lacuna descrita).
 
+## 0. CI da PR #242 (commit `b789d6934`)
+
+Todos verdes: `MCP Legacy + Modern Request Specs` (inclui `npm run verify` 46/46 e a etapa nova `Validate agent-native UI registry`), `Backend Unit Tests (RSpec)`, `E2E Playwright Tests`, `Code Quality & Security Scan`, `SEO W0 Regression Gate`, `Category Discovery & SEO Contract Gate`, `Ranking Performance Frontend Contract`, `Change Impact & Risk Classification`, `build`. Dois jobs ficaram `skipping` por filtro de paths.
+Runs: https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/45697701751 e https://github.com/MrGr33n98/Avalia-Solar-2026/actions/runs/45697701671
+
 ## 1. Matriz de critérios de aceite
 
 | Gate | Status | Evidência | Observação |
