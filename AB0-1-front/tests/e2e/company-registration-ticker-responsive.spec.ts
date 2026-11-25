@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const viewportWidths = [320, 390, 768, 1440, 2560] as const;
 
-test.describe('Faixa de cadastro — mobile, PWA e web desktop', () => {
+test.describe.skip('Faixa de cadastro — mobile, PWA e web desktop (desabilitada temporariamente para AS Watch)', () => {
   for (const width of viewportWidths) {
     test(`marquee cobre toda a área e CTA permanece compacto em ${width}px`, async ({
       page,

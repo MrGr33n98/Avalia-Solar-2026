@@ -9,7 +9,8 @@ import { ChevronDown, Menu, User as UserIcon, Bell, MessageSquare, Search } from
 import { BrandLogo } from '@/components/brand/BrandLogo';
 import LocationSearch from '@/components/LocationSearch';
 import NavbarSearch from '@/components/NavbarSearch';
-import CompanyRegistrationTicker from '@/components/CompanyRegistrationTicker';
+// Desabilitado temporariamente acima da navbar (reservado para AS Watch)
+// import CompanyRegistrationTicker from '@/components/CompanyRegistrationTicker';
 import { UserAvatarDropdown } from '@/components/navigation/UserAvatarDropdown';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -131,8 +132,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-[1000] border-b border-brand-borderSoft bg-white pt-[var(--safe-area-inset-top)] max-w-full overflow-x-clip">
-      {/* Campanha B2B apenas no marketplace público; buyer autenticado ganha 48px úteis. */}
-      {!pathname?.startsWith('/review-dashboard') && <CompanyRegistrationTicker />}
+      {/* Ticker empresarial desabilitado temporariamente acima da navbar (espaço reservado para AS Watch). */}
       <div
         data-testid="site-header-content"
         className={cn(
