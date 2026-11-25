@@ -7,6 +7,7 @@ import {
 import { useHostBridge } from '../bridge/host-adapter';
 import { recordMcpUiEvent } from '../analytics/telemetry';
 import { ProfileView } from './ProfileView';
+import { DeclaredCoverage } from '../blocks/DeclaredCoverage';
 import { BrandHero } from './BrandHero';
 import { ProjectPortfolioPreview, readPortfolioPreview } from './ProjectPortfolioPreview';
 import { PublicMediaGallery, readGalleryPreview } from './PublicMediaGallery';
@@ -67,6 +68,7 @@ export const ProfileStandaloneView: React.FC = () => {
         { id: 'services', label: 'Serviços', content: catalog && catalog.services.length ? <CatalogPreview catalog={{ ...catalog, products: [] }} /> : null },
         { id: 'catalog-error', label: 'Catálogo', content: catalog?.state === 'error' ? <CatalogPreview catalog={catalog} /> : null },
         { id: 'gallery', label: 'Galeria', content: gallery && (gallery.state === 'error' || gallery.images.length || gallery.videos.length) ? <PublicMediaGallery gallery={gallery} /> : null },
+        { id: 'coverage', label: 'Cobertura', content: payload && (payload.data.integrator.declared_coverage.states.length || payload.data.integrator.declared_coverage.cities.length) ? <DeclaredCoverage coverage={payload.data.integrator.declared_coverage} /> : null },
         { id: 'trust', label: 'Selos e FAQ', content: trust && (trust.state === 'error' || trust.badges.length || trust.faqs.length) ? <TrustPreview trust={trust} /> : null },
       ]} />}
       loading={status === 'loading'}
