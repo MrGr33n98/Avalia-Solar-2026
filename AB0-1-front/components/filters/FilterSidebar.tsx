@@ -6,12 +6,17 @@ import { ChevronDown, ChevronUp, SlidersHorizontal, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useStatesOptions, useCitiesOptions } from './hooks';
 import { useCategoriesTree } from '@/hooks/useCategoriesTree';
 import { CompanyFilters, DEFAULT_FILTERS } from './types';
 import { areFiltersEqual, parseQueryParams, stringifyQueryParams, isFilterActive } from './query';
+import {
+  MAX_RENDERED_GEOGRAPHY_OPTIONS,
+  normalizeGeographySearch,
+} from '@/lib/geography/search';
 import {
   buildCompaniesCategoriesPath,
   buildCategoryDescriptorMap,
@@ -72,7 +77,25 @@ function LocationSection({
   onCitiesChange: (cities: string[]) => void;
 }) {
   const { states, loading: statesLoading } = useStatesOptions();
-  const { cities, loading: citiesLoading } = useCitiesOptions(selectedStates);
+  const {
+    cities,
+    loading: citiesLoading,
+    stale: citiesStale,
+    error: citiesError,
+    retry: retryCities,
+  } = useCitiesOptions(selectedStates);
+  const [citySearch, setCitySearch] = useState('');
+  const selectedStateKey = selectedStates.join('|');
+  useEffect(() => setCitySearch(''), [selectedStateKey]);
+  const normalizedCitySearch = normalizeGeographySearch(citySearch);
+  const filteredCities = useMemo(
+    () =>
+      cities.filter((item) =>
+        normalizeGeographySearch(item.city).includes(normalizedCitySearch)
+      ),
+    [cities, normalizedCitySearch]
+  );
+  const visibleCities = filteredCities.slice(0, MAX_RENDERED_GEOGRAPHY_OPTIONS);
 
   const toggleState = (state: string) => {
     const nextStates = selectedStates.includes(state)
@@ -119,11 +142,19 @@ function LocationSection({
         {selectedStates.length > 0 && (
           <div className="space-y-3 border-t border-slate-100 pt-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cidade</p>
+            <Input
+              type="search"
+              aria-label="Buscar cidade"
+              placeholder="Buscar cidade..."
+              value={citySearch}
+              onChange={(event) => setCitySearch(event.target.value)}
+              className="h-10 text-xs"
+            />
             {citiesLoading ? (
               <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 rounded" />)}</div>
             ) : (
               <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
-                {cities.map((item) => (
+                {visibleCities.map((item) => (
                   <button
                     key={`${item.state}-${item.city}`}
                     type="button"
@@ -134,7 +165,30 @@ function LocationSection({
                     <span className="ml-2 shrink-0 text-[10px] text-slate-400">{item.state}</span>
                   </button>
                 ))}
+                {filteredCities.length === 0 && (
+                  <p className="py-2 text-xs text-slate-500" role="status">
+                    Nenhuma cidade encontrada.
+                  </p>
+                )}
               </div>
+            )}
+            {filteredCities.length > visibleCities.length && (
+              <p className="text-[11px] text-slate-500" role="status">
+                Exibindo {visibleCities.length} de {filteredCities.length} cidades. Refine a busca para encontrar outras.
+              </p>
+            )}
+            {citiesError && (
+              <div className="flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+                <span>Não foi possível atualizar as cidades.</span>
+                <button type="button" className="underline underline-offset-2" onClick={() => void retryCities()}>
+                  Tentar novamente
+                </button>
+              </div>
+            )}
+            {citiesStale && !citiesError && (
+              <p className="text-[11px] text-amber-700" role="status">
+                Lista salva localmente; pode estar desatualizada.
+              </p>
             )}
           </div>
         )}
@@ -315,7 +369,7 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
     (filters.min_rating !== null ? 1 : 0) +
     (filters.lat !== null && filters.lng !== null ? 1 : 0);
 
-  const FilterContent = () => (
+  const filterContent = (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -377,7 +431,7 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
     <>
       {/* Desktop Sidebar */}
       <aside className="sticky top-[calc(88px+var(--safe-area-inset-top))] hidden h-[calc(100vh-120px-var(--safe-area-inset-top)-var(--safe-area-inset-bottom))] w-full flex-col overflow-hidden border border-slate-200 bg-white rounded-xl shadow-sm dashboard:flex">
-        <FilterContent />
+        {filterContent}
       </aside>
 
       {/* Mobile Trigger & Sheet */}
@@ -415,7 +469,7 @@ export const FilterSidebar: React.FC<{ hideMobileTrigger?: boolean }> = ({ hideM
                 </Button>
               </SheetHeader>
               <div className="h-full overflow-y-auto pb-32">
-                <FilterContent />
+                {filterContent}
               </div>
             </SheetContent>
           </Sheet>

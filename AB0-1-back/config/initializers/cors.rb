@@ -74,7 +74,9 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
         'X-RateLimit-Limit',
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',
-        'Retry-After'
+        'Retry-After',
+        'ETag',
+        'X-Locations-Version'
       ],
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
       credentials: true,

@@ -589,14 +589,23 @@ module Api
       # GET /api/v1/companies/states
       def states
         states = Locations::BrLocations.states.map { |state| state['acronym'] }
-        render json: { states: states }
+        render_location_catalog(
+          { states: states },
+          etag: "states-#{Locations::BrLocations.revision}",
+          publicly_cacheable: public_location_request?
+        )
       end
 
       # GET /api/v1/companies/cities
       def cities
         state = params[:state].to_s.strip.upcase
+        valid_state = state.present? && Locations::BrLocations.valid_state?(state)
         cities = state.present? ? Locations::BrLocations.cities_for(state) : []
-        render json: { cities: cities }
+        render_location_catalog(
+          { cities: cities },
+          etag: "cities-#{state}-#{Locations::BrLocations.revision}",
+          publicly_cacheable: valid_state && public_location_request?
+        )
       end
 
       # GET /api/v1/companies/locations
@@ -608,6 +617,25 @@ module Api
       end
 
       private
+
+      def public_location_request?
+        request.get? && request.headers['Cookie'].blank? && request.authorization.blank?
+      end
+
+      def render_location_catalog(payload, etag:, publicly_cacheable:)
+        unless publicly_cacheable
+          response.set_header('Cache-Control', 'private, no-store, no-cache, max-age=0')
+          response.headers.delete('ETag')
+          return render json: payload
+        end
+
+        response.set_header('X-Locations-Version', Locations::BrLocations.revision)
+        expires_in 1.day, public: true, stale_while_revalidate: 7.days
+        cache_directives = response.headers['Cache-Control'].to_s.split(',').map(&:strip).reject(&:blank?)
+        cache_directives << 's-maxage=86400' unless cache_directives.any? { |value| value.start_with?('s-maxage=') }
+        response.headers['Cache-Control'] = cache_directives.join(', ')
+        render json: payload if stale?(etag: etag, public: true)
+      end
 
       def serialize_catalog_payload(payload)
         {

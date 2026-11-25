@@ -16,6 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useLocationData } from '@/hooks/useLocationData';
 import { useLocation } from '@/contexts/LocationContext';
 import { track } from '@/lib/analytics/lazy';
+import {
+  MAX_RENDERED_GEOGRAPHY_OPTIONS,
+  normalizeGeographySearch,
+} from '@/lib/geography/search';
 
 interface LocationSearchProps {
   className?: string;
@@ -27,7 +31,6 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
   const {
     selectedState: contextState,
     selectedCity: contextCity,
-    stateLabel: contextStateLabel,
     setState: setContextState,
     setCity: setContextCity,
   } = useLocation();
@@ -37,15 +40,34 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
   const [searchValue, setSearchValue] = React.useState('');
   const [selectedLabel, setSelectedLabel] = React.useState('Localização');
   const popoverId = React.useId();
+  const [selectedState, setSelectedState] = React.useState<string | null>(null);
   
   // Use existing hook for data
-  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities, error, citiesError } = useLocationData();
+  const {
+    states,
+    cities,
+    fetchStates,
+    fetchCities,
+    loadingStates,
+    loadingCities,
+    citiesStale,
+    error,
+    citiesError,
+  } = useLocationData(selectedState);
+  const normalizedSearchValue = normalizeGeographySearch(searchValue);
+  const filteredStates = React.useMemo(
+    () => states.filter((state) => normalizeGeographySearch(state).includes(normalizedSearchValue)),
+    [states, normalizedSearchValue]
+  );
+  const filteredCities = React.useMemo(
+    () => cities.filter((city) => normalizeGeographySearch(city).includes(normalizedSearchValue)),
+    [cities, normalizedSearchValue]
+  );
+  const visibleCities = filteredCities.slice(0, MAX_RENDERED_GEOGRAPHY_OPTIONS);
 
   React.useEffect(() => {
     fetchStates();
   }, [fetchStates]);
-
-  const [selectedState, setSelectedState] = React.useState<string | null>(null);
 
   // Sync label and state with global LocationContext
   React.useEffect(() => {
@@ -137,7 +159,7 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
         </Button>
       </PopoverTrigger>
       <PopoverContent id={popoverId} className="w-[280px] rounded-[1.35rem] border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_48px_-28px_rgba(15,23,42,0.35)] dark:border-white/10 dark:bg-[#0b1d31]/96 dark:text-white">
-          <Command>
+          <Command shouldFilter={false}>
             <CommandInput
               placeholder={view === 'states' ? "Buscar estado..." : "Buscar cidade..."}
               aria-label={view === 'states' ? "Buscar estado" : "Buscar cidade"}
@@ -175,7 +197,7 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                   <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
                   Todo Brasil
                 </CommandItem>
-                {states.map((state) => (
+                {filteredStates.map((state) => (
                   <CommandItem
                     key={state}
                     value={state}
@@ -214,8 +236,11 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                     Carregando cidades...
                   </div>
                 ) : citiesError ? (
-                  <div className="p-4 text-sm text-center text-destructive">
-                    {citiesError}
+                  <div className="flex flex-col items-center gap-2 p-4 text-sm text-center text-destructive" role="alert">
+                    <span>{citiesError}</span>
+                    <button type="button" className="underline underline-offset-2" onClick={() => void fetchCities(selectedState || '', true)}>
+                      Tentar novamente
+                    </button>
                   </div>
                 ) : (
                   <>
@@ -234,7 +259,7 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                       <Check className="mr-2 h-4 w-4 opacity-0" aria-hidden="true" />
                       Todas em {selectedState}
                     </CommandItem>
-                    {cities.map((city) => (
+                    {visibleCities.map((city) => (
                       <CommandItem
                         key={city}
                         value={city}
@@ -252,7 +277,17 @@ export default function LocationSearch({ className, ariaLabelledBy, onLocationSe
                         {city}
                       </CommandItem>
                     ))}
+                    {filteredCities.length > visibleCities.length && (
+                      <p className="px-3 py-2 text-xs text-muted-foreground" role="status">
+                        Exibindo {visibleCities.length} de {filteredCities.length} cidades. Refine a busca para encontrar outras.
+                      </p>
+                    )}
                   </>
+                )}
+                {citiesStale && (
+                  <p className="sr-only" role="status">
+                    Lista de cidades salva localmente; pode estar desatualizada.
+                  </p>
                 )}
               </CommandGroup>
             )}

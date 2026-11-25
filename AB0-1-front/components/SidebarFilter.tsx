@@ -217,7 +217,17 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
     return value && value !== '';
   }).length;
 
-  const { states, cities, loadingStates, loadingCities, error, fetchCities, refreshStates } = useLocationData();
+  const {
+    states,
+    cities,
+    loadingStates,
+    loadingCities,
+    citiesStale,
+    error,
+    citiesError,
+    fetchCities,
+    refreshStates,
+  } = useLocationData(filters.state);
 
   useEffect(() => {
     if (filters.state) {
@@ -362,6 +372,19 @@ const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories
                   {city}
                 </FilterButton>
               ))}
+              {citiesError && (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-destructive" role="alert">
+                  <span>Não foi possível carregar as cidades.</span>
+                  <button type="button" className="underline underline-offset-2" onClick={() => void fetchCities(filters.state, true)}>
+                    Tentar novamente
+                  </button>
+                </div>
+              )}
+              {citiesStale && !citiesError && (
+                <p className="px-3 py-2 text-xs text-amber-700" role="status">
+                  Lista salva localmente; pode estar desatualizada.
+                </p>
+              )}
               </div>
             </div>
           </FilterSection>

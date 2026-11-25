@@ -18,6 +18,7 @@ import { useCompanyGeolocation } from '@/hooks/useCompanyGeolocation';
 import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
 import { useCategories } from '@/hooks/useCategories';
 import { companiesApiSafe } from '@/lib/api-client';
+import { isAbortError } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
 import type { CompanyFilters } from '@/components/filters/types';
 import { CompanyCategoryPicker } from './CompanyCategoryPicker';
@@ -60,9 +61,18 @@ export default function MobileCompanyFiltersSheet({
 
   const [isRendered, setIsRendered] = useState(open);
   const [isEntered, setIsEntered] = useState(open);
+  const activeState = draftFilters.state[0] || '';
 
-  const { states, cities, fetchStates, fetchCities, loadingStates, loadingCities } =
-    useCompanyLocationData();
+  const {
+    states,
+    cities,
+    fetchStates,
+    fetchCities,
+    loadingStates,
+    loadingCities,
+    citiesStale,
+    citiesError,
+  } = useCompanyLocationData(activeState);
   const { detectingGps, gpsError, setGpsError, getCoordinates } = useCompanyGeolocation();
   const { categories } = useCategories(true);
 
@@ -172,7 +182,6 @@ export default function MobileCompanyFiltersSheet({
   }, [open]);
 
   // Fetch cities when draft state changes
-  const activeState = draftFilters.state[0] || '';
   useEffect(() => {
     if (activeState) {
       fetchCities(activeState);
@@ -209,8 +218,10 @@ export default function MobileCompanyFiltersSheet({
         });
         if (requestVersion === requestVersionRef.current) setTotalCount(count);
       } catch (err) {
-        console.error(err);
-        setTotalCount(null);
+        if (requestVersion === requestVersionRef.current && !isAbortError(err)) {
+          console.error(err);
+          setTotalCount(null);
+        }
       } finally {
         if (requestVersion === requestVersionRef.current) setLoadingCount(false);
       }
@@ -438,7 +449,15 @@ export default function MobileCompanyFiltersSheet({
                     disabled={loadingStates}
                     className="h-9 w-full truncate rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 transition-colors hover:border-slate-300 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
-                    <option value="">Selecione...</option>
+                    <option value="">
+                      {loadingCities
+                        ? 'Carregando cidades...'
+                        : citiesError
+                          ? 'Cidades indisponíveis'
+                          : activeState && cities.length === 0
+                            ? 'Nenhuma cidade encontrada'
+                            : 'Selecione...'}
+                    </option>
                     {activeState && !states.includes(activeState) && (
                       <option value={activeState}>
                         {BRAZIL_STATES_OPTIONS.find((opt) => opt.state === activeState)?.label ||
@@ -488,6 +507,28 @@ export default function MobileCompanyFiltersSheet({
                       </option>
                     ))}
                   </select>
+                  {loadingCities && (
+                    <p className="sr-only" role="status" aria-live="polite">
+                      Carregando cidades de {activeState}.
+                    </p>
+                  )}
+                  {citiesStale && (
+                    <p className="sr-only" role="status">
+                      Lista de cidades salva localmente; pode estar desatualizada.
+                    </p>
+                  )}
+                  {citiesError && activeState && (
+                    <div className="flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+                      <span>Não foi possível carregar as cidades.</span>
+                      <button
+                        type="button"
+                        className="shrink-0 underline underline-offset-2"
+                        onClick={() => void fetchCities(activeState, true)}
+                      >
+                        Tentar novamente
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

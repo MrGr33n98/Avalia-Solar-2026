@@ -43,20 +43,20 @@ export function LocationFilter({
   initialCity = '',
   className,
 }: LocationFilterProps) {
+  const [selectedState, setSelectedState] = React.useState(initialState);
+  const [selectedCity, setSelectedCity] = React.useState(initialCity);
+  const [openCity, setOpenCity] = React.useState(false);
   const { 
     states, 
     cities, 
     loadingStates, 
     loadingCities, 
+    citiesStale,
     error, 
     citiesError,
     fetchCities,
     refreshStates
-  } = useLocationData();
-
-  const [selectedState, setSelectedState] = React.useState(initialState);
-  const [selectedCity, setSelectedCity] = React.useState(initialCity);
-  const [openCity, setOpenCity] = React.useState(false);
+  } = useLocationData(selectedState);
 
   // Sync cities when state changes
   React.useEffect(() => {
@@ -191,9 +191,19 @@ export function LocationFilter({
         </PopoverContent>
       </Popover>
       {citiesError && selectedState !== 'all' && (
-        <p className="flex items-center gap-1 text-xs text-destructive">
-          <AlertTriangle className="h-3 w-3" />
-          {citiesError}
+        <div className="flex items-center justify-between gap-2 text-xs text-destructive" role="alert">
+          <span className="flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            {citiesError}
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => void fetchCities(selectedState, true)}>
+            Tentar novamente
+          </Button>
+        </div>
+      )}
+      {citiesStale && !citiesError && (
+        <p className="text-xs text-amber-700" role="status">
+          Lista salva localmente; pode estar desatualizada.
         </p>
       )}
 

@@ -84,6 +84,8 @@ function MobileLocationLeadFilter({
   states,
   cities,
   loadingCities,
+  citiesStale,
+  citiesError,
   fetchCities,
   handleFilterChange,
 }: {
@@ -91,6 +93,8 @@ function MobileLocationLeadFilter({
   states: string[];
   cities: string[];
   loadingCities: boolean;
+  citiesStale: boolean;
+  citiesError: string | null;
   fetchCities: (state: string, forceRefresh?: boolean) => Promise<void>;
   handleFilterChange: (type: string, value: any) => void;
 }) {
@@ -220,6 +224,19 @@ function MobileLocationLeadFilter({
             </select>
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
+          {citiesError && cityEnabled && (
+            <div className="flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+              <span>Não foi possível carregar as cidades.</span>
+              <button type="button" className="underline underline-offset-2" onClick={() => void fetchCities(selectedState, true)}>
+                Tentar novamente
+              </button>
+            </div>
+          )}
+          {citiesStale && !citiesError && (
+            <p className="sr-only" role="status">
+              Lista de cidades salva localmente; pode estar desatualizada.
+            </p>
+          )}
         </motion.div>
 
         <AnimatePresence>
@@ -751,7 +768,14 @@ export default function CategoryClientComponent({
     return Array.from(values).sort();
   }, [companies]);
 
-  const { states: allStates, cities: allCities, loadingCities, fetchCities } = useLocationData();
+  const {
+    states: allStates,
+    cities: allCities,
+    loadingCities,
+    citiesStale,
+    citiesError,
+    fetchCities,
+  } = useLocationData(filters.state);
 
   useEffect(() => {
     if (filters.state) {
@@ -834,6 +858,8 @@ export default function CategoryClientComponent({
             states={mobileStates}
             cities={mobileCities}
             loadingCities={loadingCities}
+            citiesStale={citiesStale}
+            citiesError={citiesError || null}
             fetchCities={fetchCities}
             handleFilterChange={handleFilterChange}
           />
