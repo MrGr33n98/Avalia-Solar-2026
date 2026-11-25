@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 // Spec 021 / T043–T044 — matriz do playground: 5 blocos × 2 temas × 8 larguras.
 // Requer `npm run build:playground` (gera dist/playground.html, servido em 127.0.0.1).
-const ITEMS = ['solar-company-card', 'solar-company-list', 'company-comparison-table', 'review-distribution', 'evidence-card'];
+const ITEMS = ['solar-company-card', 'solar-company-list', 'company-comparison-table', 'review-distribution', 'evidence-card', 'company-carousel', 'coverage-grid', 'product-comparator', 'review-highlights', 'solar-calculator', 'financing-simulator', 'quote-draft', 'favorite-companies', 'newsletter-preview', 'directory-intelligence', 'trust-evidence', 'recommendations'];
 const WIDTHS = [280, 320, 360, 390, 480, 720, 960, 1120];
 const THEMES = ['light', 'dark'] as const;
 test.beforeEach(async ({ request }) => {
