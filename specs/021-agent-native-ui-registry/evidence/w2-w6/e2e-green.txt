@@ -1,0 +1,28 @@
+
+Running 23 tests using 2 workers
+
+  ✓   1 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 12px em 320px (3.6s)
+  ✓   3 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 16px em 480px (2.5s)
+  ✓   4 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 18px em 768px (2.6s)
+  ✓   5 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 24px em 1024px (2.4s)
+  ✓   2 tests/e2e/widgets.spec.ts:31:5 › search.v1.html passes axe WCAG AA and layout checks in light mode (12.9s)
+  ✓   6 tests/e2e/registry-geometry.spec.ts:27:1 › tokens tipográficos e de espaçamento existem sem quebrar aliases legados (3.0s)
+  ✓   7 tests/e2e/widgets.spec.ts:31:5 › search.v1.html passes axe WCAG AA and layout checks in dark mode (7.5s)
+  ✓   8 tests/e2e/widgets.spec.ts:31:5 › profile.v1.html passes axe WCAG AA and layout checks in light mode (7.6s)
+  ✓   9 tests/e2e/widgets.spec.ts:31:5 › profile.v1.html passes axe WCAG AA and layout checks in dark mode (8.3s)
+  ✓  10 tests/e2e/widgets.spec.ts:31:5 › reputation.v1.html passes axe WCAG AA and layout checks in light mode (6.2s)
+  ✓  11 tests/e2e/widgets.spec.ts:31:5 › reputation.v1.html passes axe WCAG AA and layout checks in dark mode (5.8s)
+  ✓  12 tests/e2e/widgets.spec.ts:31:5 › compare.v1.html passes axe WCAG AA and layout checks in light mode (8.8s)
+  ✓  13 tests/e2e/widgets.spec.ts:31:5 › compare.v1.html passes axe WCAG AA and layout checks in dark mode (5.6s)
+  ✓  14 tests/e2e/widgets.spec.ts:31:5 › categories.v1.html passes axe WCAG AA and layout checks in light mode (8.1s)
+  ✓  15 tests/e2e/widgets.spec.ts:31:5 › categories.v1.html passes axe WCAG AA and layout checks in dark mode (5.3s)
+  ✓  16 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 320px (1.4s)
+  ✓  17 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 375px (1.7s)
+  ✓  18 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 480px (1.0s)
+  ✓  19 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 640px (1.0s)
+  ✓  20 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 768px (1.0s)
+  ✓  21 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 1024px (1.8s)
+  ✓  22 tests/e2e/widgets.spec.ts:92:1 › reputation.v1.html shows Sem avaliações (0) when zero approved reviews and respects reduced motion (1.9s)
+  ✓  23 tests/e2e/widgets.spec.ts:112:1 › interactive search -> compare flow works via host bridge in real compiled HTML (2.0s)
+
+  23 passed (1.7m)

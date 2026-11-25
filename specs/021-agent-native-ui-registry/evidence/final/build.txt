@@ -1,0 +1,6 @@
+[mcp-ui build] search: raw=433.2KB gzip=119.5KB sha256=12da6fa61e1c
+[mcp-ui build] profile: raw=430.4KB gzip=118.7KB sha256=a4d93f6a2c3c
+[mcp-ui build] reputation: raw=415.1KB gzip=114.9KB sha256=604c14cf7568
+[mcp-ui build] compare: raw=416.6KB gzip=115.4KB sha256=ab1667987c8f
+[mcp-ui build] categories: raw=435.2KB gzip=120.0KB sha256=4bc57d15811c
+exit=0

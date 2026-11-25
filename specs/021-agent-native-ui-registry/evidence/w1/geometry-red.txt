@@ -1,0 +1,106 @@
+
+Running 5 tests using 1 worker
+
+  ✓  1 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 12px em 320px (5.7s)
+  ✘  2 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 16px em 480px (4.8s)
+  ✘  3 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 18px em 768px (3.7s)
+  ✘  4 tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 24px em 1024px (3.8s)
+  ✘  5 tests/e2e/registry-geometry.spec.ts:27:1 › tokens tipográficos e de espaçamento existem sem quebrar aliases legados (2.9s)
+
+
+  1) tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 16px em 480px ───
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "16px"
+    Received: "12px"
+
+      21 |     await expect(frame).toBeVisible();
+      22 |     const padding = await frame.evaluate((el) => getComputedStyle(el).paddingLeft);
+    > 23 |     expect(padding).toBe(item.padding);
+         |                     ^
+      24 |   });
+      25 | }
+      26 |
+        at <worktree>/packages/mcp-ui/tests/e2e/registry-geometry.spec.ts:23:21
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/registry-geometry-as-frame-e247d-ng-responsivo-16px-em-480px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/registry-geometry-as-frame-e247d-ng-responsivo-16px-em-480px/error-context.md
+
+  2) tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 18px em 768px ───
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "18px"
+    Received: "12px"
+
+      21 |     await expect(frame).toBeVisible();
+      22 |     const padding = await frame.evaluate((el) => getComputedStyle(el).paddingLeft);
+    > 23 |     expect(padding).toBe(item.padding);
+         |                     ^
+      24 |   });
+      25 | }
+      26 |
+        at <worktree>/packages/mcp-ui/tests/e2e/registry-geometry.spec.ts:23:21
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/registry-geometry-as-frame-a9085-ng-responsivo-18px-em-768px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/registry-geometry-as-frame-a9085-ng-responsivo-18px-em-768px/error-context.md
+
+  3) tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 24px em 1024px ──
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "24px"
+    Received: "12px"
+
+      21 |     await expect(frame).toBeVisible();
+      22 |     const padding = await frame.evaluate((el) => getComputedStyle(el).paddingLeft);
+    > 23 |     expect(padding).toBe(item.padding);
+         |                     ^
+      24 |   });
+      25 | }
+      26 |
+        at <worktree>/packages/mcp-ui/tests/e2e/registry-geometry.spec.ts:23:21
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/registry-geometry-as-frame-e7b84-g-responsivo-24px-em-1024px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/registry-geometry-as-frame-e7b84-g-responsivo-24px-em-1024px/error-context.md
+
+  4) tests/e2e/registry-geometry.spec.ts:27:1 › tokens tipográficos e de espaçamento existem sem quebrar aliases legados
+
+    Error: --as-space-1
+
+    expect(received).not.toBe(expected) // Object.is equality
+
+    Expected: not ""
+
+      49 |   });
+      50 |   for (const [name, value] of Object.entries(values)) {
+    > 51 |     expect(value, name).not.toBe('');
+         |                             ^
+      52 |   }
+      53 |   const title = page.locator('.as-title-lg').first();
+      54 |   await expect(title).toHaveCSS('font-size', '18px');
+        at <worktree>/packages/mcp-ui/tests/e2e/registry-geometry.spec.ts:51:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/registry-geometry-tokens-t-c3ff2-sem-quebrar-aliases-legados/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/registry-geometry-tokens-t-c3ff2-sem-quebrar-aliases-legados/error-context.md
+
+  4 failed
+    tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 16px em 480px ────
+    tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 18px em 768px ────
+    tests/e2e/registry-geometry.spec.ts:14:3 › as-frame aplica padding responsivo 24px em 1024px ───
+    tests/e2e/registry-geometry.spec.ts:27:1 › tokens tipográficos e de espaçamento existem sem quebrar aliases legados
+  1 passed (52.1s)
+exit=1

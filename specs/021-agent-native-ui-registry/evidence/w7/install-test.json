@@ -1,0 +1,50 @@
+[
+  {
+    "item": "solar-company-list",
+    "status": "PASS",
+    "files": [
+      "src/avalia-solar/blocks/EvidenceCard.tsx",
+      "src/avalia-solar/blocks/SolarCompanyCard.tsx",
+      "src/avalia-solar/blocks/SolarCompanyList.tsx",
+      "src/avalia-solar/bridge/capabilities.ts",
+      "src/avalia-solar/bridge/errors.ts",
+      "src/avalia-solar/bridge/host-adapter.tsx",
+      "src/avalia-solar/bridge/types.ts",
+      "src/avalia-solar/contracts/schemas.ts",
+      "src/avalia-solar/design/motion.css",
+      "src/avalia-solar/design/primitives.tsx",
+      "src/avalia-solar/design/tokens.css"
+    ],
+    "ms": 48113,
+    "detail": ""
+  },
+  {
+    "item": "company-comparison-table",
+    "status": "PASS",
+    "files": [
+      "src/avalia-solar/blocks/CompanyComparisonTable.tsx",
+      "src/avalia-solar/blocks/EvidenceCard.tsx",
+      "src/avalia-solar/bridge/capabilities.ts",
+      "src/avalia-solar/bridge/errors.ts",
+      "src/avalia-solar/bridge/host-adapter.tsx",
+      "src/avalia-solar/bridge/types.ts",
+      "src/avalia-solar/contracts/schemas.ts",
+      "src/avalia-solar/design/motion.css",
+      "src/avalia-solar/design/primitives.tsx",
+      "src/avalia-solar/design/tokens.css"
+    ],
+    "ms": 51319,
+    "detail": ""
+  },
+  {
+    "item": "review-distribution",
+    "status": "PASS",
+    "files": [
+      "src/avalia-solar/blocks/ReviewDistribution.tsx",
+      "src/avalia-solar/design/motion.css",
+      "src/avalia-solar/design/tokens.css"
+    ],
+    "ms": 18633,
+    "detail": ""
+  }
+]

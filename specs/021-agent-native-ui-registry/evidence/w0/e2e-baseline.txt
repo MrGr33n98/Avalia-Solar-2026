@@ -1,0 +1,24 @@
+
+Running 18 tests using 1 worker
+
+  ✓   1 tests/e2e/widgets.spec.ts:31:5 › search.v1.html passes axe WCAG AA and layout checks in light mode (16.1s)
+  ✓   2 tests/e2e/widgets.spec.ts:31:5 › search.v1.html passes axe WCAG AA and layout checks in dark mode (7.8s)
+  ✓   3 tests/e2e/widgets.spec.ts:31:5 › profile.v1.html passes axe WCAG AA and layout checks in light mode (12.6s)
+  ✓   4 tests/e2e/widgets.spec.ts:31:5 › profile.v1.html passes axe WCAG AA and layout checks in dark mode (7.2s)
+  ✓   5 tests/e2e/widgets.spec.ts:31:5 › reputation.v1.html passes axe WCAG AA and layout checks in light mode (5.6s)
+  ✓   6 tests/e2e/widgets.spec.ts:31:5 › reputation.v1.html passes axe WCAG AA and layout checks in dark mode (6.7s)
+  ✓   7 tests/e2e/widgets.spec.ts:31:5 › compare.v1.html passes axe WCAG AA and layout checks in light mode (7.6s)
+  ✓   8 tests/e2e/widgets.spec.ts:31:5 › compare.v1.html passes axe WCAG AA and layout checks in dark mode (12.8s)
+  ✓   9 tests/e2e/widgets.spec.ts:31:5 › categories.v1.html passes axe WCAG AA and layout checks in light mode (8.6s)
+  ✓  10 tests/e2e/widgets.spec.ts:31:5 › categories.v1.html passes axe WCAG AA and layout checks in dark mode (7.5s)
+  ✓  11 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 320px (2.8s)
+  ✓  12 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 375px (2.8s)
+  ✓  13 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 480px (1.8s)
+  ✓  14 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 640px (2.9s)
+  ✓  15 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 768px (1.9s)
+  ✓  16 tests/e2e/widgets.spec.ts:63:3 › search.v1.html has zero horizontal overflow at 1024px (3.8s)
+  ✓  17 tests/e2e/widgets.spec.ts:92:1 › reputation.v1.html shows Sem avaliações (0) when zero approved reviews and respects reduced motion (4.5s)
+  ✓  18 tests/e2e/widgets.spec.ts:112:1 › interactive search -> compare flow works via host bridge in real compiled HTML (5.6s)
+
+  18 passed (2.2m)
+exit=0

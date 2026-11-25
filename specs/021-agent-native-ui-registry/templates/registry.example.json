@@ -1,0 +1,19 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "avalia-solar",
+  "homepage": "https://www.avaliasolar.com.br",
+  "items": [
+    {
+      "name": "solar-company-card",
+      "type": "registry:block",
+      "title": "Solar Company Card",
+      "description": "Template: adaptar fonte e depend\u00eancias antes de publicar",
+      "files": [
+        {
+          "path": "components/solar-company-card.tsx",
+          "type": "registry:component"
+        }
+      ]
+    }
+  ]
+}

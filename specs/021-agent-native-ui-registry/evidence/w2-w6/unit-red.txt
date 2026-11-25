@@ -1,0 +1,33 @@
+
+ RUN  v2.1.9 <worktree>/packages/mcp-ui
+
+ ❯ tests/unit/registry-blocks.spec.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/registry-blocks.spec.tsx [ tests/unit/registry-blocks.spec.tsx ]
+Error: Failed to resolve import "../../src/blocks/SolarCompanyCard" from "tests/unit/registry-blocks.spec.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: <worktree>/packages/mcp-ui/tests/unit/registry-blocks.spec.tsx:4:33
+  3  |  import { beforeEach, describe, expect, it, vi } from "vitest";
+  4  |  import { HostProvider } from "../../src/bridge/host-adapter";
+  5  |  import { SolarCompanyCard } from "../../src/blocks/SolarCompanyCard";
+     |                                    ^
+  6  |  import { SolarCompanyList } from "../../src/blocks/SolarCompanyList";
+  7  |  import { ReviewDistribution } from "../../src/blocks/ReviewDistribution";
+ ❯ TransformPluginContext._formatError node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41
+ ❯ TransformPluginContext.error node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16
+ ❯ normalizeUrl node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23
+ ❯ node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+ ❯ TransformPluginContext.transform node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7
+ ❯ PluginContainer.transform node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18
+ ❯ loadAndTransform node_modules/vitest/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  16:39:50
+   Duration  10.76s (transform 726ms, setup 1.09s, collect 0ms, tests 0ms, environment 6.58s, prepare 891ms)
+
+exit=1
