@@ -1,0 +1,232 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "avalia-solar",
+  "homepage": "https://www.avaliasolar.com.br",
+  "items": [
+    {
+      "name": "as-tokens",
+      "type": "registry:lib",
+      "title": "Avalia Solar Tokens",
+      "description": "Tokens --as-* host-first (cor, raio, espaçamento 4px, tipografia) e movimento com reduced motion.",
+      "files": [
+        {
+          "path": "src/design/tokens.css",
+          "type": "registry:file",
+          "target": "src/avalia-solar/design/tokens.css"
+        },
+        {
+          "path": "src/design/motion.css",
+          "type": "registry:file",
+          "target": "src/avalia-solar/design/motion.css"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented"
+      }
+    },
+    {
+      "name": "as-contracts",
+      "type": "registry:lib",
+      "title": "Avalia Solar MCP Contracts",
+      "description": "Schemas Zod do envelope público v1 (schema_version, data_as_of, source_type, data, limitations).",
+      "dependencies": [
+        "zod@^4.2.0"
+      ],
+      "files": [
+        {
+          "path": "src/contracts/schemas.ts",
+          "type": "registry:file",
+          "target": "src/avalia-solar/contracts/schemas.ts"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented"
+      }
+    },
+    {
+      "name": "as-host-bridge",
+      "type": "registry:lib",
+      "title": "Avalia Solar Host Bridge",
+      "description": "Adaptador MCP Apps (ext-apps) com fallback window.openai, capabilities e sanitização de URL. Sem segredos; uso interno.",
+      "dependencies": [
+        "@modelcontextprotocol/ext-apps@^2.0.4",
+        "zod@^4.2.0"
+      ],
+      "files": [
+        {
+          "path": "src/bridge/host-adapter.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/bridge/host-adapter.tsx"
+        },
+        {
+          "path": "src/bridge/capabilities.ts",
+          "type": "registry:file",
+          "target": "src/avalia-solar/bridge/capabilities.ts"
+        },
+        {
+          "path": "src/bridge/errors.ts",
+          "type": "registry:file",
+          "target": "src/avalia-solar/bridge/errors.ts"
+        },
+        {
+          "path": "src/bridge/types.ts",
+          "type": "registry:file",
+          "target": "src/avalia-solar/bridge/types.ts"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented"
+      }
+    },
+    {
+      "name": "evidence-card",
+      "type": "registry:block",
+      "title": "Evidence Card",
+      "description": "Origem, data (BRT) e limitações do envelope v1. Não cria identificador de evidência.",
+      "files": [
+        {
+          "path": "src/blocks/EvidenceCard.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/EvidenceCard.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented",
+        "source": "SourceNote"
+      }
+    },
+    {
+      "name": "as-primitives",
+      "type": "registry:lib",
+      "title": "Avalia Solar Primitives",
+      "description": "Button, LinkButton, Checkbox, Select, LogoAvatar, VerificationBadge, RatingInline, Metric e estados loading/empty/error.",
+      "dependencies": [
+        "react@^18.2.0"
+      ],
+      "registryDependencies": [
+        "@avalia-solar/as-tokens",
+        "@avalia-solar/as-host-bridge",
+        "@avalia-solar/evidence-card"
+      ],
+      "files": [
+        {
+          "path": "src/design/primitives.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/design/primitives.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented"
+      }
+    },
+    {
+      "name": "solar-company-card",
+      "type": "registry:block",
+      "title": "Solar Company Card",
+      "description": "Card de integrador: sede distinta de cobertura declarada, selo cadastral, reputação nula sem invenção, ações opcionais.",
+      "registryDependencies": [
+        "@avalia-solar/as-primitives",
+        "@avalia-solar/as-contracts"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/SolarCompanyCard.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/SolarCompanyCard.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented",
+        "inspiration": "mcpcn product-list (MIT)"
+      }
+    },
+    {
+      "name": "solar-company-list",
+      "type": "registry:block",
+      "title": "Solar Company List",
+      "description": "Lista/grade de integradores com seleção por ID estável e limite de comparação 2–3.",
+      "registryDependencies": [
+        "@avalia-solar/solar-company-card"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/SolarCompanyList.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/SolarCompanyList.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented",
+        "inspiration": "mcpcn product-list (MIT)"
+      }
+    },
+    {
+      "name": "company-comparison-table",
+      "type": "registry:block",
+      "title": "Company Comparison Table",
+      "description": "Tabela semântica 2–3 empresas com critérios do contrato, desconhecido explícito e remoção reversível; sem vencedor.",
+      "registryDependencies": [
+        "@avalia-solar/as-primitives",
+        "@avalia-solar/as-contracts"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CompanyComparisonTable.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CompanyComparisonTable.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented",
+        "inspiration": "mcpcn table (MIT)"
+      }
+    },
+    {
+      "name": "review-distribution",
+      "type": "registry:block",
+      "title": "Review Distribution",
+      "description": "Distribuição agregada de notas aprovadas (5→1); total zero não gera nota.",
+      "registryDependencies": [
+        "@avalia-solar/as-tokens"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/ReviewDistribution.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/ReviewDistribution.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "implemented",
+        "inspiration": "mcpcn stat-card (MIT)"
+      }
+    }
+  ]
+}

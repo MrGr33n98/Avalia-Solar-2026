@@ -43,6 +43,7 @@ on:
       - 'AB0-1-back/spec/services/mcp/ui/**'
       - 'AB0-1-back/spec/requests/api/v1/mcp/ui_resources_spec.rb'
       - 'packages/mcp-ui/**'
+      - 'packages/ui-registry/**'
       - 'Dockerfile.backend'
       - 'AB0-1-back/spec/requests/api/v1/mcp/public_directory_execution_spec.rb'
       - 'AB0-1-back/app/services/mcp/remote_telemetry.rb'
@@ -117,6 +118,11 @@ jobs:
         run: |
           npm ci
           npm run verify
+      - name: Validate agent-native UI registry (Spec 021)
+        working-directory: ./packages/ui-registry
+        run: |
+          npm test
+          npm run validate
       - name: Validate Ruby syntax
         run: |
           ruby -c app/controllers/api/v1/mcp/remote_transport_controller.rb

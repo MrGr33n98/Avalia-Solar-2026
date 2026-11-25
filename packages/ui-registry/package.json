@@ -1,0 +1,13 @@
+{
+  "name": "@avalia-solar/ui-registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Registry interno (compatível com shadcn) dos componentes MCP UI do Avalia Solar. Não publicado.",
+  "scripts": {
+    "test": "node --test tests/validate.test.mjs",
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build.mjs",
+    "install-test": "node scripts/install-test.mjs"
+  }
+}
