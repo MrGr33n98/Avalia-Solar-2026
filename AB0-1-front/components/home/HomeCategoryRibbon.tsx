@@ -198,7 +198,6 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
     el.scrollBy({ left: distance, behavior: 'smooth' });
   };
 
-  const isTudoActive = pathname === '/';
   const isFavoritesActive = pathname === '/favorites';
 
   return (
@@ -304,29 +303,7 @@ export function HomeCategoryRibbon({ className }: HomeCategoryRibbonProps) {
             </span>
           </Link>
 
-          {/* 3. Tudo */}
-          <Link
-            href="/"
-            aria-current={isTudoActive ? 'page' : undefined}
-            className={cn(
-              'group relative flex flex-col items-center justify-center shrink-0 min-w-[52px] sm:min-w-[60px] max-w-[80px] py-1 text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded-lg transition-transform duration-150 hover:-translate-y-0.5',
-              isTudoActive &&
-                "after:content-[''] after:absolute after:-bottom-[12px] after:left-1 after:right-1 after:h-[2.5px] after:bg-slate-950 after:rounded-full"
-            )}
-          >
-            {/* Reserva a altura da fileira de ícones sem renderizar uma imagem. */}
-            <div aria-hidden="true" className="h-8 w-8 sm:h-9 sm:w-9 shrink-0" />
-            <span
-              className={cn(
-                'mt-1 text-[11px] sm:text-xs font-semibold leading-tight text-slate-700 group-hover:text-blue-700 transition-colors',
-                isTudoActive && 'text-slate-950 font-bold'
-              )}
-            >
-              Tudo
-            </span>
-          </Link>
-
-          {/* 4. Atalhos de Categorias 3D */}
+          {/* 3. Atalhos de Categorias 3D */}
           {RIBBON_SHORTCUTS.map((item, index) => {
             const isActive =
               pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
