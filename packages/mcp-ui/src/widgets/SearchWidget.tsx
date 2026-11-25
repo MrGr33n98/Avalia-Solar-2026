@@ -113,7 +113,7 @@ export const SearchWidgetView: React.FC<SearchWidgetViewProps> = ({
     if (q) args.query = q;
     if (uf) args.state = uf;
     if (cat) args.category_slug = cat;
-    if (!q && !uf && !cat && city) args.headquarters_city = city;
+    if (city && (!toolInput.state || uf === toolInput.state)) args.headquarters_city = city;
     if (!args.query && !args.state && !args.category_slug && !args.headquarters_city) {
       args.query = 'solar';
     }
