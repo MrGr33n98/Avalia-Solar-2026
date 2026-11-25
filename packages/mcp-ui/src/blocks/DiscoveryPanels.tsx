@@ -16,7 +16,7 @@ export function FavoriteCompanies({ companies }: { companies: readonly Integrato
   return <section className="as-card as-stack" aria-label="Favoritos da sessão">
     <h3 className="as-title-md">Favoritos ({ids.length})</h3>
     <p className="as-meta">Salvos somente nesta sessão; não sincronizados com sua conta.</p>
-    {companies.map(c => <button type="button" className="as-btn" key={c.id} aria-pressed={ids.includes(c.id)}
+    {companies.map(c => <button type="button" className="as-btn" style={{ minWidth: 0, maxWidth: '100%', whiteSpace: 'normal', overflowWrap: 'anywhere', textAlign: 'start' }} key={c.id} aria-pressed={ids.includes(c.id)}
       onClick={() => setIds(old => old.includes(c.id) ? old.filter(id => id !== c.id) : [...old, c.id])}>{ids.includes(c.id) ? 'Remover' : 'Favoritar'} {c.name}</button>)}
   </section>;
 }
