@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
@@ -8,9 +6,10 @@ import { expect, test } from '@playwright/test';
 const ITEMS = ['solar-company-card', 'solar-company-list', 'company-comparison-table', 'review-distribution', 'evidence-card'];
 const WIDTHS = [280, 320, 360, 390, 480, 720, 960, 1120];
 const THEMES = ['light', 'dark'] as const;
-const hasPlayground = fs.existsSync(path.resolve(process.cwd(), 'dist/playground.html'));
-
-test.skip(!hasPlayground, 'dist/playground.html ausente: rode npm run build:playground');
+test.beforeEach(async ({ request }) => {
+  const res = await request.get('/playground.html');
+  test.skip(res.status() !== 200, 'dist/playground.html ausente: rode npm run build:playground');
+});
 
 for (const item of ITEMS) {
   for (const theme of THEMES) {
