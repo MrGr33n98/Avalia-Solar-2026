@@ -1,0 +1,19 @@
+scenario,route,tab,component,env,sha,device,network,cache,sample_n,metric,unit,baseline,candidate,evidence,status
+build,/dashboard,—,route,next build local,a6eb1a7b3,—,—,—,1,first_load_js_next,kB,419,,evidence/d0/A1-route-first-load.txt,MEASURED
+build,/dashboard/reports,—,route,next build local,a6eb1a7b3,—,—,—,1,first_load_js_next,kB,515,,evidence/d0/A1-route-first-load.txt,MEASURED (acima do alvo 450 KiB)
+build,/dashboard,—,DashboardCharts(Recharts),next build local,a6eb1a7b3,—,—,—,1,initial_chunk_gzip,KB,94,,chunk 53034 via app-build-manifest,MEASURED
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,desktop 1280x800,sem throttling,frio (contexto novo),5,long_task_sum,ms,3443 (2813–5356),,evidence/d0/lab/lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,desktop 1280x800,sem throttling,frio,5,long_task_max,ms,449 (400–820),,lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,desktop 1280x800,sem throttling,frio,5,dom_interactive,ms,1267 (917–1825),,lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,desktop 1280x800,sem throttling,frio,5,shell_visible (aside),ms,5883 (5094–6551),,lab-summary.json,MEASURED (lab; até o seletor aside, inclui cadeia auth→empresas)
+cold,/dashboard?company_id=FIXTURE,overview,—,lab loopback + mocks,a6eb1a7b3,desktop,sem throttling,frio,5,api_requests,count,14,,lab-summary.json + scenarios.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,—,lab loopback + mocks,a6eb1a7b3,desktop,sem throttling,frio,5,script_resources,count/KB,65 / 730,,lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,mobile 390x844,CPU 4x (rede não emulada),frio,5,long_task_sum,ms,9675 (7280–11407),,lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,mobile 390x844,CPU 4x,frio,5,long_task_max,ms,1568 (1300–2407),,lab-summary.json,MEASURED (lab)
+cold,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,mobile 390x844,CPU 4x,frio,5,dom_interactive,ms,6257 (4101–7286),,lab-summary.json,MEASURED (lab)
+warm,/dashboard?company_id=FIXTURE,overview,shell,lab loopback + mocks 120ms,a6eb1a7b3,desktop,sem throttling,reload no mesmo contexto,5,long_task_sum,ms,2869 (2738–3955),,lab-summary.json,MEASURED (lab)
+warm,/dashboard?company_id=FIXTURE,overview,—,lab loopback + mocks,a6eb1a7b3,desktop,sem throttling,reload,5,api_requests_after_reload,count,14,,lab-summary.json,MEASURED (lab)
+tabs,/dashboard,todas as abas de topo,EnterpriseDashboard,lab,a6eb1a7b3,desktop,sem throttling,quente,1,rsc_requests_per_tab_change,count,1,,scenarios.json,MEASURED (lab)
+alias,/dashboard?tab=info,info,EnterpriseDashboard,lab,a6eb1a7b3,desktop,—,—,6,crash_rate (React #185),runs,6/6,,scenarios.json + lab/tab-info-erro-critico.png,MEASURED (lab)
+field,/dashboard,—,—,produção,—,—,—,—,0,LCP/INP/CLS p75 RUM,—,BLOCKED,,sem acesso a RUM/sessão autorizada,BLOCKED
+auth,/dashboard?company_id=372,—,—,produção,—,—,—,—,0,qualquer,—,BLOCKED,,sem sessão/membership autorizada,BLOCKED

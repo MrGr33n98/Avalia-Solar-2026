@@ -1,0 +1,8 @@
+# PRD — Dashboard empresarial e operação
+Problema: múltiplas superfícies e padrões de layout, componentes legados, complexidade de ações e navegação, risco de inconsistência de dados/tenant e responsividade. Evidência: código tem shells distintos, 40 TabsContent, 121 page.tsx nas famílias; defeitos runtime não presumidos. Objetivo: reduzir atrito operacional e tornar o app reconhecível em todas páginas, no estilo Database/Tremor com marca Avalia Solar.
+
+Personas: owner/admin da empresa, membro comercial, marketing/reputação, viewer/analista, operador CRM interno, reviewer, system admin/suporte autorizado. Jobs: entender desempenho, administrar reputação e presença, acompanhar leads/propostas, gerenciar plano/equipe, operar CRM e jornada reviewer. Entitlements atuais são fonte de verdade, não alterar por persona.
+
+MVP: W0–W7, shell + core empresarial e paridade. W8 CRM, W9 reviewer, W10 auditoria de compatibilidade/auxiliares, W11 staging/rollout. Medir ativação (primeira ação relevante em sessão), tempo para localizar tarefa, conclusão de fluxos, sucesso API, conversão lead→proposta, uso de review collection, adoção de filtros, erro por rota. Definir baseline 14–28 dias quando amostra permitir; segmentar role/plano/device sem PII. Metas de produto propostas: -20% tempo em tarefas testadas, +10% conclusão relativa em jornada piloto, -20% erros de navegação; não afirmar lift antes de experimento e controlar sazonalidade.
+
+Risco: aparência premium não justifica perda de informação. Design aceito por revisão de screenshots desktop/mobile e walkthrough com pelo menos owner e membro comercial. Sem novo requisito de venda de leads; gates existentes preservados.

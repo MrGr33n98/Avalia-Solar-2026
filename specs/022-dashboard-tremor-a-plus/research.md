@@ -1,0 +1,9 @@
+# Pesquisa e decisão Tremor
+- Database é uma referência de marketing SaaS (Next 15/React 19/Tailwind 3.4), não uma aplicação de CRUD. Usar linguagem visual: linhas, superfície neutra, hierarquia e densidade; não copiar landing pages para operações.
+- Dashboard (Next 14/React 18.2/Tailwind 3.4): shell, analytics, tables, bulk actions, billing, user management. Insights (Next 14/React 18.3/Tailwind 3.4): URL filters, table/input drawer, settings. Overview e Planner: padrões de charts/relatórios.
+- Tremor Blocks: Page Shells, Filterbar, KPI Cards, Bar Lists, Chart Compositions, Area/Line/Bar/Donut, Sparklines, Tooltips, Status Monitoring, Standard Tables, Table Actions, Pagination, Standard Forms, File Uploads, Dialogs, Empty States, Grid Lists, Banner, Badges, Pricing, User Management, Billing & Usage, Onboarding.
+- Stack atual: Tailwind 3.3.3 (não 3.4), React 18.2, Next 14.2.35, Recharts 2.12.7, Radix, Lucide, Framer Motion; TanStack Query presente, TanStack Table não identificado no package.json. A divergência de stack reforça a decisão de não instalar Tremor.
+- ADR-01: estudar exclusivamente referências visuais públicas Tremor e implementar com componentes existentes; não copiar código, instalar dependências, sobrescrever globals, auth, providers ou routes. ADR-02: reutilizar DataTable existente; qualquer nova biblioteca exige proposta funcional independente e aprovação. ADR-03: charts com Recharts existente, adaptadores e tokens. ADR-04: Database é direção de estética; não copiar código, assets, templates ou fontes de terceiros. Nenhuma compra ou licença Tremor é requisito do redesign.
+- ADR-05: evitar dois design systems vivos; tokens semânticos escopados ao dashboard, adapters sobre primitives existentes. Reutilização Spec 021 por contrato, sem incluir o runtime MCP no frontend.
+
+Fontes: sources.md. Registrar URL visual, padrão observado, componente próprio, dependências inalteradas e aceite em templates/block-provenance.csv.

@@ -1,0 +1,83 @@
+HEAD: a6eb1a7b33f2cc1c3c697ac0e2cbcc0232fd57c8
+
+Worktrees:
+<scratch>/Avalia-Solar-2026     8f429ec10 [fix/disable-navbar-ticker-for-as-watch]
+<scratch>/avalia-review-brands  a6b305198 [docs/software-delivery-blueprint]
+<scratch>/avalia-solar-spec021  0ab8a2782 [feat/spec-021-agent-native-ui-registry]
+<scratch>/avalia-solar-spec022  a6eb1a7b3 [feat/spec-022-dashboard-tremor-a-plus]
+/tmp/avalia-company-ai-astryx                                      c6729fa62 [feat/company-ai-assistant-ddd-tdd-v1] prunable
+/tmp/avalia-solar-mcp-10-staging                                   147e52b61 [feat/mcp-10-staging-readiness] prunable
+
+Status:
+?? specs/022-dashboard-tremor-a-plus/
+
+Existing specs:
+<scratch>/avalia-solar-spec022/specs
+<scratch>/avalia-solar-spec022/specs/002-crm-tenant-integrity
+<scratch>/avalia-solar-spec022/specs/003-crm-prospecting-ready
+<scratch>/avalia-solar-spec022/specs/004-companies-performance-a-plus
+<scratch>/avalia-solar-spec022/specs/004-crm-email-timeline-realtime
+<scratch>/avalia-solar-spec022/specs/005-company-identity-badges-v2
+<scratch>/avalia-solar-spec022/specs/005-pwa-company-profile-compact-redesign
+<scratch>/avalia-solar-spec022/specs/006-dashboard-mvp-defensibility
+<scratch>/avalia-solar-spec022/specs/007-pwa-navbar-mobile-navigation
+<scratch>/avalia-solar-spec022/specs/008-proposals-journey-pwa-web
+<scratch>/avalia-solar-spec022/specs/009-company-proposals-pwa-redesign
+<scratch>/avalia-solar-spec022/specs/010-home-hero-premium-campaigns
+<scratch>/avalia-solar-spec022/specs/011-pwa-side-filter-drawer
+<scratch>/avalia-solar-spec022/specs/012-standalone-favorites-page
+<scratch>/avalia-solar-spec022/specs/013-mcp-production-readiness
+<scratch>/avalia-solar-spec022/specs/014-frontend-performance-remediation
+<scratch>/avalia-solar-spec022/specs/015-seo-recovery-w0
+<scratch>/avalia-solar-spec022/specs/016-seo-recovery-w0-1
+<scratch>/avalia-solar-spec022/specs/017-dashboard-unslop-astryx
+<scratch>/avalia-solar-spec022/specs/018a-mcp-full-brand-experience
+<scratch>/avalia-solar-spec022/specs/018-mcp-interactive-ui
+<scratch>/avalia-solar-spec022/specs/019-pwa-geographic-filter-performance
+<scratch>/avalia-solar-spec022/specs/021-agent-native-ui-registry
+<scratch>/avalia-solar-spec022/specs/022-dashboard-tremor-a-plus
+<scratch>/avalia-solar-spec022/specs/companies-pwa-vertical-density
+
+Toolchain:
+v22.23.5
+10.9.9
+
+Frontend dependencies (declared):
+{
+  "next": "14.2.35",
+  "react": "^18.2.0",
+  "tailwind": "3.3.3",
+  "recharts": "^2.12.7",
+  "scripts": [
+    "dev",
+    "clean:next",
+    "dev:clean",
+    "build",
+    "postbuild",
+    "build:clean",
+    "analyze",
+    "start",
+    "lint",
+    "lint:fix",
+    "format",
+    "format:check",
+    "typecheck",
+    "test",
+    "test:watch",
+    "test:coverage",
+    "test:ci",
+    "knip",
+    "seo:audit",
+    "perf:lhci",
+    "perf:warm-cache",
+    "perf:simulate-cache-fallback",
+    "test:banners",
+    "perf:lhci:mobile",
+    "perf:test",
+    "perf:report",
+    "perf:bundle",
+    "perf:compare"
+  ]
+}
+
+Read-only preflight done. No install or deploy.

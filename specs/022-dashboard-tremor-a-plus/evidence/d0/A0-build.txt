@@ -1,0 +1,346 @@
+
+> nextjs@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Experiments (use with caution):
+    · optimizeCss
+    · webpackBuildWorker
+
+   Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ⚠ Compiled with warnings
+
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@prisma/instrumentation/dist/chunk-PVBRMQBZ.js
+./node_modules/@prisma/instrumentation/dist/index.js
+./node_modules/@sentry/node/build/cjs/integrations/tracing/prisma.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./app/error.tsx
+
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@prisma/instrumentation/dist/chunk-PVBRMQBZ.js
+./node_modules/@prisma/instrumentation/dist/index.js
+./node_modules/@sentry/node/build/cjs/integrations/tracing/prisma.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./lib/error-handler.ts
+./lib/api.ts
+./app/melhores-empresas/[category_slug]/[state]/[city]/page.tsx
+
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+[BetterAuthError: You are using the default secret. Please set `BETTER_AUTH_SECRET` in your environment variables or pass `secret` in your auth config.] {
+  cause: undefined
+}
+   Generating static pages (0/249) ...
+Time 95.944189
+Time 256.008076
+   Generating static pages (62/249) 
+   Generating static pages (124/249) 
+   Generating static pages (186/249) 
+[Creators] API returned 403; rendering empty state
+[Creators] API returned 403; rendering empty state
+ ✓ Generating static pages (249/249)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                     Size     First Load JS
+┌ ○ /                                                           43.2 kB         389 kB
+├ ○ /_not-found                                                 883 B            91 kB
+├ ○ /about                                                      2.86 kB         153 kB
+├ ○ /admin/categories                                           3.9 kB          199 kB
+├ ○ /api-docs                                                   260 B          90.4 kB
+├ ƒ /api/auth/[...betterauth]                                   0 B                0 B
+├ ○ /api/cache-metrics                                          0 B                0 B
+├ ƒ /api/health                                                 0 B                0 B
+├ ƒ /api/revalidate                                             0 B                0 B
+├ ƒ /api/social/render-post                                     0 B                0 B
+├ ƒ /api/v1/[...path]                                           0 B                0 B
+├ ƒ /api/v1/analytics/web-vitals                                0 B                0 B
+├ ○ /auth/callback                                              1.88 kB         246 kB
+├ ○ /badges                                                     260 B          90.4 kB
+├ ƒ /badges/[slug]                                              199 B           104 kB
+├ ○ /banner-studio                                              9.71 kB         112 kB
+├ ƒ /blog                                                       15.5 kB         214 kB
+├ ƒ /blog/[slug]                                                24.5 kB         392 kB
+├ ○ /blog/preview                                               4.17 kB         103 kB
+├ ○ /careers                                                    2.9 kB          148 kB
+├ ○ /categories                                                 18.1 kB         338 kB
+├ ƒ /categories/[slug]                                          26.4 kB         418 kB
+├ ƒ /categories/[slug]/compare                                  2.39 kB         121 kB
+├ ƒ /categories/[slug]/matching                                 6 kB            105 kB
+├ ƒ /categories/[slug]/solutions                                2.39 kB         121 kB
+├ ○ /chat                                                       22 kB           305 kB
+├ ○ /como-funciona-o-ranking                                    2.9 kB          148 kB
+├ ƒ /companies                                                  243 B           429 kB
+├ ƒ /companies/[id]                                             58.8 kB         464 kB
+├ ● /companies/[id]/[state]                                     217 B           364 kB
+├   ├ /companies/energia-solar/ac
+├   ├ /companies/energia-solar/al
+├   ├ /companies/energia-solar/ap
+├   └ [+24 more paths]
+├ ● /companies/[id]/[state]/[city]                              217 B           364 kB
+├   ├ /companies/energia-solar/ac/rio-branco
+├   ├ /companies/energia-solar/al/maceio
+├   ├ /companies/energia-solar/ap/macapa
+├   └ [+24 more paths]
+├ ƒ /companies/[id]/categories/[categorySlug]                   13.4 kB         364 kB
+├ ƒ /companies/[id]/claim                                       7.7 kB          255 kB
+├ ƒ /companies/[id]/quote                                       6.65 kB         127 kB
+├ ƒ /companies/[id]/review                                      12.4 kB         281 kB
+├ ƒ /companies/[id]/services/[slug]                             12.8 kB         286 kB
+├ ƒ /companies/categorias/[...categorySlugs]                    243 B           429 kB
+├ ƒ /company-dashboard                                          260 B          90.4 kB
+├ ○ /company-dashboard/billing                                  10.9 kB         310 kB
+├ ○ /compare                                                    31.6 kB         396 kB
+├ ○ /confirm-email                                              5.82 kB         103 kB
+├ ƒ /confirm-email/[token]                                      260 B          90.4 kB
+├ ƒ /conquistas/verificar/[token]                               199 B           104 kB
+├ ○ /contact                                                    2.9 kB          148 kB
+├ ○ /conteudo                                                   260 B          90.4 kB
+├ ○ /cookies                                                    2.85 kB         139 kB
+├ ○ /creator-studio                                             2.14 kB         247 kB
+├ ○ /creator-studio/analytics                                   4.87 kB         104 kB
+├ ○ /creator-studio/leads                                       1.56 kB         198 kB
+├ ○ /creator-studio/profile                                     243 B           298 kB
+├ ○ /creator-studio/publications                                5.54 kB         289 kB
+├ ƒ /creator-studio/publications/[id]/edit                      649 B           193 kB
+├ ○ /creator-studio/publications/new                            211 B           192 kB
+├ ○ /creator-studio/tree                                        21.1 kB         304 kB
+├ ○ /creators                                                   199 B           104 kB
+├ ƒ /creators/[slug]                                            9.99 kB         297 kB
+├ ƒ /creators/[slug]/posts/[postSlug]                           3.82 kB         144 kB
+├ ƒ /creators/[slug]/tree                                       5.49 kB         233 kB
+├ ○ /criterios-de-avaliacao                                     2.9 kB          148 kB
+├ ○ /dados-do-setor                                             2.9 kB          148 kB
+├ ○ /dados-do-setor/cobertura-energia-solar-capitais            2.9 kB          148 kB
+├ ○ /dados-do-setor/cobertura-energia-solar-capitais/dados.csv  0 B                0 B
+├ ○ /dashboard                                                  8.42 kB         419 kB
+├ ○ /dashboard/clients                                          352 B           414 kB
+├ ○ /dashboard/companies                                        352 B           414 kB
+├ ○ /dashboard/icp                                              30.2 kB         427 kB
+├ ○ /dashboard/import                                           223 B           386 kB
+├ ○ /dashboard/inbox                                            27.2 kB         394 kB
+├ ○ /dashboard/intent                                           47.5 kB         298 kB
+├ ○ /dashboard/notifications                                    275 B           389 kB
+├ ○ /dashboard/proposals                                        38.7 kB         428 kB
+├ ○ /dashboard/proposals/settings                               8.31 kB         398 kB
+├ ƒ /dashboard/propostas                                        259 B          90.4 kB
+├ ○ /dashboard/quote-form                                       11 kB           389 kB
+├ ○ /dashboard/reports                                          240 B           515 kB
+├ ○ /dashboard/reviewer                                         403 B          90.6 kB
+├ ○ /dashboard/reviewer/achievements                            260 B          90.4 kB
+├ ○ /dashboard/reviewer/companies                               2.27 kB         199 kB
+├ ○ /dashboard/reviewer/green-score                             1.93 kB         199 kB
+├ ○ /dashboard/reviewer/journey                                 1.96 kB         199 kB
+├ ○ /dashboard/reviewer/notifications                           275 B           389 kB
+├ ○ /dashboard/reviewer/proposals                               271 B           362 kB
+├ ○ /dashboard/reviewer/reviews                                 2.45 kB         199 kB
+├ ○ /dashboard/sales                                            5.16 kB         435 kB
+├ ○ /dashboard/sales/accounts                                   276 B           414 kB
+├ ƒ /dashboard/sales/accounts/[id]                              638 B           397 kB
+├ ○ /dashboard/sales/ai/activity                                7.57 kB         390 kB
+├ ○ /dashboard/sales/ai/agents                                  5.73 kB         382 kB
+├ ○ /dashboard/sales/ai/approvals                               6.1 kB          389 kB
+├ ○ /dashboard/sales/ai/executions                              5.64 kB         388 kB
+├ ○ /dashboard/sales/ai/inbox                                   11.8 kB         397 kB
+├ ○ /dashboard/sales/campaigns                                  11.2 kB         484 kB
+├ ƒ /dashboard/sales/campaigns/[id]                             5.89 kB         479 kB
+├ ƒ /dashboard/sales/campaigns/[id]/activity                    2.33 kB         378 kB
+├ ƒ /dashboard/sales/campaigns/[id]/analytics                   2.33 kB         378 kB
+├ ƒ /dashboard/sales/campaigns/[id]/recipients                  2.33 kB         378 kB
+├ ƒ /dashboard/sales/campaigns/[id]/settings                    2.33 kB         378 kB
+├ ○ /dashboard/sales/campaigns/audiences                        4.5 kB          380 kB
+├ ○ /dashboard/sales/campaigns/audiences/import                 5.12 kB         381 kB
+├ ○ /dashboard/sales/campaigns/audiences/lists                  3.65 kB         380 kB
+├ ƒ /dashboard/sales/campaigns/audiences/lists/[id]             3.48 kB         379 kB
+├ ○ /dashboard/sales/campaigns/sequences                        4.98 kB         381 kB
+├ ○ /dashboard/sales/campaigns/templates                        222 B           395 kB
+├ ○ /dashboard/sales/companies                                  276 B           414 kB
+├ ○ /dashboard/sales/emails                                     18.6 kB         395 kB
+├ ○ /dashboard/sales/engagement                                 3.33 kB         487 kB
+├ ○ /dashboard/sales/import                                     222 B           386 kB
+├ ƒ /dashboard/sales/leads                                      33 kB           623 kB
+├ ○ /dashboard/sales/marketing                                  3.44 kB         483 kB
+├ ○ /dashboard/sales/people                                     21.7 kB         398 kB
+├ ƒ /dashboard/sales/people/[id]                                20.6 kB         399 kB
+├ ○ /dashboard/sales/pipeline                                   260 B          90.4 kB
+├ ○ /dashboard/sales/prospects                                  5.79 kB         403 kB
+├ ○ /dashboard/sales/quotes                                     2.19 kB         378 kB
+├ ○ /dashboard/sales/reports                                    239 B           515 kB
+├ ○ /dashboard/sales/reports/activity                           8.79 kB         481 kB
+├ ○ /dashboard/sales/reports/attribution                        2.55 kB         378 kB
+├ ○ /dashboard/sales/reports/custom                             1.19 kB         377 kB
+├ ○ /dashboard/sales/reports/email                              2.57 kB         378 kB
+├ ○ /dashboard/sales/reports/engagement                         8.66 kB         492 kB
+├ ○ /dashboard/sales/reports/forecast                           2.56 kB         498 kB
+├ ○ /dashboard/sales/reports/funnel                             9.1 kB          385 kB
+├ ○ /dashboard/sales/reports/installments                       2.25 kB         378 kB
+├ ○ /dashboard/sales/reports/losses                             4.7 kB          484 kB
+├ ○ /dashboard/sales/reports/new-leads                          501 B           496 kB
+├ ○ /dashboard/sales/reports/products                           5.17 kB         478 kB
+├ ○ /dashboard/sales/reports/sales                              485 B           496 kB
+├ ○ /dashboard/sales/reports/scheduler                          955 B           377 kB
+├ ○ /dashboard/sales/reports/snapshots                          6.61 kB         493 kB
+├ ○ /dashboard/sales/reports/tasks                              2.17 kB         378 kB
+├ ○ /dashboard/sales/reports/wallboard                          8.5 kB          114 kB
+├ ○ /dashboard/sales/revenue/inbox                              4 kB            380 kB
+├ ○ /dashboard/sales/settings                                   5.07 kB         384 kB
+├ ○ /dashboard/sales/settings/access                            3.23 kB         379 kB
+├ ○ /dashboard/sales/settings/access/assign                     994 B           377 kB
+├ ○ /dashboard/sales/settings/activity-types                    2.73 kB         379 kB
+├ ○ /dashboard/sales/settings/ai                                9.65 kB        99.8 kB
+├ ○ /dashboard/sales/settings/api-keys                          3.75 kB         380 kB
+├ ○ /dashboard/sales/settings/company-types                     2.18 kB         378 kB
+├ ○ /dashboard/sales/settings/custom-fields                     4 kB            380 kB
+├ ○ /dashboard/sales/settings/email                             10.3 kB         389 kB
+├ ○ /dashboard/sales/settings/email/accounts                    5.13 kB         381 kB
+├ ○ /dashboard/sales/settings/email/deliverability              276 B           376 kB
+├ ○ /dashboard/sales/settings/email/domains                     276 B           376 kB
+├ ○ /dashboard/sales/settings/email/senders                     276 B           376 kB
+├ ○ /dashboard/sales/settings/email/suppression                 1.38 kB         377 kB
+├ ○ /dashboard/sales/settings/email/templates                   222 B           395 kB
+├ ○ /dashboard/sales/settings/industries                        2.7 kB          379 kB
+├ ○ /dashboard/sales/settings/integrations                      3.69 kB         380 kB
+├ ○ /dashboard/sales/settings/markets                           2.07 kB         378 kB
+├ ○ /dashboard/sales/settings/pipelines                         9.74 kB         389 kB
+├ ○ /dashboard/sales/settings/tags                              3.25 kB         379 kB
+├ ○ /dashboard/sales/settings/territories                       2.71 kB         379 kB
+├ ○ /dashboard/sales/settings/tracking                          4.04 kB         380 kB
+├ ○ /dashboard/sales/tasks                                      5.44 kB         381 kB
+├ ○ /dashboard/sales/today                                      9.28 kB         406 kB
+├ ○ /dashboard/sales/whatsapp                                   2.07 kB         378 kB
+├ ○ /dashboard/settings/team                                    20.3 kB         293 kB
+├ ○ /dashboard/voice-reviews                                    8.04 kB         295 kB
+├ ○ /debug-design                                               5.35 kB         273 kB
+├ ○ /dmca                                                       260 B          90.4 kB
+├ ○ /empresas-verificadas                                       2.9 kB          148 kB
+├ ƒ /f/[token]                                                  13.4 kB         263 kB
+├ ○ /favorites                                                  3.35 kB         274 kB
+├ ƒ /feed                                                       27.5 kB         348 kB
+├ ○ /forbidden                                                  260 B          90.4 kB
+├ ○ /forgot-password                                            6 kB            256 kB
+├ ○ /founder                                                    15.2 kB         190 kB
+├ ○ /groups                                                     11.5 kB         336 kB
+├ ƒ /groups/[slug]                                              8.88 kB         380 kB
+├ ƒ /groups/[slug]/manage                                       15.1 kB         129 kB
+├ ƒ /groups/[slug]/posts/[postId]                               5.44 kB         317 kB
+├ ○ /groups/new                                                 11.1 kB         223 kB
+├ ○ /healthz                                                    0 B                0 B
+├ ○ /help                                                       2.9 kB          148 kB
+├ ○ /invite                                                     6.64 kB         216 kB
+├ ○ /jornada                                                    199 B          99.1 kB
+├ ○ /login                                                      638 B           359 kB
+├ ○ /logout                                                     2.69 kB        92.8 kB
+├ ○ /manifest.webmanifest                                       0 B                0 B
+├ ƒ /material-downloads/[id]                                    2.37 kB        99.3 kB
+├ ○ /melhores-empresas                                          1.9 kB          108 kB
+├ ƒ /melhores-empresas/[category_slug]/[state]/[city]           30.5 kB         398 kB
+├ ○ /metodologia                                                2.9 kB          148 kB
+├ ○ /notifications                                              1.26 kB         237 kB
+├ ○ /offline                                                    199 B          99.1 kB
+├ ƒ /opengraph-image                                            0 B                0 B
+├ ○ /plans                                                      260 B          90.4 kB
+├ ○ /press                                                      2.9 kB          148 kB
+├ ○ /prices                                                     260 B          90.4 kB
+├ ○ /pricing                                                    32.7 kB         370 kB
+├ ○ /privacy                                                    2.85 kB         139 kB
+├ ƒ /products                                                   26.8 kB         344 kB
+├ ƒ /products/[slug]                                            24.1 kB         307 kB
+├ ○ /products/compare                                           8.56 kB         238 kB
+├ ○ /profile                                                    260 B          90.4 kB
+├ ○ /quote-wizard                                               632 B          99.5 kB
+├ ○ /rating-stars                                               12.6 kB         273 kB
+├ ○ /register                                                   381 B           354 kB
+├ ○ /register-company                                           11.9 kB         262 kB
+├ ○ /register-user                                              220 B           223 kB
+├ ○ /reset-password                                             5.91 kB         201 kB
+├ ƒ /reset-password/[token]                                     260 B          90.4 kB
+├ ○ /review                                                     260 B          90.4 kB
+├ ○ /review-dashboard                                           3.86 kB         287 kB
+├ ○ /review-dashboard/achievements                              10.1 kB         241 kB
+├ ○ /review-dashboard/brands                                    448 B           301 kB
+├ ○ /review-dashboard/companies                                 2.27 kB         199 kB
+├ ○ /review-dashboard/experience                                453 B           301 kB
+├ ○ /review-dashboard/favorites                                 1.6 kB          273 kB
+├ ○ /review-dashboard/green-score                               1.93 kB         199 kB
+├ ○ /review-dashboard/help                                      4.36 kB         110 kB
+├ ○ /review-dashboard/journey                                   1.96 kB         199 kB
+├ ○ /review-dashboard/notifications                             5.87 kB         289 kB
+├ ○ /review-dashboard/profile                                   243 B           298 kB
+├ ○ /review-dashboard/proposals                                 260 B           362 kB
+├ ○ /review-dashboard/publications                              362 B          90.5 kB
+├ ƒ /review-dashboard/publications/[id]/edit                    389 B          90.5 kB
+├ ○ /review-dashboard/publications/new                          365 B          90.5 kB
+├ ○ /review-dashboard/reviews                                   5.31 kB         288 kB
+├ ○ /review-dashboard/rewards                                   3.88 kB         287 kB
+├ ○ /review-dashboard/settings                                  5.4 kB          288 kB
+├ ○ /review-dashboard/solutions                                 430 B           301 kB
+├ ○ /review-dashboard/tree                                      356 B          90.5 kB
+├ ○ /reviews/my                                                 7.39 kB         215 kB
+├ ○ /robots.txt                                                 0 B                0 B
+├ ƒ /search                                                     45.2 kB         412 kB
+├ ○ /select-company                                             16.5 kB         358 kB
+├ ○ /select-company/requests                                    5.67 kB         201 kB
+├ ƒ /seo-image                                                  0 B                0 B
+├ ○ /signup                                                     220 B           223 kB
+├ ○ /sitemap-index.xml                                          0 B                0 B
+├ ƒ /sitemap.xml                                                0 B                0 B
+├ ƒ /sitemaps/[section]/sitemap.xml                             0 B                0 B
+├ ƒ /solucoes/[slug]                                            3.92 kB         110 kB
+├ ○ /status                                                     260 B          90.4 kB
+├ ƒ /t/[...path]                                                0 B                0 B
+├ ○ /terms                                                      2.85 kB         139 kB
+├ ○ /test-images                                                875 B           189 kB
+├ ƒ /user/profile                                               260 B          90.4 kB
+├ ƒ /v/[code]                                                   4.36 kB         208 kB
+└ ƒ /voice-review/[session_id]                                  7.01 kB         202 kB
++ First Load JS shared by all                                   90.2 kB
+  ├ chunks/52117-8cd21c6f073244d4.js                            31.9 kB
+  ├ chunks/fd9d1056-b0db216e5fd8e586.js                         53.6 kB
+  └ other shared chunks (total)                                 4.64 kB
+
+
+ƒ Middleware                                                    28 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> nextjs@0.1.0 postbuild
+> node script/warm-home-cache.mjs || echo "cache warm skipped"
+
+[warm-home-cache] failed for home.categories.active: This operation was aborted
+[warm-home-cache] failed for home.categories.featured: This operation was aborted
+[warm-home-cache] failed for home.banners.categories_top: This operation was aborted
+[warm-home-cache] failed for home.banners.companies_top: This operation was aborted
+[warm-home-cache] cache written to <scratch>/avalia-solar-spec022/AB0-1-front/.cache/home-fallback-cache.json with 3 entries (0 refreshed)
+exit=0

@@ -1,0 +1,7 @@
+# Segurança / privacidade / governança
+1. Inventariar policies Rails/Pundit, membership, tenant scope, admin impersonation, feature access, plan e flags. Role no cliente somente UX. Autorização por ação no servidor, inclusive export, arquivos, realtime e bulk.
+2. Testes IDOR com 2 tenants sintéticos: URL, body, query, path, export, WebSocket, drawer, cache, background mutation, pagination cursor. Verificar response bodies e ausência de flash. Admin só dentro de escopo explícito, auditado; sem bypass por design.
+3. Não colocar tokens, cookies, secret API keys, storageState, HAR bruto ou PII em git/CI artifacts. Mask screenshots e logs. Não coletar dados reais de empresa 372 sem sessão autorizada. Use staging ou local sintético; capture produtiva somente leitura autorizada e sanitizada.
+4. CSP, XSS, URL sanitização, upload MIME/tamanho validado no servidor, CSRF conforme mecanismo existente, escape CSV injection, no dangerouslySetInnerHTML sem justificativa. API keys mascaradas; rotacionar/revogar via fluxo existente e confirmação. Não modificar política de retenção sem aprovação.
+5. Ações reais de email, WhatsApp, campanha, proposta, cobrança, publicação, exclusão e convite exigem sandbox em teste e confirmação humana quando consequenciais. Não acionar pagamento real. Realtime subscription escopada, cleanup na troca.
+6. Dependências pinadas, SBOM/licença, npm audit triado; não instalar ou copiar bibliotecas/templates Tremor. Nenhum novo serviço em VM. Feature flags fail closed. Verificar logs por request ID sem segredo.

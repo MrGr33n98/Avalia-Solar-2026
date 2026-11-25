@@ -1,0 +1,185 @@
+{
+ "cold-desktop": {
+  "n": 5,
+  "shellMs": {
+   "median": 5883,
+   "min": 5094,
+   "max": 6551
+  },
+  "domInteractiveMs": {
+   "median": 1267,
+   "min": 917,
+   "max": 1825
+  },
+  "loadEventEndMs": {
+   "median": 2903,
+   "min": 2352,
+   "max": 4177
+  },
+  "longTaskCount": {
+   "median": 20,
+   "min": 16,
+   "max": 24
+  },
+  "longTaskSumMs": {
+   "median": 3443,
+   "min": 2813,
+   "max": 5356
+  },
+  "longTaskMaxMs": {
+   "median": 449,
+   "min": 400,
+   "max": 820
+  },
+  "apiRequests": {
+   "median": 14,
+   "min": 14,
+   "max": 14
+  },
+  "scripts": {
+   "median": 65,
+   "min": 65,
+   "max": 65
+  },
+  "scriptKB": {
+   "median": 730,
+   "min": 730,
+   "max": 730
+  },
+  "domNodes": {
+   "median": 604,
+   "min": 604,
+   "max": 604
+  },
+  "heapMB": {
+   "median": 14,
+   "min": 14,
+   "max": 15
+  },
+  "wsBlocked": 5
+ },
+ "cold-mobile": {
+  "n": 5,
+  "shellMs": null,
+  "domInteractiveMs": {
+   "median": 6257,
+   "min": 4101,
+   "max": 7286
+  },
+  "loadEventEndMs": {
+   "median": 6294,
+   "min": 4121,
+   "max": 7297
+  },
+  "longTaskCount": {
+   "median": 34,
+   "min": 27,
+   "max": 35
+  },
+  "longTaskSumMs": {
+   "median": 9675,
+   "min": 7280,
+   "max": 11407
+  },
+  "longTaskMaxMs": {
+   "median": 1568,
+   "min": 1300,
+   "max": 2407
+  },
+  "apiRequests": {
+   "median": 13,
+   "min": 13,
+   "max": 13
+  },
+  "scripts": {
+   "median": 65,
+   "min": 65,
+   "max": 65
+  },
+  "scriptKB": {
+   "median": 730,
+   "min": 730,
+   "max": 730
+  },
+  "domNodes": {
+   "median": 589,
+   "min": 586,
+   "max": 596
+  },
+  "heapMB": {
+   "median": 15,
+   "min": 14,
+   "max": 15
+  },
+  "wsBlocked": 15
+ },
+ "warm-desktop": {
+  "n": 5,
+  "shellMs": {
+   "median": 5038,
+   "min": 4430,
+   "max": 5552
+  },
+  "domInteractiveMs": {
+   "median": 908,
+   "min": 718,
+   "max": 1540
+  },
+  "loadEventEndMs": {
+   "median": 2401,
+   "min": 2263,
+   "max": 2971
+  },
+  "longTaskCount": {
+   "median": 18,
+   "min": 16,
+   "max": 24
+  },
+  "longTaskSumMs": {
+   "median": 2869,
+   "min": 2738,
+   "max": 3955
+  },
+  "longTaskMaxMs": {
+   "median": 487,
+   "min": 362,
+   "max": 534
+  },
+  "apiRequests": {
+   "median": 14,
+   "min": 13,
+   "max": 14
+  },
+  "scripts": {
+   "median": 65,
+   "min": 65,
+   "max": 65
+  },
+  "scriptKB": {
+   "median": 730,
+   "min": 730,
+   "max": 730
+  },
+  "domNodes": {
+   "median": 604,
+   "min": 604,
+   "max": 604
+  },
+  "heapMB": {
+   "median": 15,
+   "min": 14,
+   "max": 15
+  },
+  "wsBlocked": 10,
+  "warmReloadShellMs": {
+   "median": 5741,
+   "min": 4253,
+   "max": 6619
+  },
+  "warmReloadApi": {
+   "median": 14,
+   "min": 14,
+   "max": 14
+  }
+ }
+}

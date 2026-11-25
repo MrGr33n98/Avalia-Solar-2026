@@ -1,0 +1,75 @@
+﻿id,wave,priority,task,test,acceptance,dependency,status
+T001,W0,P0,"Inventariar checkout, branches, specs e deploy SHA",preflight + baseline sem alterações,"README/AGENTS, dependências e bloqueios registrados",W anterior ou dependência específica,TODO
+T002,W0,P0,Mapear referências visuais públicas Tremor e criar protótipo próprio com stack atual,matriz referência → componente próprio + diff package.json/lockfile,"zero instalação, fork, cópia ou dependência Tremor; apenas inspiração visual",W anterior ou dependência específica,TODO
+T003,W0,P0,Capturar navegação autorizada de todas as rotas e aliases,Playwright crawl allowlist + classificação por role,121 paths classificados e links extras encontrados,W anterior ou dependência específica,TODO
+T004,W0,P0,"Inventariar tabs, subabas, ações, modais, eventos e API",runtime-inventory + api-parity,100% funcionalidades mapeadas ou BLOCKED explícito,W anterior ou dependência específica,TODO
+T005,W0,P0,"Baseline visual, motion, fontes e geometria",screenshots + computed CSS em viewports,artefatos sanitizados e matrix light/dark,W anterior ou dependência específica,TODO
+T006,W0,P0,Baseline performance e acessibilidade,"Lighthouse/trace, axe, network cold/warm",métricas e defeitos registrados,W anterior ou dependência específica,TODO
+T007,W0,P0,Fixar testes de paridade pré-refactor,E2E smoke com tenants A/B,RED apenas para defeitos reproduzidos,W anterior ou dependência específica,TODO
+T008,W1,P0,Reproduzir race company_id e autorização admin,"deferred selectCompany, backend IDOR","sem flash, acesso indevido ou request stale",W anterior ou dependência específica,TODO
+T009,W1,P0,Consolidar resolver de navegação/aliases,"testes de tab, URL, back e redirects",preserva deep links e flags,W anterior ou dependência específica,TODO
+T010,W1,P0,Implementar tokens escopados dashboard,snapshot computed styles e marketplace,não altera CSS público,W anterior ou dependência específica,TODO
+T011,W1,P0,Padronizar Button/Input/Select/Badge/Avatar,"RTL keyboard, contraste, variants",sem novos componentes redundantes,W anterior ou dependência específica,TODO
+T012,W1,P0,Padronizar Skeleton/Empty/Error/Locked/Offline,RTL estado + reduced motion,zero fake data e overflow,W anterior ou dependência específica,TODO
+T013,W1,P0,Criar guard de flag e rollback,tests flag off/on e default,legacy preservado,W anterior ou dependência específica,TODO
+T014,W2,P0,Refinar EnterpriseSidebar sem duplicar menu,"testes grupos, flyout e collapse",112/240 baseline ou mudança aprovada,W anterior ou dependência específica,TODO
+T015,W2,P0,"Refinar DashboardToolbar, busca, company switcher",keyboard + troca tenant,"foco, sem controles duplicados",W anterior ou dependência específica,TODO
+T016,W2,P0,"Unificar PageHeader, breadcrumbs e FilterBar",RTL e deep links,ações autorizadas,W anterior ou dependência específica,TODO
+T017,W2,P0,Mobile drawer/quick access/bottom nav,"320–430px, safe area, keyboard",sem ações escondidas,W anterior ou dependência específica,TODO
+T018,W2,P0,"Melhorar scroll, width e skeleton shell",Playwright resize/zoom,document scrollWidth <= clientWidth +1,W anterior ou dependência específica,TODO
+T019,W2,P0,Aplicar motion tokens e theme,light/dark/presets/reduced motion,sem flicker e preferência persistida,W anterior ou dependência específica,TODO
+T020,W3,P0,Extrair MetricCard/MetricStrip e chart frame,teste null/0/period/unit,cinco KPIs existentes preservados,W anterior ou dependência específica,TODO
+T021,W3,P0,Refatorar overview e layout desktop/mobile,visual snapshots + data assertions,"série, fontes, oportunidades, perfil e insights",W anterior ou dependência específica,TODO
+T022,W3,P0,Unificar período e export,"contrato CSV, timezone, filtro",mesmo período ou diferença explicitada,W anterior ou dependência específica,TODO
+T023,W3,P0,Reutilizar Recharts com tokens e alternativa tabular,"teclado, no data e labels",legenda/tooltip acessíveis,W anterior ou dependência específica,TODO
+T024,W3,P0,Deduplicar requests e lazy charts,trace before/after,sem fetch duplicado evitável,W anterior ou dependência específica,TODO
+T025,W3,P0,Refatorar analytics e benchmark existentes,paridade métricas e gating,sem mudar cálculo,W anterior ou dependência específica,TODO
+T026,W4,P0,Migrar reviews e detalhe/resposta,US07 + 422/403,sem perda de filtros e ações,W anterior ou dependência específica,TODO
+T027,W4,P0,Migrar coleta de avaliações e QR/embed,US08 com sandbox,sem email real em teste,W anterior ou dependência específica,TODO
+T028,W4,P0,"Migrar widgets, confiança, selos e editor",preview/export e limites,mesmos recursos e assets,W anterior ou dependência específica,TODO
+T029,W4,P0,"Migrar CompanyInfo, categorias e CTA","schema, dirty state e feature gate",dados salvos e visibilidade preservados,W anterior ou dependência específica,TODO
+T030,W4,P0,Migrar produtos e serviços,"CRUD, status e limites",sem perda de categorias e imagens,W anterior ou dependência específica,TODO
+T031,W4,P0,Migrar projetos/materiais/formulários,"subabas, upload, moderação",PDF 25MB cliente + validação servidor,W anterior ou dependência específica,TODO
+T032,W4,P0,"Migrar mídia, perguntas e banners","file upload, crop e moderation",sem ação inexistente inventada,W anterior ou dependência específica,TODO
+T033,W5,P0,"Buyer Intent: 7 subabas, filtros, drawers",US14 + 403/empty,"gates, metodologia e dados reais",W anterior ou dependência específica,TODO
+T034,W5,P0,"Ranking: cards, evidence tabs e positioning","US15, períodos 30/90/365",ranking sem alteração de fórmula,W anterior ou dependência específica,TODO
+T035,W5,P0,Tracking: 7 subabas e Intent Sync,"US16, tag, UTM, integração",sem segredo em log e atribuição igual,W anterior ou dependência específica,TODO
+T036,W5,P0,ICP e filtros segmentação,"form schema, mobile, dirty",mesmos critérios e persistência,W anterior ou dependência específica,TODO
+T037,W5,P0,Revalidar exports/PII e planos,cross-tenant e downgrade,nenhuma exposição privada,W anterior ou dependência específica,TODO
+T038,W6,P0,Lead table/drawer e OpportunityBoard,"US11, pagination e selection",ids estáveis e ações existentes,W anterior ou dependência específica,TODO
+T039,W6,P0,Inbox e realtime,"US13, reconnect e switch",sem envio duplicado,W anterior ou dependência específica,TODO
+T040,W6,P0,"Propostas, wizard, PDF preview e settings","US12, fixtures, confirmação",paridade de etapas e documentos,W anterior ou dependência específica,TODO
+T041,W6,P0,Quote form studio,schema e preview,preserva formulários e submit,W anterior ou dependência específica,TODO
+T042,W6,P0,Campanhas e approvals empresariais,sandbox + policy,"sem envio real, status corretos",W anterior ou dependência específica,TODO
+T043,W6,P0,AI assistant e feature flags,enabled/disabled/forbidden,não expor recurso não habilitado,W anterior ou dependência específica,TODO
+T044,W7,P0,PlanAndSubscription e pricing modal,"US17, period, gating","preços reais, sem cobrança de teste",W anterior ou dependência específica,TODO
+T045,W7,P0,"Equipe, roles, invites","US18, IDOR, revoke",backend policy preservada,W anterior ou dependência específica,TODO
+T046,W7,P0,"Configurações, Webhooks, suporte","US28, ajuda e erros",segredos mascarados,W anterior ou dependência específica,TODO
+T047,W7,P0,Validação de core 15 rotas e 40 blocos,paridade + E2E + visual,100% classificados e aprovados,W anterior ou dependência específica,TODO
+T048,W7,P0,"Gate MVP, documentação e PR draft",acceptance + metrics,W0–W7 concluídas ou não declarar MVP,W anterior ou dependência específica,TODO
+T049,W8,P1,"Classificar 74 rotas, role e shell CRM",route sweep + RBAC,sem expor CRM interno ao público,W anterior ou dependência específica,TODO
+T050,W8,P1,"Today, accounts, people, companies, leads, prospects",data table/filters/drawers,preservar CRUD e detalhes,W anterior ou dependência específica,TODO
+T051,W8,P1,"Pipeline, tasks, quotes, revenue inbox",keyboard/drag e optimistic rollback,mesmos stages e ações,W anterior ou dependência específica,TODO
+T052,W8,P1,"Campaigns, audiences, imports, sequences, templates","sandbox, preview e status",paridade e zero envio real,W anterior ou dependência específica,TODO
+T053,W8,P1,"Emails, WhatsApp, engagement, marketing","realtime, retry e errors",não duplicar dispatch,W anterior ou dependência específica,TODO
+T054,W8,P1,"Reports: forecast, funnel, losses e demais",todas 16 rotas reports e filtros (validar contagem),sem alterar métricas,W anterior ou dependência específica,TODO
+T055,W8,P1,AI agents/activity/approvals/executions/inbox,"RBAC, audit e confirmação",human approval preservada,W anterior ou dependência específica,TODO
+T056,W8,P1,"Settings: access, custom fields, email, integrations","schema, secrets e permisos",sem regressão de configuração,W anterior ou dependência específica,TODO
+T057,W8,P1,Homologar 74 rotas CRM,E2E por jornada + smoke todas,100% classificadas,W anterior ou dependência específica,TODO
+T058,W9,P1,Auditar dois namespaces reviewer,"redirects, role e membership",8 + 20 paths classificados,W anterior ou dependência específica,TODO
+T059,W9,P1,"Migrar overview, profile, journey, settings","US21/22, responsive",sem cruzar dados empresa,W anterior ou dependência específica,TODO
+T060,W9,P1,"Migrar reviews, proposals, favorites, companies",CRUD e estados,paridade de ações,W anterior ou dependência específica,TODO
+T061,W9,P1,Migrar brands/experience/solutions/publications,editor e media,fluxos e moderação preservados,W anterior ou dependência específica,TODO
+T062,W9,P1,"Migrar achievements, green score, rewards, notifications",dados reais e navegação,sem gamificação inventada,W anterior ou dependência específica,TODO
+T063,W9,P1,Homologar shell reviewer e help,visual/accessibility e links,100% rotas autorizadas,W anterior ou dependência específica,TODO
+T064,W10,P1,System admin DashboardLayout,role matrix e system metrics,sem ampliar acesso,W anterior ou dependência específica,TODO
+T065,W10,P1,Legacy company-dashboard e billing,redirect/plan/context,links e dados preservados,W anterior ou dependência específica,TODO
+T066,W10,P1,Select-company e requests,0/1/N empresas e pending,transição consistente,W anterior ou dependência específica,TODO
+T067,W10,P1,Verificar rotas auxiliares e arquivos órfãos,import graph e runtime,remoção só com prova e aprovação,W anterior ou dependência específica,TODO
+T068,W10,P1,"Auditar offline, notifications e theme cross-domain",reconnect/zoom/reduced motion,todos estados críticos,W anterior ou dependência específica,TODO
+T069,W10,P1,Documentar catálogo reutilizável e Spec 021 boundary,storybook/playground opcional,zero runtime MCP import,W anterior ou dependência específica,TODO
+T070,W11,P0,Executar suíte completa frontend/backend,Jest/Playwright/RSpec afetados,sem regressão nova,W anterior ou dependência específica,TODO
+T071,W11,P0,"Gate performance, a11y e security","budgets, axe, IDOR",evidências PASS,W anterior ou dependência específica,TODO
+T072,W11,P0,Staging smoke e UAT,roles/planos/device e canary,aprovação registrada,W anterior ou dependência específica,TODO
+T073,W11,P0,Testar rollback por flag,desativar e reativar staging,sem perder dados,W anterior ou dependência específica,TODO
+T074,W11,P0,"Entregar PRs, changelog, evidence manifest",review e CI,sem merge/deploy sem autorização,W anterior ou dependência específica,TODO
