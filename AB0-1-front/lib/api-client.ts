@@ -210,6 +210,14 @@ function attachSignalToPromise<T>(promise: Promise<T>, signal?: AbortSignal): Pr
 export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Promise<T> {
   const url = buildApiUrl(endpoint);
   const requestOptions: any = { ...options };
+  const dedupeRequest = requestOptions.dedupe !== false;
+  const skipRateLimitWait = requestOptions.skipRateLimitWait === true;
+  const onResponseHeaders = requestOptions.onResponseHeaders as
+    | ((headers: Headers) => void)
+    | undefined;
+  delete requestOptions.dedupe;
+  delete requestOptions.skipRateLimitWait;
+  delete requestOptions.onResponseHeaders;
   const callerSignal: AbortSignal | undefined = requestOptions.signal;
 
   if (callerSignal?.aborted) {
@@ -249,11 +257,17 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
     }
 
     // If no cache and it's a public endpoint, wait and retry once
-    if (isPublicCacheableEndpoint(normalizedEndpoint)) {
+    if (isPublicCacheableEndpoint(normalizedEndpoint) && !skipRateLimitWait) {
       const waitTime = Math.min(blockedUntil - Date.now(), 3000); // Max 3s wait
       console.log(`[API] Waiting ${waitTime}ms before retry...`);
       await sleep(waitTime);
       SAFE_API_BLOCKED_UNTIL.delete(throttleKey); // Clear block after wait
+    } else if (skipRateLimitWait) {
+      throw new ApiError('[429] Muitas solicitações. Por favor, tente novamente mais tarde.', {
+        status: 429,
+        url,
+        method,
+      });
     } else {
       throw new ApiError('[429] Muitas solicitações. Por favor, tente novamente mais tarde.', {
         status: 429,
@@ -273,7 +287,7 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
     }
   }
 
-  if (method === 'GET') {
+  if (method === 'GET' && dedupeRequest) {
     const inFlight = SAFE_API_IN_FLIGHT.get(cacheKey);
     if (inFlight) {
       return attachSignalToPromise(inFlight as Promise<T>, callerSignal);
@@ -322,7 +336,7 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
   // Para requisições GET compartilhadas no SAFE_API_IN_FLIGHT,
   // desacoplamos o signal do chamador do transporte nativo.
   const transportOptions =
-    method === 'GET'
+    method === 'GET' && dedupeRequest
       ? (() => {
           const { signal: _callerSignal, ...rest } = requestOptions;
           return rest;
@@ -342,6 +356,14 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
           },
           credentials: transportOptions.credentials || 'include',
         });
+
+        if (response.ok && onResponseHeaders) {
+          try {
+            onResponseHeaders(response.headers);
+          } catch {
+            // Optional response metadata must not change the request result.
+          }
+        }
 
         const responseBody = await response.json().catch(() => null);
         if (!response.ok) {
@@ -460,7 +482,7 @@ export async function fetchApiSafe<T>(endpoint: string, options: any = {}): Prom
     throw new ApiError('API request failed after retries', { url, method });
   };
 
-  if (method === 'GET') {
+  if (method === 'GET' && dedupeRequest) {
     let promise = SAFE_API_IN_FLIGHT.get(cacheKey) as Promise<T> | undefined;
     if (!promise) {
       promise = executeRequest().finally(() => {
@@ -552,13 +574,21 @@ export const companiesApiSafe = {
     lat?: number;
     lng?: number;
     signal?: AbortSignal;
+    requestOptions?: {
+      retries?: number;
+      cacheTtlMs?: number;
+      noCache?: boolean;
+      dedupe?: boolean;
+      skipRateLimitWait?: boolean;
+      cache?: RequestCache;
+    };
   }): Promise<{ data: Company[]; meta?: { pagination?: any } }> => {
     try {
-      const { signal, ...queryParams } = params || {};
+      const { signal, requestOptions, ...queryParams } = params || {};
       const url = `companies${buildQueryParams(queryParams)}`;
       console.log('[companiesApiSafe.getAllPaginated] Fetching:', url);
 
-      const response = await fetchApiSafe<any>(url, { signal });
+      const response = await fetchApiSafe<any>(url, { signal, ...requestOptions });
 
       console.log('[companiesApiSafe.getAllPaginated] Response structure:', {
         isArray: Array.isArray(response),
@@ -627,7 +657,18 @@ export const companiesApiSafe = {
   }): Promise<number | null> => {
     try {
       const { signal, ...countParams } = params || {};
-      const countRes = await fetchApiSafe<{ count: number }>(`companies/count${buildQueryParams(countParams)}`, { signal });
+      const countRes = await fetchApiSafe<{ count: number }>(
+        `companies/count${buildQueryParams(countParams)}`,
+        {
+          signal,
+          retries: 1,
+          cacheTtlMs: 0,
+          noCache: true,
+          dedupe: false,
+          skipRateLimitWait: true,
+          cache: 'no-store',
+        }
+      );
       if (typeof countRes?.count === 'number') {
         return countRes.count;
       }
@@ -638,6 +679,14 @@ export const companiesApiSafe = {
         page: 1,
         per_page: 1,
         signal,
+        requestOptions: {
+          retries: 1,
+          cacheTtlMs: 0,
+          noCache: true,
+          dedupe: false,
+          skipRateLimitWait: true,
+          cache: 'no-store',
+        },
       });
 
       const total = Number(response?.meta?.pagination?.total);
@@ -754,6 +803,41 @@ export const companiesApiSafe = {
       console.error('Error fetching cities:', error);
       throw error;
     }
+  },
+
+  getGeographicCities: async (
+    state: string,
+    signal?: AbortSignal
+  ): Promise<{ uf: string; cities: string[]; revision: string }> => {
+    const uf = state.trim().toUpperCase();
+    let headerRevision = 'legacy';
+    const response = await fetchApiSafe<{ cities?: unknown; revision?: unknown }>(
+      `companies/cities?state=${encodeURIComponent(uf)}`,
+      {
+        signal,
+        retries: 1,
+        cacheTtlMs: 0,
+        noCache: true,
+        cache: 'no-cache',
+        credentials: 'omit',
+        dedupe: false,
+        skipRateLimitWait: true,
+        onResponseHeaders: (headers: Headers) => {
+          headerRevision = headers.get('x-locations-version') || 'legacy';
+        },
+      }
+    );
+
+    return {
+      uf,
+      cities: Array.isArray(response?.cities)
+        ? response.cities.filter((city): city is string => typeof city === 'string')
+        : [],
+      revision:
+        typeof response?.revision === 'string' && response.revision.trim()
+          ? response.revision
+          : headerRevision,
+    };
   },
 
   getCatalog: async (

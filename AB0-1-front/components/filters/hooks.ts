@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { StateOption, CityOption } from './types';
-import { companiesApiSafe } from '@/lib/api-client';
+import { useCallback, useMemo } from 'react';
+import { StateOption } from './types';
 import { BRAZIL_STATES_OPTIONS } from '@/lib/company-options';
+import { useGeographyCatalog } from '@/hooks/useGeographyCatalog';
+import { normalizeUf } from '@/lib/geography/catalog';
 
-const STATIC_STATES_OPTIONS: StateOption[] = BRAZIL_STATES_OPTIONS.map((s) => ({
-  state: s.state,
+const STATIC_STATES_OPTIONS: StateOption[] = BRAZIL_STATES_OPTIONS.map((state) => ({
+  state: state.state,
   count: 0,
 })).sort((a, b) => a.state.localeCompare(b.state));
 
@@ -13,38 +14,39 @@ export function useStatesOptions() {
 }
 
 export function useCitiesOptions(selectedStates: string[]) {
-  const [cities, setCities] = useState<CityOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const catalog = useGeographyCatalog(selectedStates);
+  const selectedStatesKey = selectedStates.join('|');
+  const normalizedStates = useMemo(
+    () =>
+      selectedStatesKey
+        .split('|')
+        .map(normalizeUf)
+        .filter((state): state is string => Boolean(state)),
+    [selectedStatesKey]
+  );
+  const cities = useMemo(
+    () =>
+      [...catalog.cities].sort(
+        (left, right) => left.city.localeCompare(right.city) || left.state.localeCompare(right.state)
+      ),
+    [catalog.cities]
+  );
+  const failedStates = useMemo(
+    () => normalizedStates.filter((state) => catalog.errorByState[state] instanceof Error),
+    [catalog.errorByState, normalizedStates]
+  );
+  const error = failedStates.length > 0 ? catalog.errorByState[failedStates[0]] : null;
+  const requestCities = catalog.requestCities;
+  const retry = useCallback(
+    () => Promise.all(failedStates.map((state) => requestCities(state, true))),
+    [failedStates, requestCities]
+  );
 
-  useEffect(() => {
-    if (selectedStates.length === 0) {
-      setCities([]);
-      return;
-    }
-
-    async function fetchCities() {
-      setLoading(true);
-      try {
-        const allCities = await Promise.all(
-          selectedStates.map(async (state) => {
-            const cities = await companiesApiSafe.getCities(state);
-            return cities.map((city) => ({ city, state, count: 0 }));
-          })
-        );
-        const normalizedData: CityOption[] = allCities.flat();
-          
-        setCities(normalizedData.sort((a, b) => a.city.localeCompare(b.city)));
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Erro desconhecido'));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    const timer = setTimeout(fetchCities, 300); // Debounce
-    return () => clearTimeout(timer);
-  }, [selectedStates]);
-
-  return { cities, loading, error };
+  return {
+    cities,
+    loading: Object.values(catalog.loadingByState).some(Boolean),
+    stale: Object.values(catalog.isStaleByState).some(Boolean),
+    error,
+    retry,
+  };
 }

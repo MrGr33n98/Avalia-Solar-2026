@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { MapPin, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -12,6 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useStatesOptions, useCitiesOptions } from './hooks';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  MAX_RENDERED_GEOGRAPHY_OPTIONS,
+  normalizeGeographySearch,
+} from '@/lib/geography/search';
 
 interface LocationFilterProps {
   selectedStates: string[];
@@ -27,27 +31,30 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
   onCitiesChange,
 }) => {
   const { states, loading: statesLoading, error: statesError } = useStatesOptions();
-  const { cities, loading: citiesLoading, error: citiesError } = useCitiesOptions(selectedStates);
+  const {
+    cities,
+    loading: citiesLoading,
+    stale: citiesStale,
+    error: citiesError,
+    retry: retryCities,
+  } = useCitiesOptions(selectedStates);
   
   const [stateSearch, setStateSearch] = useState('');
   const [citySearch, setCitySearch] = useState('');
-
-  if (statesError) return null;
 
   const handleStateToggle = (state: string) => {
     const newStates = selectedStates.includes(state)
       ? selectedStates.filter((s) => s !== state)
       : [...selectedStates, state];
+    setCitySearch('');
     onStatesChange(newStates);
-    
-    // Se remover um estado, removemos as cidades associadas a ele
+
     if (selectedStates.includes(state)) {
-      // Nota: Para ser perfeito, precisaríamos saber qual cidade pertence a qual estado
-      // mas como o filtro de cidades é dependente dos estados selecionados, 
-      // podemos opcionalmente limpar todas as cidades ou apenas as que não pertencem mais.
-      // Por simplicidade e melhor UX, vamos manter as cidades que ainda forem válidas
-      // se a API nos der essa info, ou limpar se houver mudança brusca.
-      // Aqui vamos apenas disparar a mudança e deixar o hook de cidades atualizar as opções.
+      onCitiesChange(
+        selectedCities.filter((city) =>
+          cities.some((option) => option.city === city && option.state !== state)
+        )
+      );
     }
   };
 
@@ -58,15 +65,26 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
     onCitiesChange(newCities);
   };
 
-  const filteredStates = states.filter((s) =>
-    s.state.toLowerCase().includes(stateSearch.toLowerCase())
+  const normalizedStateSearch = normalizeGeographySearch(stateSearch);
+  const filteredStates = useMemo(
+    () =>
+      states.filter((state) =>
+        normalizeGeographySearch(state.state).includes(normalizedStateSearch)
+      ),
+    [normalizedStateSearch, states]
   );
-
-  const filteredCities = cities.filter((c) =>
-    c.city.toLowerCase().includes(citySearch.toLowerCase())
+  const normalizedCitySearch = normalizeGeographySearch(citySearch);
+  const filteredCities = useMemo(
+    () =>
+      cities.filter((city) =>
+        normalizeGeographySearch(city.city).includes(normalizedCitySearch)
+      ),
+    [cities, normalizedCitySearch]
   );
+  const visibleCities = filteredCities.slice(0, MAX_RENDERED_GEOGRAPHY_OPTIONS);
 
   const totalSelected = selectedStates.length + selectedCities.length;
+  if (statesError) return null;
 
   return (
     <AccordionItem value="location" className="border-b border-slate-200">
@@ -159,7 +177,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
             ) : (
               <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
                 {filteredCities.length > 0 ? (
-                  filteredCities.map((item) => (
+                  visibleCities.map((item) => (
                     <div
                       key={`${item.state}-${item.city}`}
                       className="group flex cursor-pointer items-center justify-between rounded-none px-2 py-1.5 hover:bg-slate-50"
@@ -189,7 +207,25 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                     {citySearch ? 'Nenhuma cidade encontrada' : 'Busque uma cidade'}
                   </p>
                 )}
+                {filteredCities.length > visibleCities.length && (
+                  <p className="text-[11px] text-slate-500" role="status">
+                    Exibindo {visibleCities.length} de {filteredCities.length} cidades. Refine a busca para encontrar outras.
+                  </p>
+                )}
               </div>
+            )}
+            {citiesError && (
+              <div className="flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+                <span>Não foi possível atualizar as cidades.</span>
+                <button type="button" className="underline underline-offset-2" onClick={() => void retryCities()}>
+                  Tentar novamente
+                </button>
+              </div>
+            )}
+            {citiesStale && !citiesError && (
+              <p className="text-[11px] text-amber-700" role="status">
+                Lista salva localmente; pode estar desatualizada.
+              </p>
             )}
           </div>
         )}

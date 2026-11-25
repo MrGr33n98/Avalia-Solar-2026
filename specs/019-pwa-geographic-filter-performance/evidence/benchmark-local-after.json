@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-11-25T16:46:06.586Z",
+  "branch": "feat/019-pwa-geographic-filter-performance",
+  "head": "f1d6f42586d1614a54cc975bdc3ca9b62c62de57",
+  "environment": "isolated local Rails test container; public GET over loopback",
+  "apiBase": "http://127.0.0.1:23001/api/v1",
+  "state": "SC",
+  "revision": "0317f2bc443cac6b2dd697dfe7fa3e97cf1bd6821ffb19278738d7eb49e63bc8",
+  "warmupSamples": 5,
+  "results": {
+    "publicGet200": {
+      "sampleCount": 30,
+      "statuses": {
+        "200": 30
+      },
+      "timeToHeadersMs": {
+        "p50": 39.52924699999994,
+        "p95": 78.19704599999977,
+        "max": 83.22626200000013
+      },
+      "railsRuntimeMs": {
+        "p50": 30.131,
+        "p95": 65.681,
+        "max": 71.05300000000001
+      },
+      "bodyBytes": [
+        4241
+      ],
+      "cacheControl": [
+        "max-age=86400, public, stale-while-revalidate=604800, s-maxage=86400"
+      ]
+    },
+    "conditionalGet304": {
+      "sampleCount": 30,
+      "statuses": {
+        "304": 30
+      },
+      "timeToHeadersMs": {
+        "p50": 35.880501000000095,
+        "p95": 95.60135700000001,
+        "max": 104.02009300000009
+      },
+      "railsRuntimeMs": {
+        "p50": 27.206999999999997,
+        "p95": 78.76700000000001,
+        "max": 80.64399999999999
+      },
+      "bodyBytes": [
+        0
+      ],
+      "cacheControl": [
+        "max-age=86400, public, stale-while-revalidate=604800, s-maxage=86400"
+      ]
+    }
+  },
+  "limits": {
+    "measuredSamplesPerCase": 30,
+    "ttfbMeaning": "time from fetch start until response headers are available",
+    "comparison": "no comparable baseline was available; these are after-change local measurements only"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-11-25T16:35:51.741Z",
+  "branch": "feat/019-pwa-geographic-filter-performance",
+  "head": "f1d6f42586d1614a54cc975bdc3ca9b62c62de57",
+  "environment": "isolated local Rails test container; public GET over loopback",
+  "state": "SC",
+  "revision": "0317f2bc443cac6b2dd697dfe7fa3e97cf1bd6821ffb19278738d7eb49e63bc8",
+  "warmupSamples": 5,
+  "results": {
+    "publicGet200": {
+      "sampleCount": 30,
+      "statuses": { "200": 30 },
+      "timeToHeadersMs": {
+        "p50": 66.30116500000031,
+        "p95": 169.2986310000001,
+        "max": 193.40797800000018
+      },
+      "railsRuntimeMs": {
+        "p50": 39.797,
+        "p95": 86.68599999999999,
+        "max": 120.752
+      },
+      "bodyBytes": [4241],
+      "cacheControl": [
+        "max-age=86400, public, stale-while-revalidate=604800, , s-maxage=86400"
+      ]
+    },
+    "conditionalGet304": {
+      "sampleCount": 30,
+      "statuses": { "304": 30 },
+      "timeToHeadersMs": {
+        "p50": 48.412012999999206,
+        "p95": 78.17477000000054,
+        "max": 79.75248800000008
+      },
+      "railsRuntimeMs": {
+        "p50": 30.368,
+        "p95": 37.193,
+        "max": 39.034
+      },
+      "bodyBytes": [0],
+      "cacheControl": [
+        "max-age=86400, public, stale-while-revalidate=604800, , s-maxage=86400"
+      ]
+    }
+  },
+  "note": "Medição real intermediária após a implementação e antes da correção da diretiva vazia de Cache-Control. Não é baseline do refactor; não comparar diretamente com produção."
+}

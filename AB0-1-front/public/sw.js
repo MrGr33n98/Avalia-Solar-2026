@@ -1,7 +1,20 @@
-const SW_VERSION = '2026-08-17-v5';
+const SW_VERSION = '2026-11-25-spec019-v6';
 const APP_SHELL_CACHE = `avalia-app-shell-${SW_VERSION}`;
 const STATIC_CACHE = `avalia-static-${SW_VERSION}`;
-const API_CACHE = `avalia-api-${SW_VERSION}`;
+const GEOGRAPHY_CACHE = `avalia-geography-${SW_VERSION}`;
+const GEOGRAPHY_CACHE_STORED_AT_HEADER = 'x-avalia-geo-cache-stored-at';
+const GEOGRAPHY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const GEOGRAPHY_CACHE_RETENTION_MS = 7 * GEOGRAPHY_CACHE_TTL_MS;
+const GEOGRAPHY_CACHEABLE_UFS = new Set([
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
+  'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+]);
+const OWNED_CACHE_PREFIXES = [
+  'avalia-app-shell-',
+  'avalia-static-',
+  'avalia-api-',
+  'avalia-geography-',
+];
 const OFFLINE_DB_NAME = 'avalia-mobile-offline';
 const OFFLINE_MUTATION_STORE = 'mutationQueue';
 const OFFLINE_SYNC_TAG = 'avalia-offline-sync';
@@ -37,10 +50,80 @@ const isStaticAssetPath = (pathname) =>
   pathname.startsWith('/images/') ||
   /\.(?:css|js|mjs|woff2?|png|jpe?g|webp|svg|ico)$/i.test(pathname);
 
-const isApiCacheablePath = (pathname) =>
-  /^\/api\/v1\/(categories|banners|products|companies|states|cities)\b/i.test(
-    normalizePath(pathname)
-  );
+const isGeographyCacheableRequest = (request, url) => {
+  if (
+    request.method !== 'GET' ||
+    request.credentials !== 'omit' ||
+    request.headers.has('cookie') ||
+    request.headers.has('authorization')
+  ) {
+    return false;
+  }
+
+  const pathname = normalizePath(url.pathname);
+  const queryKeys = Array.from(url.searchParams.keys());
+  if (pathname === '/api/v1/companies/states') return queryKeys.length === 0;
+  if (pathname !== '/api/v1/companies/cities' || queryKeys.length !== 1 || queryKeys[0] !== 'state') {
+    return false;
+  }
+
+  const states = url.searchParams.getAll('state');
+  return states.length === 1 && GEOGRAPHY_CACHEABLE_UFS.has(states[0]);
+};
+
+const isPublicGeographyResponse = (response) => {
+  if (response.status !== 200 || response.headers.has('set-cookie')) return false;
+
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  if (!contentType.includes('application/json') && !contentType.includes('+json')) return false;
+
+  const cacheControl = (response.headers.get('cache-control') || '').toLowerCase();
+  if (!cacheControl.includes('public') || /\b(private|no-store)\b/.test(cacheControl)) return false;
+
+  const vary = (response.headers.get('vary') || '').toLowerCase();
+  return !vary.split(',').some((value) => ['*', 'cookie', 'authorization'].includes(value.trim()));
+};
+
+const hasPrivateCacheDirective = (response) => {
+  const cacheControl = (response.headers.get('cache-control') || '').toLowerCase();
+  return /\b(private|no-store)\b/.test(cacheControl);
+};
+
+const hasSensitiveVary = (response) => {
+  const vary = (response.headers.get('vary') || '').toLowerCase();
+  return vary.split(',').some((value) => ['*', 'cookie', 'authorization'].includes(value.trim()));
+};
+
+const isSafeNavigationCacheRequest = (request) => {
+  if (
+    request.method !== 'GET' ||
+    request.credentials !== 'omit' ||
+    request.headers.has('cookie') ||
+    request.headers.has('authorization')
+  ) {
+    return false;
+  }
+
+  const url = new URL(request.url);
+  return url.origin === self.location.origin &&
+    !url.search &&
+    OFFLINE_SUPPORTED_ROUTES.includes(normalizePath(url.pathname));
+};
+
+const isSafeNavigationCacheResponse = (response) => {
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  return response.status === 200 &&
+    contentType.includes('text/html') &&
+    !response.headers.has('set-cookie') &&
+    !hasPrivateCacheDirective(response) &&
+    !hasSensitiveVary(response);
+};
+
+const isSafeStaticCacheResponse = (response) =>
+  response.status === 200 &&
+  !response.headers.has('set-cookie') &&
+  !hasPrivateCacheDirective(response) &&
+  !hasSensitiveVary(response);
 
 const isRetryableStatus = (status) =>
   status === 408 || status === 425 || status === 429 || status >= 500;
@@ -178,8 +261,12 @@ const ensureOfflineFallbackDocument = async (cache) => {
   const offlineFallbackResponse = buildOfflineDocumentResponse();
 
   try {
-    const response = await fetchWithTimeout(OFFLINE_FALLBACK_ROUTE);
-    if (response?.ok) {
+    const fallbackRequest = new Request(
+      new URL(OFFLINE_FALLBACK_ROUTE, self.location.origin),
+      { credentials: 'omit' }
+    );
+    const response = await fetchWithTimeout(fallbackRequest);
+    if (isSafeNavigationCacheResponse(response)) {
       await cacheDocumentAtPath(cache, OFFLINE_FALLBACK_ROUTE, response);
       return response;
     }
@@ -193,8 +280,11 @@ const precacheSupportedRoutes = async (cache, fallbackResponse) => {
   await Promise.all(
     OFFLINE_SUPPORTED_ROUTES.map(async (route) => {
       try {
-        const response = await fetchWithTimeout(route);
-        if (response?.ok) {
+        const routeRequest = new Request(new URL(route, self.location.origin), {
+          credentials: 'omit',
+        });
+        const response = await fetchWithTimeout(routeRequest);
+        if (isSafeNavigationCacheRequest(routeRequest) && isSafeNavigationCacheResponse(response)) {
           await cacheDocumentAtPath(cache, route, response);
           return;
         }
@@ -387,7 +477,13 @@ const processQueuedMutations = async () => {
 };
 
 const cacheNavigationResponse = async (request, response) => {
-  if (!response || !response.ok) return response;
+  if (
+    !response ||
+    !isSafeNavigationCacheRequest(request) ||
+    !isSafeNavigationCacheResponse(response)
+  ) {
+    return response;
+  }
   const normalizedPath = normalizePath(new URL(request.url).pathname);
   if (/^\/companies\/[^/]+\/claim\/?$/.test(normalizedPath)) return response;
   const cache = await caches.open(APP_SHELL_CACHE);
@@ -428,7 +524,7 @@ const handleCacheFirst = async (request) => {
   if (cachedResponse) return cachedResponse;
 
   const networkResponse = await fetch(request);
-  if (networkResponse && networkResponse.ok) {
+  if (networkResponse && isSafeStaticCacheResponse(networkResponse)) {
     await cache.put(request, networkResponse.clone());
   }
 
@@ -457,30 +553,103 @@ const handleNextStaticRequest = async (request) => {
   }
 };
 
-const handleStaleWhileRevalidate = async (request) => {
-  const cache = await caches.open(API_CACHE);
-  const cachedResponse = await cache.match(request);
+const withGeographyCacheTimestamp = (response, timestamp) => {
+  const cachedResponse = response.clone();
+  const headers = new Headers(cachedResponse.headers);
+  headers.set(GEOGRAPHY_CACHE_STORED_AT_HEADER, String(timestamp));
 
-  const networkPromise = fetch(request)
-    .then(async (response) => {
-      if (response && response.ok) {
-        await cache.put(request, response.clone());
-      }
-      return response;
-    })
-    .catch(() => null);
+  return new Response(cachedResponse.body, {
+    status: cachedResponse.status,
+    statusText: cachedResponse.statusText,
+    headers,
+  });
+};
 
-  if (cachedResponse) {
-    return cachedResponse;
+const withoutGeographyCacheTimestamp = (response) => {
+  const visibleResponse = response.clone();
+  const headers = new Headers(visibleResponse.headers);
+  headers.delete(GEOGRAPHY_CACHE_STORED_AT_HEADER);
+
+  return new Response(visibleResponse.body, {
+    status: visibleResponse.status,
+    statusText: visibleResponse.statusText,
+    headers,
+  });
+};
+
+const readGeographyCache = async (cache, request) => {
+  const response = await cache.match(request);
+  if (!response) return null;
+
+  const storedAt = Number(response.headers.get(GEOGRAPHY_CACHE_STORED_AT_HEADER));
+  const age = Date.now() - storedAt;
+  if (!Number.isFinite(storedAt) || storedAt <= 0 || age < 0 || age > GEOGRAPHY_CACHE_RETENTION_MS) {
+    await cache.delete(request);
+    return null;
   }
 
-  const networkResponse = await networkPromise;
-  if (networkResponse) return networkResponse;
+  return {
+    response: withoutGeographyCacheTimestamp(response),
+    stale: age >= GEOGRAPHY_CACHE_TTL_MS,
+    cachedResponse: response,
+  };
+};
 
-  return new Response(JSON.stringify({ error: 'Offline cache unavailable' }), {
-    status: 503,
-    headers: { 'Content-Type': 'application/json' },
-  });
+const refreshGeographyCache = async (cache, request, cachedResponse) => {
+  try {
+    const response = await fetchWithTimeout(request, 8000);
+    const now = Date.now();
+
+    if (response.status === 304 && cachedResponse) {
+      const cached = cachedResponse.clone();
+      const headers = new Headers(cached.headers);
+      ['cache-control', 'etag', 'expires', 'last-modified', 'x-locations-version'].forEach((name) => {
+        const value = response.headers.get(name);
+        if (value) headers.set(name, value);
+      });
+      headers.set(GEOGRAPHY_CACHE_STORED_AT_HEADER, String(now));
+      await cache.put(
+        request,
+        new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers })
+      );
+      return;
+    }
+
+    if (isPublicGeographyResponse(response)) {
+      await cache.put(request, withGeographyCacheTimestamp(response, now));
+    }
+  } catch {
+    // Uma atualização offline não invalida uma resposta stale ainda retida.
+  }
+};
+
+const handleGeographyRequest = async (event, request) => {
+  const cache = await caches.open(GEOGRAPHY_CACHE);
+  const cached = await readGeographyCache(cache, request);
+
+  if (cached && !cached.stale) return cached.response;
+  if (cached?.stale) {
+    const refresh = refreshGeographyCache(cache, request, cached.cachedResponse);
+    if (typeof event.waitUntil === 'function') event.waitUntil(refresh);
+    else void refresh;
+    return cached.response;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (isPublicGeographyResponse(response)) {
+      await cache.put(request, withGeographyCacheTimestamp(response, Date.now()));
+    }
+    return response;
+  } catch {
+    return new Response(JSON.stringify({ error: 'Offline geographic catalog unavailable' }), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
 };
 
 self.addEventListener('install', (event) => {
@@ -504,7 +673,8 @@ self.addEventListener('activate', (event) => {
         cacheNames
           .filter(
             (cacheName) =>
-              ![APP_SHELL_CACHE, STATIC_CACHE, API_CACHE].includes(cacheName)
+              OWNED_CACHE_PREFIXES.some((prefix) => cacheName.startsWith(prefix)) &&
+              ![APP_SHELL_CACHE, STATIC_CACHE, GEOGRAPHY_CACHE].includes(cacheName)
           )
           .map((cacheName) => caches.delete(cacheName))
       );
@@ -535,8 +705,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.origin === self.location.origin && isApiCacheablePath(url.pathname)) {
-    event.respondWith(handleStaleWhileRevalidate(request));
+  if (url.origin === self.location.origin && isGeographyCacheableRequest(request, url)) {
+    event.respondWith(handleGeographyRequest(event, request));
   }
 });
 

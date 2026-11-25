@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 
 import { getApiBaseUrl, getApiRequestHeaders } from '@/lib/api-config';
+import { normalizeUf } from '@/lib/geography/catalog';
 
 const HOP_BY_HOP_RESPONSE_HEADERS = new Set([
   'connection',
@@ -28,7 +29,24 @@ const CONDITIONAL_REQUEST_HEADERS = [
   'cache-control',
   'pragma',
 ];
-const CACHE_RESPONSE_HEADERS = ['cache-control', 'etag', 'expires', 'last-modified', 'pragma'];
+const CACHE_RESPONSE_HEADERS = [
+  'cache-control',
+  'etag',
+  'expires',
+  'last-modified',
+  'pragma',
+  'vary',
+  'x-locations-version',
+];
+const GEOGRAPHY_CACHE_RESPONSE_HEADERS = [
+  'cache-control',
+  'etag',
+  'expires',
+  'last-modified',
+  'vary',
+  'x-locations-version',
+];
+const GEOGRAPHY_VALIDATOR_REQUEST_HEADERS = new Set(['if-none-match', 'if-modified-since']);
 const RETRYABLE_UPSTREAM_STATUSES = new Set([502, 503, 504]);
 
 type RouteContext = {
@@ -82,7 +100,11 @@ function buildUpstreamUrl(baseUrl: string, pathSegments: string[], search: strin
   return `${baseUrl}/${encodedPath}${search}`;
 }
 
-function buildUpstreamHeaders(request: NextRequest, bodyLength?: number) {
+function buildUpstreamHeaders(
+  request: NextRequest,
+  bodyLength?: number,
+  forwardGeographyValidators = false
+) {
   const headers = new Headers(request.headers);
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
@@ -97,9 +119,11 @@ function buildUpstreamHeaders(request: NextRequest, bodyLength?: number) {
   headers.delete('connection');
   headers.delete('content-length');
   UPSTREAM_FORWARDED_HEADERS.forEach((header) => headers.delete(header));
-  // O cliente consome a resposta como JSON. Repassar validators do browser
-  // permite que o upstream responda 304 sem corpo, quebrando o fetch autenticado.
-  CONDITIONAL_REQUEST_HEADERS.forEach((header) => headers.delete(header));
+  CONDITIONAL_REQUEST_HEADERS.forEach((header) => {
+    if (!forwardGeographyValidators || !GEOGRAPHY_VALIDATOR_REQUEST_HEADERS.has(header)) {
+      headers.delete(header);
+    }
+  });
 
   if (typeof bodyLength === 'number' && bodyLength >= 0) {
     headers.set('content-length', bodyLength.toString());
@@ -136,6 +160,35 @@ function isPublicGetEndpoint(pathSegments: string[]) {
   return firstSegment === 'categories' || firstSegment === 'banners';
 }
 
+function isPublicGeographyRequest(request: NextRequest, pathSegments: string[]) {
+  if (request.method.toUpperCase() !== 'GET') return false;
+  if (request.headers.has('cookie') || request.headers.has('authorization')) return false;
+
+  const [resource, endpoint, ...extraSegments] = pathSegments;
+  if (resource !== 'companies' || extraSegments.length > 0) return false;
+
+  const queryKeys = Array.from(request.nextUrl.searchParams.keys());
+  if (endpoint === 'states') return queryKeys.length === 0;
+  if (endpoint !== 'cities' || queryKeys.length !== 1 || queryKeys[0] !== 'state') return false;
+
+  const states = request.nextUrl.searchParams.getAll('state');
+  return states.length === 1 && normalizeUf(states[0]) === states[0];
+}
+
+function hasPublicGeographyCacheHeaders(response: Response) {
+  if (![200, 304].includes(response.status) || response.headers.has('set-cookie')) return false;
+
+  const cacheControl = (response.headers.get('cache-control') || '').toLowerCase();
+  if (!cacheControl.includes('public') || /\b(private|no-store)\b/.test(cacheControl)) return false;
+
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  if (response.status === 200 && !isJsonContentType(contentType)) return false;
+  if (response.status === 304 && contentType && !isJsonContentType(contentType)) return false;
+
+  const vary = (response.headers.get('vary') || '').toLowerCase();
+  return !vary.split(',').some((value) => ['*', 'cookie', 'authorization'].includes(value.trim()));
+}
+
 function shouldRetryWithFallback(upstreamResponse: Response, method: string, pathSegments: string[]) {
   if (RETRYABLE_UPSTREAM_STATUSES.has(upstreamResponse.status)) {
     return true;
@@ -170,6 +223,7 @@ const UPSTREAM_DEFAULT_TIMEOUT_MS = 15000;
 
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<Response> {
   const pathSegments = context.params.path ?? [];
+  const cacheableGeographyRequest = isPublicGeographyRequest(request, pathSegments);
   const upstreamBases = resolveProxyApiBases();
   const method = request.method.toUpperCase();
   const requestBody =
@@ -205,7 +259,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     try {
       const init: RequestInit & { duplex?: 'half' } = {
         method,
-        headers: buildUpstreamHeaders(request, requestBody?.byteLength),
+        headers: buildUpstreamHeaders(request, requestBody?.byteLength, cacheableGeographyRequest),
         cache: 'no-store',
         redirect: 'manual',
         signal: controller.signal,
@@ -226,7 +280,17 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
       const responseHeaders = new Headers(upstreamResponse.headers);
       HOP_BY_HOP_RESPONSE_HEADERS.forEach((header) => responseHeaders.delete(header));
       CACHE_RESPONSE_HEADERS.forEach((header) => responseHeaders.delete(header));
-      responseHeaders.set('cache-control', 'no-store, max-age=0');
+
+      const preserveGeographyCacheHeaders =
+        cacheableGeographyRequest && hasPublicGeographyCacheHeaders(upstreamResponse);
+      if (preserveGeographyCacheHeaders) {
+        GEOGRAPHY_CACHE_RESPONSE_HEADERS.forEach((header) => {
+          const value = upstreamResponse.headers.get(header);
+          if (value) responseHeaders.set(header, value);
+        });
+      } else {
+        responseHeaders.set('cache-control', 'no-store, max-age=0');
+      }
 
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,

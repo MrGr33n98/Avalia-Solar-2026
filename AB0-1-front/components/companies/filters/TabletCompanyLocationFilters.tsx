@@ -38,11 +38,11 @@ export default function TabletCompanyLocationFilters({
   detectingLocation = false,
   className,
 }: TabletCompanyLocationFiltersProps) {
-  const { cities, fetchCities, loadingCities } = useCompanyLocationData();
-
   const activeState = filters.state[0] || '';
   const activeCity = filters.city[0] || '';
   const isGpsActive = filters.lat !== null && filters.lng !== null;
+  const { cities, fetchCities, loadingCities, citiesStale, citiesError } =
+    useCompanyLocationData(activeState);
 
   useEffect(() => {
     if (activeState) {
@@ -153,6 +153,10 @@ export default function TabletCompanyLocationFilters({
               <option value="">Selecione o estado...</option>
             ) : loadingCities ? (
               <option value="">Carregando cidades...</option>
+            ) : citiesError ? (
+              <option value="">Cidades indisponíveis</option>
+            ) : cities.length === 0 ? (
+              <option value="">Nenhuma cidade encontrada</option>
             ) : (
               <>
                 <option value="">Todas as Cidades</option>
@@ -168,6 +172,23 @@ export default function TabletCompanyLocationFilters({
             <Loader2 className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-blue-500" />
           ) : (
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          )}
+          {citiesError && activeState && (
+            <div className="mt-1 flex items-center justify-between gap-2 text-xs text-red-700" role="alert">
+              <span>Não foi possível carregar as cidades.</span>
+              <button
+                type="button"
+                className="shrink-0 underline underline-offset-2"
+                onClick={() => void fetchCities(activeState, true)}
+              >
+                Tentar novamente
+              </button>
+            </div>
+          )}
+          {citiesStale && !citiesError && (
+            <p className="mt-1 text-[11px] text-amber-700" role="status">
+              Lista salva localmente; pode estar desatualizada.
+            </p>
           )}
         </div>
 
