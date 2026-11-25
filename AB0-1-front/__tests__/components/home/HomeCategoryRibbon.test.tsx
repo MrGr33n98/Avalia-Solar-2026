@@ -53,7 +53,7 @@ describe('HomeCategoryRibbon', () => {
     expect(track).toBeInTheDocument();
   });
 
-  it('renders Categorias, Favoritos and Tudo controls', () => {
+  it('renders Categorias and Favoritos without a Tudo item or reserved slot', () => {
     render(<HomeCategoryRibbon />);
 
     expect(
@@ -63,10 +63,11 @@ describe('HomeCategoryRibbon', () => {
     const favoritosLink = screen.getByRole('link', { name: /favoritos/i });
     expect(favoritosLink).toHaveAttribute('href', '/favorites');
 
-    const tudoLink = screen.getByRole('link', { name: /tudo/i });
-    expect(tudoLink).toHaveAttribute('href', '/');
-    expect(tudoLink).toHaveAttribute('aria-current', 'page');
-    expect(tudoLink.querySelector('img, svg')).toBeNull();
+    const track = screen.getByRole('region', { name: 'Trilho de categorias e atalhos' });
+    expect(screen.queryByRole('link', { name: /tudo/i })).not.toBeInTheDocument();
+    expect(track.children).toHaveLength(RIBBON_SHORTCUTS.length + 2);
+    expect(track.children[1]).toBe(favoritosLink);
+    expect(track.children[2]).toHaveAttribute('href', RIBBON_SHORTCUTS[0].href);
     expect(screen.getByAltText('Ícone de Categorias').getAttribute('src')).toContain(
       'avalia-solar-categorias.webp'
     );
@@ -98,8 +99,7 @@ describe('HomeCategoryRibbon', () => {
     mockPathname = '/categories/energia-solar';
     render(<HomeCategoryRibbon />);
 
-    const tudoLink = screen.getByRole('link', { name: /tudo/i });
-    expect(tudoLink).not.toHaveAttribute('aria-current');
+    expect(screen.queryByRole('link', { name: /tudo/i })).not.toBeInTheDocument();
 
     const solarLink = screen.getByRole('link', { name: /energia solar/i });
     expect(solarLink).toHaveAttribute('aria-current', 'page');

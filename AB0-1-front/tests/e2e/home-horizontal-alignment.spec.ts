@@ -7,6 +7,32 @@ const TOLERANCE_PX = 2;
 type Edges = { left: number; right: number };
 
 test.describe('Home: shared horizontal alignment contract', () => {
+  test('category ribbon removes Tudo and collapses its slot at every viewport', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'Run viewport matrix in Chromium once.');
+    const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    const rail = page.getByRole('region', { name: 'Trilho de categorias e atalhos' });
+    await expect(rail).toBeVisible();
+    await expect(rail.getByRole('link', { name: /^Tudo$/i })).toHaveCount(0);
+
+    for (const width of [...MOBILE_WIDTHS, ...DESKTOP_WIDTHS]) {
+      await page.setViewportSize({ width, height: 844 });
+      const geometry = await rail.evaluate((element) => {
+        const favorites = element.querySelector<HTMLElement>('a[href="/favorites"]');
+        const solar = element.querySelector<HTMLElement>('a[href="/categories/energia-solar"]');
+        if (!favorites || !solar) throw new Error('Required ribbon shortcuts missing');
+        return {
+          adjacent: favorites.nextElementSibling === solar,
+          gap: solar.getBoundingClientRect().left - favorites.getBoundingClientRect().right,
+          expectedGap: parseFloat(getComputedStyle(element).columnGap),
+        };
+      });
+      expect(geometry.adjacent, `Unexpected slot after Favoritos at ${width}px`).toBe(true);
+      expect(Math.abs(geometry.gap - geometry.expectedGap), `Ribbon gap at ${width}px`)
+        .toBeLessThanOrEqual(TOLERANCE_PX);
+    }
+  });
+
   test('Header, Category Ribbon, Hero and featured companies share the same vertical edges', async ({
     page,
   }, testInfo) => {
