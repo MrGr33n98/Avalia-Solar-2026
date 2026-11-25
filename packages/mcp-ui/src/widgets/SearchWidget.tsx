@@ -27,7 +27,7 @@ import {
 import { CompareView } from './CompareView';
 import { ProfileView } from './ProfileView';
 import { ReputationView } from './ReputationView';
-import { IntegratorCard } from './shared/IntegratorCard';
+import { SolarCompanyList } from '../blocks/SolarCompanyList';
 
 const UF_OPTIONS = [
   '',
@@ -420,27 +420,23 @@ export const SearchWidgetView: React.FC<SearchWidgetViewProps> = ({
           }
         />
       ) : (
-        <div className="as-card-list as-card-grid-desktop">
-          {visibleIntegrators.map((integrator) => (
-            <IntegratorCard
-              key={integrator.id}
-              integrator={integrator}
-              selectedForCompare={selectedIds.includes(integrator.id)}
-              compareDisabled={selectedIds.length >= 3}
-              onToggleCompare={(id, checked) => {
-                setSelectedIds((prev) =>
-                  checked
-                    ? prev.length < 3 && !prev.includes(id)
-                      ? [...prev, id]
-                      : prev
-                    : prev.filter((item) => item !== id)
-                );
-              }}
-              onViewProfile={(item) => void handleViewProfile(item)}
-              onViewReputation={(item) => void handleViewReputation(item)}
-            />
-          ))}
-        </div>
+        <SolarCompanyList
+          data={{ companies: visibleIntegrators }}
+          control={{ selectedIds, maxSelected: 3 }}
+          actions={{
+            onToggleCompare: (id, checked) => {
+              setSelectedIds((prev) =>
+                checked
+                  ? prev.length < 3 && !prev.includes(id)
+                    ? [...prev, id]
+                    : prev
+                  : prev.filter((item) => item !== id)
+              );
+            },
+            onViewProfile: (item) => void handleViewProfile(item),
+            onViewReputation: (item) => void handleViewReputation(item),
+          }}
+        />
       )}
 
       {(canLoadMore || selectedIds.length > 0) ? (

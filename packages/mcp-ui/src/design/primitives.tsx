@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { sanitizeExternalHttpsUrl } from '../bridge/capabilities';
 import { useHostBridge } from '../bridge/host-adapter';
+import { EvidenceCard } from '../blocks/EvidenceCard';
 
 export class BridgeErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -360,46 +361,12 @@ export const ErrorState: React.FC<{
   </div>
 );
 
+// Compatibilidade: implementação no bloco de registry `evidence-card` (Spec 021).
 export const SourceNote: React.FC<{
   sourceType: string;
   dataAsOf: string;
   limitations: string[];
-}> = ({ sourceType, dataAsOf, limitations }) => {
-  const sourceLabelMap: Record<string, string> = {
-    company_declared: 'Dados públicos declarados pelas empresas',
-    platform_verified: 'Verificação cadastral da plataforma',
-    review_aggregate: 'Agregado de avaliações aprovadas',
-    platform_derived: 'Catálogo público Avalia Solar',
-    unknown: 'Fonte pública não especificada',
-  };
-
-  let formattedDate = dataAsOf;
-  try {
-    formattedDate = new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-      timeZone: 'America/Sao_Paulo',
-    }).format(new Date(dataAsOf));
-  } catch {
-    // Keep ISO fallback
-  }
-
-  return (
-    <footer className="as-source-note as-stack" style={{ gap: '4px' }}>
-      <div>
-        <strong>Origem:</strong> {sourceLabelMap[sourceType] ?? sourceType} ·{' '}
-        <strong>Atualizado em:</strong> {formattedDate} (BRT)
-      </div>
-      {limitations.length > 0 ? (
-        <ul style={{ margin: 0, paddingLeft: '16px' }}>
-          {limitations.map((item, idx) => (
-            <li key={idx}>{item}</li>
-          ))}
-        </ul>
-      ) : null}
-    </footer>
-  );
-};
+}> = (props) => <EvidenceCard data={props} />;
 
 export const LiveRegion: React.FC<{ message: string }> = ({ message }) => (
   <div className="as-sr-only" aria-live="polite" aria-atomic="true">
