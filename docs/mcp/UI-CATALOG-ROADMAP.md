@@ -49,3 +49,14 @@ Spec 021 reporta categories 122748/122880 B gzip (132 B livres), search 592 B li
 - Não foram executados CI, RSpec ou host real nesta sessão até a criação deste documento; verificar PR.
 ## Waves seguintes
 W2: orçamento de bundle e testes de host; filtros completos, cursor/estado inicial e carrossel. W3: catálogo, comparação técnica, reviews, achievements, mapa. W4: simuladores com fórmulas validadas. W5: orçamento, favoritos persistentes, newsletter com consentimento. W6: metodologia Trust Score, inteligência e recomendações auditáveis. W7: staging, canary e release. Cada wave PR independente, rollback e critérios acima.
+
+
+## Execução adicional W2–W7 (PR #245)
+- CI da Wave 1: falha TS6133 (import React não usado) e categories 122885 B > 122880 B; corrigidos import e textos compartilhados, orçamento preservado. Necessário verificar novo SHA.
+- W2: carrossel navegável local no registry/playground; não conectado à busca real. Filtros cidade parcialmente corrigidos; debounce/cursor e ganho de bundle ainda pendentes de validação.
+- W3: comparação de metadados do catálogo (não especificações técnicas), grade de cobertura por UF (não mapa geográfico), highlights filtrados por aprovado (sem endpoint). Product Showcase e Achievements permanecem previews condicionais.
+- W4: simuladores puros e formulários interativos no playground, sem oferta financeira ou dados de irradiação geográfica. Testes de fórmula e limites escritos.
+- W5: favoritos em estado local, rascunho de orçamento sem envio, newsletter com prévia de consentimento sem coleta. Persistência e mutações autenticadas não implementadas.
+- W6: indicadores da seleção carregada, evidências de cadastro sem score numérico e recomendações por categoria sem ranking. Não são inteligência de mercado nacional nem Trust Score oficial.
+- W7: registry e playground estendidos com 12 blocos; matriz Playwright/axe em 17 blocos × 2 temas × 8 larguras; novo job de browser paralelo aos contratos Rails. Execução e aprovação ainda pendentes.
+- Todas as novas prévias estão isoladas do build de produção, com fixtures explícitas; nenhum novo tool MCP publicado. Não habilitar flags, merge ou deploy até CI verde, análise de segurança e teste real do host. Os blocos não representam a implementação integral das waves.
