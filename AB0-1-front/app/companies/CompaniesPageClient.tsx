@@ -798,7 +798,7 @@ export function CompaniesContent({
     {
       label: 'Categorias',
       href: '/categories',
-      imageSrc: '/icones/icone_categorias_avalia_solar.png',
+      imageSrc: '/icones/avalia-solar-categorias.webp',
     },
     {
       label: 'Avaliar',

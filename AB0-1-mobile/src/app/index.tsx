@@ -14,12 +14,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@apollo/client/react';
 import * as Location from 'expo-location';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Bell,
   ChevronRight,
-  Grid2X2,
   Heart,
   MapPin,
   MessageSquare,
@@ -363,7 +363,12 @@ export default function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel="Ir para categorias"
           >
-            <Grid2X2 size={21} color={colors.tint} />
+            <Image
+              source={require('../../assets/images/avalia-solar-categorias.webp')}
+              style={styles.discoveryCategoryIcon}
+              contentFit="contain"
+              accessible={false}
+            />
             <ThemedText style={[styles.discoveryActionLabel, { color: colors.text }]}>
               Categorias
             </ThemedText>
@@ -712,6 +717,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingHorizontal: Spacing.two,
   },
+  discoveryCategoryIcon: { width: 21, height: 21 },
   discoveryAction: {
     minHeight: 48,
     flex: 1,
