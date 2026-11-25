@@ -128,7 +128,8 @@ puts "Usuário E2E pronto: #{user.email}"
 # usuário. Um reviewer independente elimina a interferência entre workers,
 # preservando login, cookies e autorização Rails reais.
 reviewer_email = ENV.fetch('E2E_REVIEWER_EMAIL', 'reviewer-ci@avaliasolar.test')
-raise 'E2E reviewer must be isolated from the shared auth fixture' if reviewer_email == email
+proposal_email = ENV.fetch('E2E_PROPOSALS_EMAIL', 'proposals-ci@avaliasolar.test')
+raise 'E2E auth, reviewer and proposals fixtures must be distinct' unless [email, reviewer_email, proposal_email].map { |value| value.strip.downcase }.uniq.size == 3
 
 reviewer = User.find_or_initialize_by(email: reviewer_email)
 reviewer.assign_attributes(
@@ -150,3 +151,25 @@ reviewer.assign_attributes(
 reviewer.skip_confirmation_notification!
 reviewer.save!
 puts "Revisor E2E isolado pronto: #{reviewer.email}"
+
+# Independent buyer fixture: no interference from logout_all.
+proposal_user = User.find_or_initialize_by(email: proposal_email)
+proposal_user.assign_attributes(
+  name: 'Comprador E2E Avalia Solar',
+  city: 'Florianópolis',
+  state: 'SC',
+  role: 'review',
+  status: :active,
+  terms_accepted: true,
+  terms_accepted_at: Time.current,
+  public_name_consent: true,
+  display_full_name_consent: true,
+  review_name_consent: true,
+  lgpd_name_consent: true,
+  confirmed_at: proposal_user.confirmed_at || Time.current,
+  password: password,
+  password_confirmation: password
+)
+proposal_user.skip_confirmation_notification!
+proposal_user.save!
+puts "Comprador E2E isolado pronto: #{proposal_user.email}"

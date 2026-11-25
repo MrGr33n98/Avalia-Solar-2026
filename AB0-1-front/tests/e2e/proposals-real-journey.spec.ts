@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const email = process.env.E2E_USER_EMAIL || 'test@avaliasolar.com.br';
+const email = process.env.E2E_PROPOSALS_EMAIL || 'proposals-ci@avaliasolar.test';
 const password = process.env.E2E_USER_PASSWORD || 'Password123';
 
 test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
@@ -8,15 +8,21 @@ test.describe('Jornada E2E real de propostas (API real sem Mocks)', () => {
     await page.goto('/login');
     await page.locator('#email').fill(email);
     await page.locator('#password').fill(password);
+    const loginResponsePromise = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/api/v1/auth/login' &&
+        response.request().method() === 'POST'
+    );
     await page
       .locator('form')
       .filter({ has: page.locator('#email') })
       .locator('button[type="submit"]')
       .click();
+    const loginResponse = await loginResponsePromise;
+    expect(loginResponse.ok(), `Proposals UI login HTTP ${loginResponse.status()}`).toBe(true);
     await expect(page).toHaveURL(/review-dashboard|dashboard|home/, { timeout: 10000 });
 
     const currentUser = await page.request.get('/api/v1/auth/me');
-    expect(currentUser.ok()).toBeTruthy();
+    expect(currentUser.ok(), `Proposals /auth/me HTTP ${currentUser.status()}`).toBe(true);
     expect((await currentUser.json()).user.role).toBe('review');
     await page.goto('/review-dashboard/proposals');
 

@@ -14,14 +14,19 @@ test.describe('JWT Revocation and Logout', () => {
     password: process.env.E2E_USER_PASSWORD || 'Password123',
   };
 
+  let issuedToken: string;
+
   test.beforeEach(async ({ page }) => {
     const response = await page.request.post('/api/v1/auth/login', {
       data: testUser,
     });
-    expect(response.ok()).toBeTruthy();
+    expect(response.ok(), `Auth fixture login HTTP ${response.status()}`).toBe(true);
 
     const { token } = await response.json();
     expect(token).toBeTruthy();
+    issuedToken = token;
+    const currentUser = await page.request.get('/api/v1/auth/me');
+    expect(currentUser.ok(), `Auth fixture /auth/me HTTP ${currentUser.status()}`).toBe(true);
     await page.goto('/');
   });
 
@@ -54,12 +59,10 @@ test.describe('JWT Revocation and Logout', () => {
     const cookies = await page.context().cookies();
     const jwtCookie = cookies.find((c) => c.name === 'jwt_token');
 
-    if (!jwtCookie) {
-      test.skip();
-      return;
-    }
+    expect(jwtCookie).toBeTruthy();
 
-    const token = jwtCookie.value;
+    // Rails signs the browser cookie; use the actual JWT issued by the login API.
+    const token = issuedToken;
 
     // Logout (revoke token)
     await page.goto('/logout');
@@ -158,6 +161,7 @@ test.describe('JWT Revocation and Logout', () => {
   test('should allow new login after logout', async ({ page, context }) => {
     // Logout
     await page.goto('/logout', { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/\/login\?logout=success/, { timeout: 10000 });
     await expect
       .poll(async () =>
         (await page.context().cookies()).some((cookie) => cookie.name === 'jwt_token')
@@ -169,7 +173,16 @@ test.describe('JWT Revocation and Logout', () => {
     const expectedOrigin = new URL(page.url()).origin;
     await page.locator('#email').fill(testUser.email);
     await page.locator('#password').fill(testUser.password);
+    const loginResponsePromise = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/api/v1/auth/login' &&
+        response.request().method() === 'POST'
+    );
     await loginForm(page).locator('button[type="submit"]').click();
+    const loginResponse = await loginResponsePromise;
+    expect(loginResponse.ok(), `Relogin HTTP ${loginResponse.status()}`).toBe(true);
+    const { token: newToken } = await loginResponse.json();
+    expect(newToken).toBeTruthy();
+    expect(newToken).not.toBe(issuedToken);
 
     // Verify new token was issued
     await expect
@@ -183,6 +196,8 @@ test.describe('JWT Revocation and Logout', () => {
     expect(new URL(page.url()).origin).toBe(expectedOrigin);
 
     // Should be able to access protected resources
+    const currentUser = await page.request.get('/api/v1/auth/me');
+    expect(currentUser.status(), 'Fresh browser session must authenticate on the real API').toBe(200);
     await expect
       .poll(async () => {
         try {
