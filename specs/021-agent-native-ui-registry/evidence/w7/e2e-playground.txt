@@ -1,0 +1,19 @@
+
+Running 14 tests using 1 worker
+
+  ✓   1 tests/e2e/registry-playground.spec.ts:17:5 › solar-company-card (light) sem overflow em 8 larguras e sem violação axe serious/critical (18.6s)
+  ✓   2 tests/e2e/registry-playground.spec.ts:17:5 › solar-company-card (dark) sem overflow em 8 larguras e sem violação axe serious/critical (14.5s)
+  ✓   3 tests/e2e/registry-playground.spec.ts:17:5 › solar-company-list (light) sem overflow em 8 larguras e sem violação axe serious/critical (20.3s)
+  ✓   4 tests/e2e/registry-playground.spec.ts:17:5 › solar-company-list (dark) sem overflow em 8 larguras e sem violação axe serious/critical (14.1s)
+  ✓   5 tests/e2e/registry-playground.spec.ts:17:5 › company-comparison-table (light) sem overflow em 8 larguras e sem violação axe serious/critical (29.6s)
+  ✓   6 tests/e2e/registry-playground.spec.ts:17:5 › company-comparison-table (dark) sem overflow em 8 larguras e sem violação axe serious/critical (21.4s)
+  ✓   7 tests/e2e/registry-playground.spec.ts:17:5 › review-distribution (light) sem overflow em 8 larguras e sem violação axe serious/critical (20.2s)
+  ✓   8 tests/e2e/registry-playground.spec.ts:17:5 › review-distribution (dark) sem overflow em 8 larguras e sem violação axe serious/critical (14.3s)
+  ✓   9 tests/e2e/registry-playground.spec.ts:17:5 › evidence-card (light) sem overflow em 8 larguras e sem violação axe serious/critical (16.0s)
+  ✓  10 tests/e2e/registry-playground.spec.ts:17:5 › evidence-card (dark) sem overflow em 8 larguras e sem violação axe serious/critical (13.8s)
+  ✓  11 tests/e2e/registry-playground.spec.ts:42:3 › estado loading renderiza sem dados inventados (1.4s)
+  ✓  12 tests/e2e/registry-playground.spec.ts:42:3 › estado empty renderiza sem dados inventados (1.5s)
+  ✓  13 tests/e2e/registry-playground.spec.ts:42:3 › estado error renderiza sem dados inventados (1.3s)
+  ✓  14 tests/e2e/registry-playground.spec.ts:52:1 › playground sinaliza permanentemente FIXTURE / NÃO PRODUÇÃO (1.2s)
+
+  14 passed (3.3m)

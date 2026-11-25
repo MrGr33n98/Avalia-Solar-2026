@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GetIntegratorReputationPayload } from '../contracts/schemas';
+import { ReviewDistribution } from '../blocks/ReviewDistribution';
 import {
   AppFrame,
   Button,
@@ -63,12 +64,6 @@ export const ReputationView: React.FC<ReputationViewProps> = ({
   const { total_approved, average_rating, rating_distribution, verified_total, replied_total, sample_size } =
     payload.data;
 
-  const levels = ['5', '4', '3', '2', '1'];
-  const maxBucket = Math.max(
-    1,
-    ...levels.map((lvl) => Number(rating_distribution[lvl] ?? 0))
-  );
-
   return (
     <AppFrame label={`Reputação pública ${companyName ?? ''}`}>
       <SectionHeader
@@ -102,31 +97,7 @@ export const ReputationView: React.FC<ReputationViewProps> = ({
           </div>
         ) : null}
 
-        {total_approved === 0 ? (
-          <p className="as-meta" style={{ margin: 0 }}>
-            Esta empresa ainda não possui avaliações públicas aprovadas. Nota não atribuída.
-          </p>
-        ) : (
-          <div className="as-stack" style={{ gap: '6px' }} aria-label="Distribuição de notas">
-            {levels.map((level) => {
-              const count = Number(rating_distribution[level] ?? 0);
-              const pct = Math.round((count / maxBucket) * 100);
-              return (
-                <div key={level} className="as-row" style={{ gap: '8px' }}>
-                  <span className="as-meta as-tabular" style={{ width: '36px' }}>
-                    {level} ★
-                  </span>
-                  <div className="as-bar-track" aria-hidden="true">
-                    <div className="as-bar-fill" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="as-meta as-tabular" style={{ width: '36px', textAlign: 'right' }}>
-                    {count}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ReviewDistribution data={{ totalApproved: total_approved, distribution: rating_distribution }} />
       </div>
 
       <div

@@ -1,0 +1,59 @@
+mcpcn upstream commit: 538fa792fd3c05a6dd62695fc3ebe7343e5c6dd3 (2026-11-11T14:54:47+00:00)
+registry.json sha256: 56dabebf27447d65d52373daa80f442a0dcbf122e51c0a404fa0830e46992cc6
+create-next-app 16.3.1 / shadcn 4.13.0 / Node v22.23.5
+
+name	sha256[0:16]	type	npm deps	registry deps	files	content_bytes	EUR	fetch	urls
+product-list	eab21ac11e927c89	registry:block	@base-ui/react,lucide-react	button,https://mcpcn.dev/r/shared-types.json,https://mcpcn.dev/r/apps-sdk-theme.json	1	29186	EUR	-	https://picsum.photos/seed/product-1/400/400 https://picsum.photos/seed/product-2/400/400 https://picsum.photos/seed/product-3/400/400 https://picsum.photos/seed/product-4/400/400
+table	a28c2612d308bba9	registry:block	@base-ui/react,lucide-react	button,popover,select,input,https://mcpcn.dev/r/apps-sdk-theme.json	1	19518	-	-
+option-list	fc6f016a0fb576a1	registry:block	@base-ui/react,lucide-react	button,https://mcpcn.dev/r/shared-types.json,https://mcpcn.dev/r/apps-sdk-theme.json	1	6019	-	-
+tag-select	0c67dd885e4e6b8d	registry:block	@base-ui/react,lucide-react	button,https://mcpcn.dev/r/apps-sdk-theme.json	1	5561	-	-
+quick-reply	0096f84d7e6ea79a	registry:block		https://mcpcn.dev/r/apps-sdk-theme.json	1	2812	-	-
+status-badge	611c44398d470a10	registry:block	lucide-react	https://mcpcn.dev/r/apps-sdk-theme.json	1	3829	-	-
+stat-card	cf578f5aa7f407ec	registry:block	lucide-react	https://mcpcn.dev/r/apps-sdk-theme.json	1	4226	-	-
+hero	97023b35d43a667a	registry:block	@base-ui/react,lucide-react	button,https://mcpcn.dev/r/apps-sdk-theme.json	1	8066	-	-
+apps-sdk-theme	c9476626117aed76	registry:style			1	8001	-	-
+shared-types	62689c9a0cdfe8d2	registry:lib			1	10281	-	-
+
+--- shadcn search @mcpcn (CLI)
+Found 33 items in @mcpcn
+Showing 1-33 of 33
+
+- @mcpcn/apps-sdk-theme (style) — A scoped OpenAI Apps SDK UI compatibility theme for mcpcn blocks.
+- @mcpcn/contact-form (block) — A complete contact form with name fields, phone with country selector,...
+- @mcpcn/date-time-picker (block) — A Calendly-style date and time picker with calendar, available time slots,...
+- @mcpcn/issue-report-form (block) — A compact issue reporting form for team members with categories,...
+- @mcpcn/order-confirm (block) — Order confirmation with product image, delivery info, and confirm action.
+- @mcpcn/payment-confirmed (block) — Payment confirmation card with product image, price, delivery info, and...
+- @mcpcn/product-list (block) — Product list with list, grid, carousel, and picker variants.
+- @mcpcn/option-list (block) — Tag-style option selector with single or multiple selection modes.
+- @mcpcn/amount-input (block) — Amount input with increment/decrement buttons and preset values.
+- @mcpcn/tag-select (block) — Colored tag selector with single or multiple selection and color variants.
+- @mcpcn/quick-reply (block) — Quick reply buttons for common chat responses.
+- @mcpcn/progress-steps (block) — Progress indicator with horizontal or vertical layout and step statuses.
+- @mcpcn/status-badge (block) — Status badge with multiple states (success, pending, processing, error,...
+- @mcpcn/stat-card (block) — Scrollable stat cards with values, trends, and change indicators.
+- @mcpcn/post-card (block) — Post card with image, title, excerpt, author info and read more button....
+- @mcpcn/post-list (block) — Post list with list, grid, carousel, and fullwidth variants. Fullwidth mode...
+- @mcpcn/post-detail (block) — Full post view with cover image, author info, content, tags and related...
+- @mcpcn/table (block) — Data table with optional single or multi-select modes for chat interfaces.
+- @mcpcn/message-bubble (block) — Chat message bubbles with text, image, voice, and reaction variants.
+- @mcpcn/chat-conversation (block) — Full chat conversation component with multiple message types.
+- @mcpcn/x-post (block) — X (Twitter) post card with engagement metrics.
+- @mcpcn/instagram-post (block) — Instagram post card with image and engagement.
+- @mcpcn/linkedin-post (block) — LinkedIn post card with professional styling.
+- @mcpcn/youtube-post (block) — YouTube video card with playable embed.
+- @mcpcn/map-carousel (block) — Interactive map with location markers and a draggable carousel of cards.
+- @mcpcn/event-card (block) — Display event information with multiple layouts. Supports events with...
+- @mcpcn/event-list (block) — Display events in grid, list, or carousel layouts. Fullscreen mode shows...
+- @mcpcn/event-detail (block) — Full event detail view with organizer info, interactive map, policies, and...
+- @mcpcn/ticket-tier-select (block) — Ticket tier selection with quantity controls and order summary. Shows price...
+- @mcpcn/event-confirmation (block) — Order confirmation with event details, ticket delivery info, organizer...
+- @mcpcn/hero (block) — Landing hero section with optional logos, title, subtitle, CTA buttons, and...
+- @mcpcn/event-shared (lib) — Shared utilities for event components (Leaflet map helpers, signal badges).
+- @mcpcn/shared-types (lib) — Shared type definitions for mcpcn components.
+
+--- sandbox
+init: falhou no npm install (ETIMEDOUT); components.json criado (style base-nova)
+add @mcpcn/product-list: exit 0; add @mcpcn/table: exit 0
+sandbox-deps.log:deps exit=0
+build exit=1

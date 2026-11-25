@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-25T19:30:18.956Z",
+  "resources": {
+    "search": {
+      "uri": "ui://avalia-solar/search/v1.html",
+      "file": "search.v1.html",
+      "mimeType": "text/html;profile=mcp-app",
+      "sha256": "44c047580dd8881118da9101326225b6e9bfe4724ec17a33be38104d989caecb",
+      "rawBytes": 442997,
+      "gzipBytes": 122259
+    },
+    "profile": {
+      "uri": "ui://avalia-solar/profile/v1.html",
+      "file": "profile.v1.html",
+      "mimeType": "text/html;profile=mcp-app",
+      "sha256": "92fa561079a67cf33fc9fc779fecfa021e6b8fb04be64423f9be39c330a1b653",
+      "rawBytes": 440599,
+      "gzipBytes": 121610
+    },
+    "reputation": {
+      "uri": "ui://avalia-solar/reputation/v1.html",
+      "file": "reputation.v1.html",
+      "mimeType": "text/html;profile=mcp-app",
+      "sha256": "481a81138c515a00cf1071c3a5585189f06f6a703603326c2af250e0f409fd9e",
+      "rawBytes": 424871,
+      "gzipBytes": 117666
+    },
+    "compare": {
+      "uri": "ui://avalia-solar/compare/v1.html",
+      "file": "compare.v1.html",
+      "mimeType": "text/html;profile=mcp-app",
+      "sha256": "9916a77686b11d3d633e92718bae81387d3d1a3350d4d6fb8284b9ceab79e10d",
+      "rawBytes": 426604,
+      "gzipBytes": 118198
+    },
+    "categories": {
+      "uri": "ui://avalia-solar/categories/v1.html",
+      "file": "categories.v1.html",
+      "mimeType": "text/html;profile=mcp-app",
+      "sha256": "f9e6f4025c5f2bdde58f02cecce7de546c7e5c74945d9a798ed07d2144d0eace",
+      "rawBytes": 444978,
+      "gzipBytes": 122680
+    }
+  }
+}

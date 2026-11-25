@@ -1,0 +1,46 @@
+{
+  "registry": "avalia-solar",
+  "shadcn": "shadcn@4.13.0",
+  "items": {
+    "as-contracts.json": {
+      "sha256": "517bfe523cec1e344d37c5ff336a5f14c6cceba9d9f0cfc47615e4e0678e473b",
+      "bytes": 4959
+    },
+    "as-host-bridge.json": {
+      "sha256": "e969b537f829cbae278c003e06f37b6bcadcb3354db8cffdc71b3be655687189",
+      "bytes": 18306
+    },
+    "as-primitives.json": {
+      "sha256": "80e337df1d3b73facc4123337b152b6f619ad6b096ab9b51b8e3d2a1315a5f26",
+      "bytes": 12306
+    },
+    "as-tokens.json": {
+      "sha256": "08ddafec8eb49805f77ee5ce588f93a27bdf3bef90406f8bbf2d162db0eb6ad6",
+      "bytes": 10951
+    },
+    "company-comparison-table.json": {
+      "sha256": "ba963c6dc40a8f5089563efd08b071eb07f867117fe9f3e28a9c1cca858fb50d",
+      "bytes": 6259
+    },
+    "evidence-card.json": {
+      "sha256": "2208caa12ca5866f9c6adf297524fec8bc4182018804a90a6e77b0d5368b2973",
+      "bytes": 2244
+    },
+    "registry.json": {
+      "sha256": "83676c4d5e3e570c2dabf3e1a67dc86711be2e6ea7c87b0e0de998a7320f8bd1",
+      "bytes": 7126
+    },
+    "review-distribution.json": {
+      "sha256": "8fd086d98bb9126cdf30ddb96d8800dd8870e347c4755de2417e945ccd57363d",
+      "bytes": 2360
+    },
+    "solar-company-card.json": {
+      "sha256": "6efed7e547a993191487b678147278de58c05f93d404d3ba36738e6988a50f15",
+      "bytes": 5453
+    },
+    "solar-company-list.json": {
+      "sha256": "c74676673a546a9ffa85033317188f8fe1f093b9a192ea3a1b5797db8eac0b44",
+      "bytes": 2219
+    }
+  }
+}
