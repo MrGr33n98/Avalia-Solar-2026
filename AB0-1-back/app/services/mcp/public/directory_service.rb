@@ -122,14 +122,14 @@ module Mcp
           category = Category.active.find_by(seo_url: args['category_slug'])
           raise InputValidator::Invalid, 'Unknown category slug.' unless category
 
-          scope = scope.joins(:categories).where(categories: { id: category.id })
+          scope = scope.where(id: category.companies.select(:id))
         end
         if args['headquarters_city'].present?
           scope = scope.where('LOWER(companies.city) = LOWER(?)', args['headquarters_city'])
         end
         scope = scope.where('UPPER(companies.state) = ?', args['state']) if args['state'].present?
         scope = scope.where(verified: args['verified']) if args.key?('verified')
-        sorted = scope.distinct.order(Arel.sql(ORDERS.fetch(args.fetch('sort'))))
+        sorted = scope.order(Arel.sql(ORDERS.fetch(args.fetch('sort'))))
         page = sorted.offset(offset).limit(limit + 1).to_a
         has_more = page.length > limit
         next_cursor = if has_more
