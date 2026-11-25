@@ -278,7 +278,7 @@ export const SearchWidgetView: React.FC<SearchWidgetViewProps> = ({
   if (status === 'loading' && !payload) {
     return (
       <AppFrame label="Busca de integradores solares" busy>
-        <SectionHeader title="Integradores Solares" subtitle="Consultando catálogo público..." />
+        <SectionHeader title="Integradores Solares" subtitle="Consultando…" />
         <SkeletonList count={3} />
       </AppFrame>
     );
@@ -287,7 +287,7 @@ export const SearchWidgetView: React.FC<SearchWidgetViewProps> = ({
   if (status === 'offline' && !payload) {
     return (
       <AppFrame label="Busca de integradores solares">
-        <ErrorState message="Você está offline. Conecte-se para pesquisar integradores." />
+        <ErrorState message="Você está offline." />
       </AppFrame>
     );
   }
@@ -402,7 +402,7 @@ export const SearchWidgetView: React.FC<SearchWidgetViewProps> = ({
       {integrators.length === 0 ? (
         <EmptyState
           title="Nenhum integrador encontrado"
-          description="Nenhuma empresa ativa corresponde aos filtros atuais. Limpe os filtros ou amplie a UF."
+          description="Nenhuma empresa ativa corresponde aos filtros."
           action={
             capabilities.canCallTools ? (
               <Button
