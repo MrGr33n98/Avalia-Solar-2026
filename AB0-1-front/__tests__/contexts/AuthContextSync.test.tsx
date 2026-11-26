@@ -284,7 +284,9 @@ describe('AuthContext sync & concurrency', () => {
     expect(destination).toContain('/review-dashboard');
   });
 
-  it('routes review user with creator enabled to /feed', async () => {
+  // Feed social pausado no MVP (SOCIAL_FEED_ENABLED=false, ver lib/mvp-reviews e
+  // post-auth-destination.spec C5): criador vai para o dashboard de avaliações.
+  it('routes review user with creator enabled to /review-dashboard while social feed is paused', async () => {
     const initial = createDeferred<any>();
     (authApi.me as jest.Mock).mockReturnValue(initial.promise);
     (companyAccessApi.context as jest.Mock).mockResolvedValue({ active_memberships: [] });
@@ -302,7 +304,8 @@ describe('AuthContext sync & concurrency', () => {
     };
 
     const destination = await result.current.getPostLoginDestination(creatorUser as any);
-    expect(destination).toContain('/feed');
+    expect(destination).toContain('/review-dashboard');
+    expect(destination).not.toContain('/feed');
   });
 
   it('routes review user with active company membership to company dashboard', async () => {
