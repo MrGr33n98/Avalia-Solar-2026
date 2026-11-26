@@ -13,7 +13,9 @@ describe('EnterpriseSearchPagination', () => {
 
   it('keeps actual shareable URLs and accessible current page', () => {
     render(<EnterpriseSearchPagination {...props} />);
-    expect(screen.getByText('Mostrando 241–264 de 473 empresas')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Mostrando 241–264 de 473 empresas')
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Página 11' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Próxima página' })).toHaveAttribute(
       'href',

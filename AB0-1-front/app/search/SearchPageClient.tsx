@@ -639,22 +639,25 @@ function SearchPageContent({ initialData, initialSearchParamsKey }: { initialDat
                           ) : undefined
                         }
                       >
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                          {filteredProducts.map((product) => (
-                            <ProductCardEnhanced
-                              key={product.id}
-                              product={product}
-                              favorite={productFavorites.has(product.id)}
-                              onToggleFavorite={() =>
-                                toggleFavorite(
-                                  'product',
-                                  product.id,
-                                  productFavorites,
-                                  setProductFavorites
-                                )
-                              }
-                            />
-                          ))}
+                        <div className="search-products-container w-full">
+                          <div className="search-products-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                            {filteredProducts.map((product) => (
+                              <ProductCardEnhanced
+                                key={product.id}
+                                product={product}
+                                favorite={productFavorites.has(product.id)}
+                                onToggleFavorite={() =>
+                                  toggleFavorite(
+                                    'product',
+                                    product.id,
+                                    productFavorites,
+                                    setProductFavorites
+                                  )
+                                }
+                                density="compact"
+                              />
+                            ))}
+                          </div>
                         </div>
                       </ResultSection>
                     ) : null}
@@ -836,9 +839,9 @@ function SearchLoadingState() {
     <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div>
         <Skeleton className="h-24 w-full rounded-xl" />
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 search-products-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
           {Array.from({ length: 8 }, (_, index) => (
-            <Skeleton key={index} className="h-[390px] rounded-xl" />
+            <Skeleton key={index} className="h-[324px] rounded-lg" />
           ))}
         </div>
       </div>

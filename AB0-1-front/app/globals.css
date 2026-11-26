@@ -46,6 +46,60 @@
       animation: none;
     }
   }
+
+  /* SPEC-023: Search Products Compact Premium Grid & Tokens */
+  .search-products-container {
+    container-type: inline-size;
+    container-name: search-products;
+    width: 100%;
+  }
+
+  .search-products-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @container search-products (min-width: 492px) {
+    .search-products-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container search-products (min-width: 744px) {
+    .search-products-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @container search-products (min-width: 996px) {
+    .search-products-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @container search-products (min-width: 1248px) {
+    .search-products-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .search-product-card-compact {
+    --card-padding: 12px;
+    --card-radius: 8px;
+    --card-gap: 12px;
+    --media-height: 136px;
+    --media-padding: 8px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --title-size: 14px;
+    --title-line-height: 18px;
+    --price-size: 18px;
+    --price-line-height: 24px;
+    --cta-height: 36px;
+    --transition-duration: 150ms;
+  }
 }
 
 :root {
