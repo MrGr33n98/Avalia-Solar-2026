@@ -720,3 +720,65 @@ export const publicBadgesApi = {
     );
   },
 };
+
+export interface PublicStorefrontResponse {
+  schema_version: string;
+  data_as_of: string;
+  source_type: string;
+  data: {
+    company: {
+      id: number;
+      name: string;
+      slug: string;
+      verified: boolean;
+      logo_url?: string | null;
+      headquarters: {
+        city: string;
+        state: string;
+      };
+      rating?: number | null;
+      review_count: number;
+    };
+    settings: {
+      headline: string;
+      cta_label: string;
+      show_calculator: boolean;
+      featured_brands: string[];
+      direct_quote_enabled: boolean;
+    };
+    projects: Array<{
+      id: number;
+      title: string;
+      power_kwp: number;
+      city: string;
+      uf: string;
+      photo_urls: string[];
+      completion_year: number;
+    }>;
+    curated_products: Array<{
+      id: number;
+      category: string;
+      brand: string;
+      model: string;
+      warranty_years?: number | null;
+    }>;
+  };
+  limitations: string[];
+}
+
+export const publicStorefrontsApi = {
+  getBySlug: async (
+    slug: string,
+    options?: PublicFetchOptions<PublicStorefrontResponse | null>
+  ): Promise<PublicStorefrontResponse | null> => {
+    return fetchApiPublic<PublicStorefrontResponse, null>(
+      `storefronts/${encodeURIComponent(slug)}`,
+      {
+        revalidate: options?.revalidate ?? 1800,
+        tags: options?.tags || [`storefront-${slug}`, 'storefronts'],
+        fallback: null,
+        silent: options?.silent ?? true,
+      }
+    );
+  },
+};

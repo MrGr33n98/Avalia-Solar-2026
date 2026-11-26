@@ -16,20 +16,20 @@
 ---
 
 ## Fase 2 — Ferramenta Pública MCP & MCP Apps SDK
-- [ ] **T07 — MCP Tool Registration:** Registrar `show_storefront_profile` em `app/services/mcp/public_tool_registry.rb` com schema JSON estrito.
-- [ ] **T08 — MCP Resource Binding:** Adicionar `ui://avalia-solar/storefront/v1.html` ao `Mcp::Ui::ResourceRegistry` com flags de canário.
-- [ ] **T09 — Spec MCP Tool:** Implementar `spec/services/mcp/public/storefront_tool_spec.rb` validando contratos e hints read-only.
-- [ ] **T10 — Zod Contract:** Adicionar `StorefrontPayloadSchema` em `packages/mcp-ui/src/contracts/schemas.ts`.
-- [ ] **T11 — Componente Storefront:** Criar `packages/mcp-ui/src/widgets/StorefrontWidget.tsx` com tabs de catálogo, projetos e simulação.
-- [ ] **T12 — Build & Budget:** Adicionar entry `storefront.html` em `packages/mcp-ui/entries/` e validar limite de 120 KiB gzip no Vite build.
+- [x] **T07 — MCP Tool Registration:** Registrar `show_storefront_profile` em `app/services/mcp/public_tool_registry.rb` com schema JSON estrito.
+- [x] **T08 — MCP Resource Binding:** Adicionar `ui://avalia-solar/storefront/v1.html` ao `Mcp::Ui::ResourceRegistry` com flags de canário.
+- [x] **T09 — Spec MCP Tool:** Implementar `spec/services/mcp/public/storefront_tool_spec.rb` validando contratos e hints read-only.
+- [x] **T10 — Zod Contract:** Adicionar `StorefrontPayloadSchema` em `packages/mcp-ui/src/contracts/schemas.ts`.
+- [x] **T11 — Componente Storefront:** Criar `packages/mcp-ui/src/widgets/StorefrontWidget.tsx` com tabs de catálogo, projetos e simulação.
+- [x] **T12 — Build & Budget:** Adicionar entry `storefront.html` em `packages/mcp-ui/entries/` e validar limite de 120 KiB gzip no Vite build.
 
 ---
 
 ## Fase 3 — Frontend Web & PWA Next.js 14
-- [ ] **T13 — Rota Web Storefront:** Criar `AB0-1-front/app/storefront/[slug]/page.tsx` com Server Components e ISR.
-- [ ] **T14 — Componentes de Vitrine:** Integrar `SolarCompanyCard`, `CompanyCarousel`, `SolarCalculator` e `QuoteDraft` na página.
-- [ ] **T15 — SEO & Schema.org:** Injetar JSON-LD para `LocalBusiness` e `AggregateRating` auditado.
-- [ ] **T16 — Testes de Componente (Jest):** Implementar testes em `AB0-1-front/__tests__/storefront.test.tsx`.
+- [x] **T13 — Rota Web Storefront:** Criar `AB0-1-front/app/storefront/[slug]/page.tsx` com Server Components e ISR.
+- [x] **T14 — Componentes de Vitrine:** Integrar `SolarCompanyCard`, `CompanyCarousel`, `SolarCalculator` e `QuoteDraft` na página.
+- [x] **T15 — SEO & Schema.org:** Injetar JSON-LD para `LocalBusiness` e `AggregateRating` auditado.
+- [x] **T16 — Testes de Componente (Jest):** Implementar testes em `AB0-1-front/__tests__/storefront.test.tsx`.
 
 ---
 
