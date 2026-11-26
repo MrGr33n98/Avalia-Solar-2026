@@ -476,25 +476,64 @@ export async function getLocalRankingSitemapEntries(): Promise<MetadataRoute.Sit
 }
 
 export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap> {
-  const companies = await fetchPaginatedRecords(
-    'companies?status=active',
-    COMPANY_SITEMAP_PAGE_SIZE,
-    900
-  );
-  const entries = companies
-    .filter((company) => getString(company, 'slug'))
-    .map((company) => ({
-      url: absoluteUrl(
-        buildCompanyPath(
-          getString(company, 'slug'),
-          getString(company, 'name'),
-          getNumber(company, 'id')
-        )
-      ),
-      lastModified: getString(company, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
-      changeFrequency: 'daily' as const,
-      priority: 0.9,
-    }));
+  const entries: MetadataRoute.Sitemap = [];
+  const pageSize = 500;
+  let useDedicatedFeed = true;
+
+  try {
+    for (let page = 1; page <= 50; page += 1) {
+      const records = await fetchRecords(`sitemaps/companies?page=${page}&per_page=${pageSize}`, 1800);
+      for (const company of records) {
+        const slug = getString(company, 'slug');
+        if (!slug) continue;
+        entries.push({
+          url: absoluteUrl(
+            buildCompanyPath(
+              slug,
+              getString(company, 'name'),
+              getNumber(company, 'id')
+            )
+          ),
+          lastModified: getString(company, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
+          changeFrequency: 'daily' as const,
+          priority: 0.9,
+        });
+      }
+      if (records.length < pageSize) break;
+    }
+  } catch (error) {
+    console.warn('[Sitemap][companies] Dedicated feed failed, attempting fallback:', error);
+    useDedicatedFeed = false;
+  }
+
+  if (!useDedicatedFeed && entries.length === 0) {
+    try {
+      const companies = await fetchPaginatedRecords(
+        'companies?status=active',
+        COMPANY_SITEMAP_PAGE_SIZE,
+        900
+      );
+      for (const company of companies) {
+        const slug = getString(company, 'slug');
+        if (!slug) continue;
+        entries.push({
+          url: absoluteUrl(
+            buildCompanyPath(
+              slug,
+              getString(company, 'name'),
+              getNumber(company, 'id')
+            )
+          ),
+          lastModified: getString(company, 'updated_at') || STATIC_SITEMAP_LAST_MODIFIED,
+          changeFrequency: 'daily' as const,
+          priority: 0.9,
+        });
+      }
+    } catch (fallbackError) {
+      console.error('[Sitemap][companies] Both feeds failed:', fallbackError);
+      if (entries.length === 0) throw fallbackError;
+    }
+  }
 
   if (entries.length > MAX_URLS_PER_SITEMAP) {
     throw new SitemapUpstreamError(
