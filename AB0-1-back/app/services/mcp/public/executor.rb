@@ -14,6 +14,7 @@ module Mcp
         get_integrator_reputation
         compare_integrators
         get_company_services
+        show_storefront_profile
       ].freeze
 
       class << self
@@ -28,6 +29,17 @@ module Mcp
             ServicesService.new.call(arguments: arguments)
           when 'compare_integrators'
             ComparisonService.new.call(arguments: arguments)
+          when 'show_storefront_profile'
+            slug = arguments['slug']
+            company_id = arguments['company_id']
+            company = if slug.present?
+                        Company.find_by(slug: slug)
+                      elsif company_id.present?
+                        Company.find_by(id: company_id)
+                      end
+            raise InputValidator::Invalid, 'Company not found or inactive.' unless company&.active?
+
+            ::Storefront::PublicProfileService.new(company).call
           else
             DirectoryService.new(principal: principal).call(name: name, arguments: arguments)
           end

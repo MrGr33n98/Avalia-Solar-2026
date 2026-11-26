@@ -55,6 +55,15 @@ module Mcp
           description: 'Diretório interativo de categorias solares e filtro rápido para pesquisar integradores.',
           flag: 'MCP_UI_CATEGORIES_ENABLED',
           display_modes: %w[inline fullscreen]
+        }.freeze,
+        'show_storefront_profile' => {
+          key: 'storefront',
+          file: 'storefront.v1.html',
+          uri: 'ui://avalia-solar/storefront/v1.html',
+          name: 'Avalia Solar Storefront',
+          description: 'Vitrine digital completa do integrador solar com catálogo de produtos, projetos executados e simulador.',
+          flag: 'MCP_UI_STOREFRONT_ENABLED',
+          display_modes: %w[fullscreen inline]
         }.freeze
       }.freeze
 

@@ -14,6 +14,7 @@ module Mcp
       list_solar_categories
       get_integrator_reputation
       compare_integrators
+      show_storefront_profile
     ].freeze
 
     STRING_FILTER = { 'type' => 'string', 'minLength' => 1, 'maxLength' => 120 }.freeze
@@ -245,6 +246,34 @@ module Mcp
             'criteria_used' => { 'type' => 'array', 'items' => { 'type' => 'string' } }
           },
           %w[companies comparison_matrix unknown_fields criteria_used]
+        )
+      ),
+      'show_storefront_profile' => tool(
+        'show_storefront_profile',
+        title: 'Consultar vitrine do integrador (Storefront)',
+        description: 'Exibe a vitrine interativa pública de um integrador solar com catálogo de produtos, marcas parceiras, portfólio de projetos e simulador.',
+        source: 'Storefront::PublicProfileService',
+        input: COMPANY_REFERENCE,
+        output: envelope(
+          {
+            'company' => schema(
+              properties: {
+                'id' => PUBLIC_ID,
+                'name' => { 'type' => 'string' },
+                'slug' => STRING_FILTER,
+                'verified' => { 'type' => 'boolean' },
+                'logo_url' => { 'type' => %w[string null] },
+                'headquarters' => { 'type' => 'object' },
+                'rating' => { 'type' => %w[number null] },
+                'review_count' => { 'type' => 'integer', 'minimum' => 0 }
+              },
+              required: %w[id name slug verified headquarters review_count]
+            ),
+            'settings' => { 'type' => 'object' },
+            'projects' => { 'type' => 'array', 'items' => { 'type' => 'object' } },
+            'curated_products' => { 'type' => 'array', 'items' => { 'type' => 'object' } }
+          },
+          %w[company settings projects curated_products]
         )
       )
     }.freeze

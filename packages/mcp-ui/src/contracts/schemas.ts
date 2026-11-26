@@ -125,3 +125,5 @@ export type ListSolarCategoriesPayload = z.infer<typeof ListSolarCategoriesPaylo
 export type GetIntegratorReputationPayload = z.infer<typeof GetIntegratorReputationPayloadSchema>;
 export type CompareIntegratorsPayload = z.infer<typeof CompareIntegratorsPayloadSchema>;
 
+export type * from './storefront';
+
