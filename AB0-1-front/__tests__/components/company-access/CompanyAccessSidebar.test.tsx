@@ -173,8 +173,9 @@ describe('CompanyAccessSidebar — ActiveAdmin as single source of ad creatives'
       render(<CompanyAccessSidebar selectedCompany={null} pendingRequest={null} />);
 
       expect(screen.getByText('Verificação 24h')).toBeInTheDocument();
-      expect(screen.getByText('Nenhuma empresa selecionada')).toBeInTheDocument();
-      expect(screen.getByText(/Selecione sua empresa na busca ao lado/i)).toBeInTheDocument();
+      expect(screen.getByText('Acompanhamento Corporativo')).toBeInTheDocument();
+      expect(screen.getByText(/Ao selecionar sua empresa, a solicitação é encaminhada/i)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Gerenciar empresa no painel/i })).not.toBeInTheDocument();
     });
 
     it('exibe status de aprovação concedida com link para gerenciar', () => {
@@ -199,10 +200,33 @@ describe('CompanyAccessSidebar — ActiveAdmin as single source of ad creatives'
       expect(screen.getByText('Aprovado')).toBeInTheDocument();
       expect(screen.getByText('EcoEnergia Solar')).toBeInTheDocument();
       expect(screen.getByText(/Seu acesso foi liberado!/i)).toBeInTheDocument();
+      // Abre o painel já na empresa aprovada (multiempresa).
       expect(screen.getByRole('link', { name: /Gerenciar empresa no painel/i })).toHaveAttribute(
         'href',
-        '/dashboard'
+        '/dashboard?company_id=102'
       );
+    });
+
+    it('não oferece o painel enquanto a solicitação está em análise', () => {
+      mockUseBannersQuery.mockReturnValue({
+        data: [],
+        isLoading: false,
+        error: null,
+      } as ReturnType<typeof useBannersQuery>);
+
+      render(
+        <CompanyAccessSidebar
+          pendingRequest={{
+            id: 3,
+            company_id: 103,
+            company_name: 'Sol Nascente',
+            status: 'pending',
+          }}
+        />
+      );
+
+      expect(screen.getByText('Em análise')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Gerenciar empresa no painel/i })).not.toBeInTheDocument();
     });
 
     it('exibe link para acompanhamento detalhado de todas as solicitações', () => {
@@ -214,7 +238,7 @@ describe('CompanyAccessSidebar — ActiveAdmin as single source of ad creatives'
 
       render(<CompanyAccessSidebar />);
 
-      const requestsLink = screen.getByRole('link', { name: /Acompanhar todas as solicitações/i });
+      const requestsLink = screen.getByRole('link', { name: /Histórico de solicitações/i });
       expect(requestsLink).toHaveAttribute('href', '/select-company/requests');
     });
   });
