@@ -10,7 +10,8 @@ module Mcp
         'show_integrator_profile' => :format_profile,
         'list_solar_categories' => :format_categories,
         'get_integrator_reputation' => :format_reputation,
-        'compare_integrators' => :format_comparison
+        'compare_integrators' => :format_comparison,
+        'get_company_services' => :format_services
       }.freeze
 
       class << self
@@ -65,6 +66,15 @@ module Mcp
           return 'Sem avaliações públicas aprovadas; nota média não atribuída.' if total.zero?
 
           "Reputação pública: nota #{data['average_rating']}/5 baseada em #{total} avaliações aprovadas."
+        end
+
+        def format_services(data)
+          company = data.fetch('company', {})
+          services = Array(data['services'])
+          return "Nenhum serviço ativo publicado por #{company['name']}." if services.empty?
+
+          lines = services.map { |item| "- #{item['name']}: #{item['summary']} (#{item['detail_url'] || company['profile_url']})" }
+          "Serviços publicados por #{company['name']} (#{services.size} de #{data['total_count']}):\n#{lines.join("\n")}\nDisponibilidade deve ser confirmada com a empresa."
         end
 
         def format_comparison(data)

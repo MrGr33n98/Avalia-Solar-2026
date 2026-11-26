@@ -24,6 +24,12 @@ module Mcp
             search(args)
           when 'show_integrator_profile', 'get_integrator_reputation'
             reference(args)
+          when 'get_company_services'
+            result = reference(args)
+            limit = args.fetch('limit', 5)
+            raise Invalid, 'Limit must be between 1 and 5.' unless limit.is_a?(Integer) && limit.between?(1, 5)
+
+            result.merge('limit' => limit)
           when 'list_solar_categories'
             categories(args)
           when 'compare_integrators'

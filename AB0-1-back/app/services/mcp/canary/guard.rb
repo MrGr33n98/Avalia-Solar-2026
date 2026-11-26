@@ -53,7 +53,8 @@ module Mcp
             emit_security_event('canary_guard', 'execution_disabled')
             raise Failure, :execution_disabled
           end
-          unless Configuration::PUBLIC_TOOLS.include?(tool_name)
+          unless Configuration::PUBLIC_TOOLS.include?(tool_name) ||
+                 (tool_name == 'get_company_services' && Mcp::PublicToolRegistry.services_enabled?)
             emit_security_event('canary_guard', 'tool_not_allowed')
             raise Failure, :tool_not_allowed
           end

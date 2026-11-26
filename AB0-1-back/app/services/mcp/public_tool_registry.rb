@@ -7,6 +7,7 @@ module Mcp
   class PublicToolRegistry
     CONTRACT_VERSION = '1.0.0'
     MAX_LIMIT = 20
+    SERVICES_FLAG = 'MCP_PUBLIC_COMPANY_SERVICES_ENABLED'
     PUBLIC_NAMES = %w[
       list_integrators
       show_integrator_profile
@@ -22,10 +23,12 @@ module Mcp
 
     class << self
       def list
-        PUBLIC_NAMES.map { |name| find(name) }
+        names.map { |name| find(name) }
       end
 
       def find(name)
+        return nil if name.to_s == 'get_company_services' && !services_enabled?
+
         entry = CATALOG[name.to_s]
         return nil unless entry
 
@@ -37,7 +40,11 @@ module Mcp
       end
 
       def names
-        PUBLIC_NAMES.dup
+        PUBLIC_NAMES.dup.tap { |names| names << 'get_company_services' if services_enabled? }
+      end
+
+      def services_enabled?
+        ENV[SERVICES_FLAG] == 'true'
       end
 
       # For the future protocol adapter only. Does not dispatch or grant access.
@@ -174,6 +181,33 @@ module Mcp
             'sample_size' => { 'type' => 'integer', 'minimum' => 0 }
           },
           %w[total_approved average_rating rating_distribution verified_total replied_total sample_size]
+        )
+      ),
+      'get_company_services' => tool(
+        'get_company_services',
+        title: 'Consultar serviços de uma empresa',
+        description: 'Lista até cinco serviços ativos da vitrine pública de uma empresa ativa por ID ou slug. Não comprova disponibilidade ou preço.',
+        source: 'Catalog::ShowcaseQuery',
+        input: schema(
+          properties: { 'company_id' => PUBLIC_ID, 'slug' => STRING_FILTER,
+                        'limit' => { 'type' => 'integer', 'minimum' => 1, 'maximum' => 5 } },
+          conditions: { 'oneOf' => [{ 'required' => ['company_id'] }, { 'required' => ['slug'] }] }
+        ),
+        output: envelope(
+          {
+            'company' => schema(properties: { 'id' => PUBLIC_ID, 'name' => { 'type' => 'string' },
+                                               'slug' => { 'type' => 'string' }, 'profile_url' => { 'type' => 'string' } },
+                                required: %w[id name slug profile_url]),
+            'services' => { 'type' => 'array', 'maxItems' => 5, 'items' => schema(
+              properties: { 'id' => { 'type' => 'string' }, 'name' => { 'type' => 'string' },
+                            'summary' => { 'type' => 'string' }, 'category' => { 'type' => 'string' },
+                            'image_url' => { 'type' => %w[string null] }, 'detail_url' => { 'type' => %w[string null] } },
+              required: %w[id name summary category image_url detail_url]
+            ) },
+            'total_count' => { 'type' => 'integer', 'minimum' => 0 },
+            'has_more' => { 'type' => 'boolean' }
+          },
+          %w[company services total_count has_more]
         )
       ),
       'compare_integrators' => tool(
