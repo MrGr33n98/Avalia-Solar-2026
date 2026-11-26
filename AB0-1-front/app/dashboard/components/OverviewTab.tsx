@@ -44,6 +44,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { companyDashboardApi, fetchApi, type FeatureAccessEntry } from '@/lib/api';
 import AttributionOverview from './analytics/AttributionOverview';
 import { cn } from '@/lib/utils';
+import { formatDate, formatNumber, formatRange } from '../lib/overview-format';
 
 type CompanyOverview = {
   name?: string;
@@ -140,18 +141,6 @@ function number(value: unknown) {
   return Number(value || 0);
 }
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('pt-BR').format(value);
-}
-
-function formatDate(date?: string) {
-  if (!date) return '—';
-  const parsed = new Date(date);
-  return Number.isNaN(parsed.getTime())
-    ? '—'
-    : parsed.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
-}
-
 function formatRelativeDate(date?: string) {
   if (!date) return '—';
   const difference = Date.now() - new Date(date).getTime();
@@ -161,14 +150,6 @@ function formatRelativeDate(date?: string) {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `Há ${hours} h`;
   return `Há ${Math.round(hours / 24)} d`;
-}
-
-function formatRange(days: number) {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - days + 1);
-  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' };
-  return `${start.toLocaleDateString('pt-BR', options).replace('.', '')} — ${end.toLocaleDateString('pt-BR', options).replace('.', '')} ${end.getFullYear()}`;
 }
 
 function normalizeSeries(payload: unknown): SeriesPoint[] {
