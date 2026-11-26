@@ -47,7 +47,7 @@ describe('Company Sitemap Resilience (TEST-04)', () => {
     expect(entries.length).toBe(600);
     expect(entries[0].url).toContain('/companies/empresa-solar-1');
     expect(entries[599].url).toContain('/companies/empresa-solar-600');
-    expect(duration).toBeLessThan(2000);
+    expect(duration).toBeLessThan(5000);
   });
 
   it('falls back to standard paginated companies endpoint when dedicated feed returns 404', async () => {

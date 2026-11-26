@@ -20,14 +20,14 @@
 
 ## 2. Fase P1 — Enriquecimento de Dados, AEO/GEO e Atribuição
 
-| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite |
-|---|:---:|---|---|---|
-| **T-P1-01** | **P1** | Conectar dispatcher do frontend ao GA4 (`gtagEvent` dentro de `track()`) | `AB0-1-front/lib/analytics/index.ts` | Cliques de WhatsApp, comparador e leads disparam eventos no GA4. |
-| **T-P1-02** | **P1** | Conceder permissão de usuário no Google Search Console para a credencial ADC | Console Google Search Console | Chamada à Search Analytics API retorna HTTP 200 OK. |
-| **T-P1-03** | **P1** | Publicar `/llms.txt` com inventário semântico para agentes de IA | `AB0-1-front/public/llms.txt` | `https://www.avaliasolar.com.br/llms.txt` responde HTTP 200 OK em formato Markdown limpo. |
-| **T-P1-04** | **P1** | Adicionar Schema.org `Product` e `AggregateRating` nas páginas de produtos | `AB0-1-front/app/products/[slug]/page.tsx` | Validador de dados estruturados do Google acusa 0 erros. |
-| **T-P1-05** | **P1** | Adicionar Schema.org `FAQPage` na Homepage e páginas de categorias | `AB0-1-front/app/page.tsx` | Schema FAQPage detectado no teste de Rich Results. |
-| **T-P1-06** | **P1** | Garantir disparo de `gtag('consent', 'default')` síncrono antes do script do GA4 | `AB0-1-front/app/layout.tsx` | Nenhum cookie analítico é gravado antes do consentimento do usuário. |
+| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite | Status |
+|---|:---:|---|---|---|:---:|
+| **T-P1-01** | **P1** | Conectar dispatcher do frontend ao GA4 (`gtagEvent` dentro de `track()`) | `AB0-1-front/lib/analytics/index.ts` | Cliques de WhatsApp, comparador e leads disparam eventos no GA4. | **CONCLUÍDO** |
+| **T-P1-02** | **P1** | Conceder permissão de usuário no Google Search Console para a credencial ADC | Console Google Search Console | Chamada à Search Analytics API retorna HTTP 200 OK. | Pendente (Permissão Manual) |
+| **T-P1-03** | **P1** | Publicar `/llms.txt` com inventário semântico para agentes de IA | `AB0-1-front/public/llms.txt` | `https://www.avaliasolar.com.br/llms.txt` responde HTTP 200 OK em formato Markdown limpo. | **CONCLUÍDO** |
+| **T-P1-04** | **P1** | Adicionar Schema.org `Product` e `AggregateRating` nas páginas de produtos | `AB0-1-front/app/products/[slug]/page.tsx` | Validador de dados estruturados do Google acusa 0 erros. | **CONCLUÍDO** |
+| **T-P1-05** | **P1** | Adicionar Schema.org `FAQPage` na Homepage e páginas de categorias | `AB0-1-front/app/page.tsx` | Schema FAQPage detectado no teste de Rich Results. | **CONCLUÍDO** |
+| **T-P1-06** | **P1** | Garantir disparo de `gtag('consent', 'default')` síncrono antes do script do GA4 | `AB0-1-front/app/layout.tsx` | Nenhum cookie analítico é gravado antes do consentimento do usuário. | **CONCLUÍDO** |
 
 ---
 
