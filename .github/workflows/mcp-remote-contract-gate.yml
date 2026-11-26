@@ -191,3 +191,22 @@ jobs:
             spec/requests/api/v1/mcp/public_directory_execution_spec.rb \
             spec/requests/api/v1/mcp/production_canary_guard_spec.rb \
             spec/services/mcp/public_tool_registry_spec.rb
+
+  ui-browser-contract:
+    name: MCP UI — Browser and accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: packages/mcp-ui
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ./packages/mcp-ui/package-lock.json
+      - run: npm ci
+      - run: npm run build && npm run build:playground
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

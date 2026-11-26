@@ -1,4 +1,7 @@
 import React from 'react';
+import { SolarCalculator, FinancingSimulator } from '../src/blocks/SimulationPanels';
+import { CompanyCarousel, FavoriteCompanies, TrustEvidence, DirectoryIntelligence, Recommendations } from '../src/blocks/DiscoveryPanels';
+import { ProductComparator, CoverageGrid, QuoteDraft, NewsletterPreview, ReviewHighlights } from '../src/blocks/CatalogPanels';
 import { CompanyComparisonTable } from '../src/blocks/CompanyComparisonTable';
 import { EvidenceCard } from '../src/blocks/EvidenceCard';
 import { ReviewDistribution } from '../src/blocks/ReviewDistribution';
@@ -98,4 +101,21 @@ export const PLAYGROUND_ITEMS: PlaygroundItem[] = [
         />
       ), 'Sem metadados'),
   },
+  ...([
+    ['company-carousel', 'Marketplace', () => <CompanyCarousel companies={companies} />],
+    ['coverage-grid', 'Marketplace', () => <CoverageGrid coverage={companies[0].declared_coverage} />],
+    ['product-comparator', 'Marketplace', () => <ProductComparator products={[{ id: 'fixture-a', name: 'Produto A (fixture)', category: 'Inversor', summary: 'Descrição de teste' }, { id: 'fixture-b', name: 'Produto B (fixture)', category: 'Inversor', summary: '' }]} />],
+    ['review-highlights', 'Trust', () => <ReviewHighlights reviews={[]} />],
+    ['solar-calculator', 'Marketplace', () => <SolarCalculator />],
+    ['financing-simulator', 'Marketplace', () => <FinancingSimulator />],
+    ['quote-draft', 'Marketplace', () => <QuoteDraft />],
+    ['favorite-companies', 'Marketplace', () => <FavoriteCompanies companies={companies} />],
+    ['newsletter-preview', 'Marketplace', () => <NewsletterPreview />],
+    ['directory-intelligence', 'Trust', () => <DirectoryIntelligence companies={companies} />],
+    ['trust-evidence', 'Trust', () => <TrustEvidence company={companies[0]} />],
+    ['recommendations', 'Marketplace', () => <Recommendations companies={companies} />],
+  ] satisfies [string, PlaygroundItem['group'], () => React.ReactNode][]).map(([name, group, render]) => ({
+    name, group, render: (state: PreviewState) => byState(state, render, 'Sem dados disponíveis'),
+  })),
+
 ];

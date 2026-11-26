@@ -227,6 +227,363 @@
         "status": "implemented",
         "inspiration": "mcpcn stat-card (MIT)"
       }
+    },
+    {
+      "name": "catalog-domain",
+      "type": "registry:lib",
+      "title": "Catalog Domain",
+      "description": "Funções puras de simulação e seleção.",
+      "registryDependencies": [
+        "@avalia-solar/as-contracts"
+      ],
+      "files": [
+        {
+          "path": "src/domain/catalog.ts",
+          "type": "registry:file",
+          "target": "src/avalia-solar/domain/catalog.ts"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "simulation-panels",
+      "type": "registry:lib",
+      "title": "Simulation Panels",
+      "description": "Simulação solar e financeira.",
+      "registryDependencies": [
+        "@avalia-solar/as-tokens",
+        "@avalia-solar/as-contracts",
+        "@avalia-solar/catalog-domain"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/SimulationPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/SimulationPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "discovery-panels",
+      "type": "registry:lib",
+      "title": "Discovery Panels",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/as-tokens",
+        "@avalia-solar/as-contracts",
+        "@avalia-solar/catalog-domain"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "catalog-panels",
+      "type": "registry:lib",
+      "title": "Catalog Panels",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/as-tokens",
+        "@avalia-solar/as-contracts"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "company-carousel",
+      "type": "registry:block",
+      "title": "Company Carousel",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/discovery-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "coverage-grid",
+      "type": "registry:block",
+      "title": "Coverage Grid",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/catalog-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "product-comparator",
+      "type": "registry:block",
+      "title": "Product Comparator",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/catalog-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "review-highlights",
+      "type": "registry:block",
+      "title": "Review Highlights",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/catalog-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "solar-calculator",
+      "type": "registry:block",
+      "title": "Solar Calculator",
+      "description": "Simulação solar e financeira.",
+      "registryDependencies": [
+        "@avalia-solar/simulation-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/SimulationPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/SimulationPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "financing-simulator",
+      "type": "registry:block",
+      "title": "Financing Simulator",
+      "description": "Simulação solar e financeira.",
+      "registryDependencies": [
+        "@avalia-solar/simulation-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/SimulationPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/SimulationPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "quote-draft",
+      "type": "registry:block",
+      "title": "Quote Draft",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/catalog-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "favorite-companies",
+      "type": "registry:block",
+      "title": "Favorite Companies",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/discovery-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "newsletter-preview",
+      "type": "registry:block",
+      "title": "Newsletter Preview",
+      "description": "Comparação, cobertura, reviews e rascunhos de ações.",
+      "registryDependencies": [
+        "@avalia-solar/catalog-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/CatalogPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/CatalogPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "directory-intelligence",
+      "type": "registry:block",
+      "title": "Directory Intelligence",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/discovery-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "trust-evidence",
+      "type": "registry:block",
+      "title": "Trust Evidence",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/discovery-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
+    },
+    {
+      "name": "recommendations",
+      "type": "registry:block",
+      "title": "Recommendations",
+      "description": "Carrossel, favoritos locais, indicadores e recomendações.",
+      "registryDependencies": [
+        "@avalia-solar/discovery-panels"
+      ],
+      "files": [
+        {
+          "path": "src/blocks/DiscoveryPanels.tsx",
+          "type": "registry:file",
+          "target": "src/avalia-solar/blocks/DiscoveryPanels.tsx"
+        }
+      ],
+      "meta": {
+        "version": "0.1.0",
+        "license": "UNLICENSED",
+        "distribution": "internal",
+        "status": "prototype"
+      }
     }
   ]
 }

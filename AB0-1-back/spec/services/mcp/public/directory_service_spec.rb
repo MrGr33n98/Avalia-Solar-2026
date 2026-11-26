@@ -17,6 +17,16 @@ RSpec.describe Mcp::Public::DirectoryService do
     expect(result.fetch(:limitations).join).to include('sede')
   end
 
+  it 'combines headquarters filters with category and returns unique active companies' do
+    category = create(:category, status: 'active')
+    included = create(:company, city: 'Florianópolis', state: 'SC', status: :active)
+    excluded = create(:company, city: 'São José', state: 'SC', status: :active)
+    category.companies << [included, excluded]
+    args = { 'headquarters_city' => 'Florianópolis', 'state' => 'SC', 'category_slug' => category.seo_url }
+    result = service.call(name: 'list_integrators', arguments: args)
+    expect(result.dig(:data, :integrators).map { |item| item.fetch(:id) }).to eq([included.id])
+  end
+
   it 'cannot return an inactive company by an otherwise valid ID or slug' do
     private_company = create(:company, status: :inactive)
     expect do

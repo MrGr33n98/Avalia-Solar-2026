@@ -49,6 +49,20 @@ describe('R1 MCP Interactive UI Widgets', () => {
     expect(await screen.findByText(/Comparação \(3 integradores\)/i)).toBeInTheDocument();
   });
 
+  it('preserves headquarters city with state and sort changes', async () => {
+    const callTool = vi.fn().mockResolvedValue({ structuredContent: FIXTURE_INTEGRATORS });
+    window.__AVALIA_MCP_HARNESS__ = {
+      toolOutput: FIXTURE_INTEGRATORS,
+      toolInput: { headquarters_city: 'Florianópolis', state: 'SC' },
+      callTool,
+    };
+    render(<HostProvider appName="search-test"><SearchWidgetView /></HostProvider>);
+    fireEvent.change(screen.getByLabelText('Ordenar por'), { target: { value: 'review_count' } });
+    await vi.waitFor(() => expect(callTool).toHaveBeenCalledWith('list_integrators', {
+      headquarters_city: 'Florianópolis', state: 'SC', sort: 'review_count', limit: 10,
+    }));
+  });
+
   it('W03+W05: ProfileStandaloneView displays verification caveat, coverage distinction, and official link', () => {
     window.__AVALIA_MCP_HARNESS__ = {
       toolOutput: FIXTURE_PROFILE,
