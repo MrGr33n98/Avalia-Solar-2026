@@ -10,6 +10,18 @@ declare global {
   }
 }
 
+export const isLocalhost = (overrideHostname?: string): boolean => {
+  if (typeof window === 'undefined' && !overrideHostname) return false;
+  const hostname =
+    overrideHostname || (typeof window !== 'undefined' ? window.location.hostname : '');
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.localhost') ||
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)
+  );
+};
+
 export const getGaCookieDomain = (overrideHostname?: string): string => {
   if (typeof window === 'undefined' && !overrideHostname) return 'auto';
   const hostname =
@@ -44,8 +56,16 @@ export const getGaCookieDomain = (overrideHostname?: string): string => {
 /**
  * Initialize gtag
  */
-export function initializeGTag(measurementId: string): void {
+export function initializeGTag(measurementId: string, overrideHostname?: string): void {
   if (typeof window === 'undefined') return;
+
+  // Bloqueio de localhost para evitar contaminação da propriedade de produção do GA4
+  if (isLocalhost(overrideHostname) && process.env.NEXT_PUBLIC_ENABLE_LOCAL_GA !== 'true') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[GA4:Localhost-Blocked] Initialization skipped for measurement ID:', measurementId);
+    }
+    return;
+  }
 
   // Garantimos que dataLayer e gtag funcionem corretamente
   window.dataLayer = window.dataLayer || [];
@@ -58,10 +78,10 @@ export function initializeGTag(measurementId: string): void {
 
   // 🚨 CRITICAL FIX: Configura o GA4 measurement ID explicitamente com domínio e flags seguras
   // Isso garante que o GA4 seja inicializado mesmo sem GTM container e sem rejeição de cookie de domínio
-  const isHttps = window.location.protocol === 'https:';
+  const isHttps = (typeof window !== 'undefined' && window.location.protocol === 'https:') || false;
   window.gtag('config', measurementId, {
     send_page_view: false, // Manual page view tracking
-    cookie_domain: getGaCookieDomain(),
+    cookie_domain: getGaCookieDomain(overrideHostname),
     cookie_flags: isHttps ? 'SameSite=Lax;Secure' : 'SameSite=Lax',
     cookie_update: true,
     custom_map: {
@@ -77,8 +97,21 @@ export function initializeGTag(measurementId: string): void {
 /**
  * Track GA4 event
  */
-export function gtagEvent(eventName: string, params?: Record<string, any>): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
+export function gtagEvent(
+  eventName: string,
+  params?: Record<string, any>,
+  overrideHostname?: string
+): void {
+  if (typeof window === 'undefined') return;
+
+  if (isLocalhost(overrideHostname) && process.env.NEXT_PUBLIC_ENABLE_LOCAL_GA !== 'true') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[GA4:Localhost-Blocked] Event:', eventName, params);
+    }
+    return;
+  }
+
+  if (!window.gtag) return;
 
   try {
     window.gtag('event', eventName, params);
@@ -106,7 +139,9 @@ export function gtagPageView(url: string, title?: string, params?: Record<string
  * Set user properties
  */
 export function gtagSetUserProperties(properties: Record<string, any>): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined') return;
+  if (isLocalhost() && process.env.NEXT_PUBLIC_ENABLE_LOCAL_GA !== 'true') return;
+  if (!window.gtag) return;
 
   try {
     window.gtag('set', 'user_properties', properties);
@@ -119,7 +154,9 @@ export function gtagSetUserProperties(properties: Record<string, any>): void {
  * Set user ID
  */
 export function gtagSetUserId(userId: string | null): void {
-  if (typeof window === 'undefined' || !window.gtag) return;
+  if (typeof window === 'undefined') return;
+  if (isLocalhost() && process.env.NEXT_PUBLIC_ENABLE_LOCAL_GA !== 'true') return;
+  if (!window.gtag) return;
 
   try {
     window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID!, {
