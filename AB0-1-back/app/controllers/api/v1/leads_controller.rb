@@ -487,18 +487,38 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def scoped_leads
     return ::Lead.all if current_user&.admin?
 
-    if current_user&.company_user? && current_user.company_id.present?
-      company = current_user.company
+    company = current_user&.company_user? ? leads_company : nil
+    if company
       unless company_active?(company)
         render_error_response(message: 'Company account is not active', status: :forbidden,
                               code: 'COMPANY_INACTIVE')
         return nil
       end
-      return ::Lead.where(company_id: current_user.company_id)
+      return ::Lead.where(company_id: company.id)
     end
     render_error_response(message: 'Not authorized to list leads', status: :forbidden,
                           code: 'FORBIDDEN')
     nil
+  end
+
+  # Empresa cujos leads o usuário pode listar: a do `company_id` pedido, só se for a
+  # empresa principal ou houver membership ativa; sem `company_id`, a principal.
+  def leads_company
+    return @leads_company if defined?(@leads_company)
+
+    requested_id = params[:company_id].presence
+    @leads_company =
+      if requested_id.nil?
+        current_user.company
+      elsif lead_company_member?(requested_id)
+        ::Company.find_by(id: requested_id)
+      end
+  end
+
+  def lead_company_member?(company_id)
+    return false if company_id.blank?
+
+    company_id.to_i == current_user.company_id || current_user.active_membership_for?(company_id)
   end
 
   def ensure_leads_access!
@@ -510,21 +530,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def ensure_leads_feature_access!
     return if performed? || current_user&.admin?
 
-    enforce_feature_access!(:leads_marketplace, company: current_user&.company)
+    enforce_feature_access!(:leads_marketplace, company: current_user&.company_user? ? leads_company : nil)
   end
 
   def ensure_lead_access!
     return if performed? || current_user.nil?
     return if current_user&.admin?
 
-    if current_user&.company_user? && current_user.company_id.present?
-      company = current_user.company
-      unless company_active?(company)
-        render_error_response(message: 'Company account is not active', status: :forbidden,
-                              code: 'COMPANY_INACTIVE')
-        return
-      end
-      return if @lead.company_id == current_user.company_id
+    if current_user&.company_user? && lead_company_member?(@lead.company_id)
+      return if company_active?(::Company.find_by(id: @lead.company_id))
+
+      render_error_response(message: 'Company account is not active', status: :forbidden,
+                            code: 'COMPANY_INACTIVE')
+      return
     end
     render_error_response(message: 'Not authorized to access this lead', status: :forbidden,
                           code: 'FORBIDDEN')

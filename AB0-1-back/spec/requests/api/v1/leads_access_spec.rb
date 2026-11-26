@@ -138,4 +138,57 @@ RSpec.describe 'Leads RBAC', type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
   end
+
+  describe 'usuário com mais de uma empresa (company_id ativo)' do
+    let(:second_company) { create(:company, status: 'active', plan: leads_plan) }
+    let!(:lead_second) { create(:lead, company: second_company) }
+
+    before do
+      create(:company_member, user: company_user, company: second_company, status: :active)
+      stub_auth(company_user)
+    end
+
+    it 'lista os leads da empresa ativa pedida, não os da principal' do
+      get '/api/v1/leads', params: { company_id: second_company.id }
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body).map { |l| l['id'] }).to contain_exactly(lead_second.id)
+    end
+
+    it 'sem company_id continua usando a empresa principal' do
+      get '/api/v1/leads'
+      expect(JSON.parse(response.body).map { |l| l['id'] }).to contain_exactly(lead_owned.id)
+    end
+
+    it 'nega company_id sem membership ativa (IDOR)' do
+      get '/api/v1/leads', params: { company_id: other_company.id }
+      expect(response).to have_http_status(:forbidden)
+      expect(response.body).not_to include(%("id":#{lead_other.id}))
+    end
+
+    it 'nega company_id com membership revogada' do
+      third_company = create(:company, status: 'active', plan: leads_plan)
+      create(:lead, company: third_company)
+      create(:company_member, user: company_user, company: third_company, status: :revoked)
+      get '/api/v1/leads', params: { company_id: third_company.id }
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'aplica o plano da empresa ativa no gate de leads' do
+      free_plan = create(:plan, name: 'Free Leads', price: 0,
+                                features_json: PlanFeatureCatalog.defaults_for_tier('free'))
+      second_company.update!(plan: free_plan)
+      get '/api/v1/leads', params: { company_id: second_company.id }
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'abre o detalhe de lead da empresa com membership' do
+      get "/api/v1/leads/#{lead_second.id}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'nega o detalhe de lead de empresa sem membership' do
+      get "/api/v1/leads/#{lead_other.id}"
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end
