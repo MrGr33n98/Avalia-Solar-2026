@@ -133,6 +133,10 @@ async function setupWorkspace(context: BrowserContext, page: Page, baseURL: stri
   const selectActiveCalls: number[] = [];
   const companyIdsRequested = new Set<number>();
   page.on('pageerror', (e) => errors.push(e.message));
+  // Mismatch de hidratação (React 18 minificado: #418/#423/#425) também conta como erro.
+  page.on('console', (m) => {
+    if (m.type() === 'error' && /hydrat|did not match|#418|#423|#425/i.test(m.text())) errors.push(m.text());
+  });
 
   await page.route('**/*', async (route: Route) => {
     const req = route.request();
@@ -177,7 +181,7 @@ async function waitForShell(page: Page, companyName: string) {
 
 async function expectNoCrash(page: Page, errors: string[]) {
   await expect(page.getByText('Erro Crítico')).toHaveCount(0);
-  expect(errors.filter((e) => /Minified React error #185|Maximum update depth/.test(e))).toEqual([]);
+  expect(errors.filter((e) => /Minified React error #185|Maximum update depth|hydrat|did not match|#418|#423|#425/i.test(e))).toEqual([]);
 }
 
 test.describe('Workspace empresarial — fixtures A/B', () => {
@@ -259,6 +263,50 @@ test.describe('Workspace empresarial — fixtures A/B', () => {
     await waitForShell(page, COMPANY_B.name);
     await page.waitForTimeout(3500);
     await expect(page.locator('main')).not.toContainText(COMPANY_A.name);
+    await expectNoCrash(page, errors);
+  });
+
+  test('só o painel da aba ativa fica no DOM (Spec 022 Fase C)', async ({ context, page, baseURL }) => {
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    await page.goto(`/dashboard?company_id=${COMPANY_A.id}`);
+    await waitForShell(page, COMPANY_A.name);
+    await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+    await expect(page.locator('[data-tour="overview"]')).toHaveCount(1);
+    await expectNoCrash(page, errors);
+  });
+
+  test('deep link com alias abre o painel canônico correto', async ({ context, page, baseURL }) => {
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    for (const [alias, canonical] of [
+      ['info', 'product-general'],
+      ['prospects', 'tracking-attribution'],
+      ['buyer_intent', 'buyer-intent'],
+    ]) {
+      await page.goto(`/dashboard?company_id=${COMPANY_A.id}&tab=${alias}`);
+      await waitForShell(page, COMPANY_A.name);
+      await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', canonical, { timeout: 15_000 });
+      await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
+    }
+    await expectNoCrash(page, errors);
+  });
+
+  test('clique na sidebar troca o painel e voltar/avançar restauram o conteúdo', async ({ context, page, baseURL }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 768, 'sidebar fixa só a partir de md');
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    await page.goto(`/dashboard?company_id=${COMPANY_A.id}`);
+    await waitForShell(page, COMPANY_A.name);
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+
+    await page.locator('aside').getByRole('button', { name: 'Integrações', exact: true }).first().click();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'integrations');
+    expect(new URL(page.url()).searchParams.get('tab')).toBe('integrations');
+
+    await page.goBack();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+    await page.goForward();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'integrations');
+    await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
     await expectNoCrash(page, errors);
   });
 });
