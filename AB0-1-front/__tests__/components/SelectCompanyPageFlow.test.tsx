@@ -213,11 +213,57 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
       expect(screen.getByPlaceholderText(/Buscar por nome da empresa/i)).toBeInTheDocument();
     });
 
-    // Alerta de contexto visível
+    // Alerta de contexto visível com mensagem canônica em português
     expect(
-      screen.getByText(/Não foi possível carregar as sugestões de empresas para solicitação de acesso/i)
+      screen.getByText('Não foi possível carregar as sugestões de empresas. Tente novamente.')
     ).toBeInTheDocument();
     expect(screen.queryByText(/Network Timeout/)).not.toBeInTheDocument();
+  });
+
+  it('permite tentar novamente com retry funcional após falha da API de contexto', async () => {
+    (companyAccessApi.context as jest.Mock)
+      .mockRejectedValueOnce(new Error('Network Timeout'))
+      .mockResolvedValueOnce({
+        suggested_companies: [{ id: 77, name: 'Solar Recuperada', city: 'Curitiba', state: 'PR' }],
+        pending_requests: [],
+        active_memberships: [],
+      });
+
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 10, email: 'user@empresa.com', role: 'company' },
+      loading: false,
+      isAuthenticated: true,
+    });
+
+    (useCompanyContext as jest.Mock).mockReturnValue({
+      companies: [],
+      activeCompany: null,
+      selectCompany: mockSelectCompany,
+      isLoading: false,
+    });
+
+    render(<SelectCompanyPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Não foi possível carregar as sugestões de empresas. Tente novamente.')
+      ).toBeInTheDocument();
+    });
+
+    const retryButton = screen.getByRole('button', { name: /Tentar carregar sugestões novamente/i });
+    expect(retryButton).toBeInTheDocument();
+
+    fireEvent.click(retryButton);
+
+    await waitFor(() => {
+      expect(companyAccessApi.context).toHaveBeenCalledTimes(2);
+      expect(
+        screen.queryByText('Não foi possível carregar as sugestões de empresas. Tente novamente.')
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Tentar carregar sugestões novamente/i })
+      ).not.toBeInTheDocument();
+    });
   });
 
   it('mostra a mensagem do servidor quando a API de contexto responde 4xx', async () => {
