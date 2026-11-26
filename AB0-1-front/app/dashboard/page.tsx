@@ -22,11 +22,26 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 import DashboardLayout from './components/DashboardLayout';
 import StatsCard from './components/StatsCard';
-import ChartCard from './components/ChartCard';
 import RecentActivity from './components/RecentActivity';
-import DataTable from './components/DataTable';
-import { DashboardCharts } from './components/DashboardCharts';
 import { dashboardApi } from '@/lib/api-dashboard';
+
+// Visão system_admin: Recharts e tabela só carregam para administradores do
+// sistema, fora do First Load do workspace empresarial (Spec 022, D0 H07).
+const AdminChartLoading = () => (
+  <div className="h-[300px] flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+const ChartCard = dynamic(() => import('./components/ChartCard'));
+const DataTable = dynamic(() => import('./components/DataTable'));
+const AdminAreaChart = dynamic(
+  () => import('./components/DashboardCharts').then((m) => m.DashboardCharts.AreaChart),
+  { ssr: false, loading: AdminChartLoading }
+);
+const AdminBarChart = dynamic(
+  () => import('./components/DashboardCharts').then((m) => m.DashboardCharts.BarChart),
+  { ssr: false, loading: AdminChartLoading }
+);
 
 // ✅ Code splitting - lazy load EnterpriseDashboard for company users
 const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboard'), {
@@ -335,7 +350,7 @@ function DashboardPageContent() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <DashboardCharts.AreaChart data={chartData || []} />
+                <AdminAreaChart data={chartData || []} />
               )}
             </ChartCard>
 
@@ -348,7 +363,7 @@ function DashboardPageContent() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <DashboardCharts.BarChart data={chartData || []} />
+                <AdminBarChart data={chartData || []} />
               )}
             </ChartCard>
           </div>
