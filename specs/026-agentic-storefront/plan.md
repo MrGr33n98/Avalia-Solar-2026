@@ -73,3 +73,4 @@ A implementação do Storefront segue o princípio de **mínima complexidade aci
 ### W6: Revisão EGM Goldfish & Drift Report
 - Execução de `egm-review` e `egm-drift-report`.
 - Resolução de blockers e homologação final.
+

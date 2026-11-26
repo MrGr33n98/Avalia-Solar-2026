@@ -30,3 +30,4 @@
 | **Interactive UI** | `@avalia-solar/mcp-ui` (Vite singlefile) | Carregamento autocontido em iframes seguros com CSP restrita |
 | **Web Frontend** | Next.js 14 App Router (ISR) | SEO otimizado, Core Web Vitals elevados e hidratação seletiva |
 | **Dashboard B2B** | Hotwire / React Islands (SPEC 022) | Continuidade visual com o Company Dashboard existente |
+

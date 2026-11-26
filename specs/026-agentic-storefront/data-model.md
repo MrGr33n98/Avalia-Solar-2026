@@ -92,3 +92,4 @@ export const StorefrontPayloadSchema = z.object({
 
 export type StorefrontPayload = z.infer<typeof StorefrontPayloadSchema>;
 ```
+

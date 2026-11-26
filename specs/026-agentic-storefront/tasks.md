@@ -46,3 +46,4 @@
 - [ ] **T22 — EGM Review:** Executar suíte de revisão Goldfish de 5 estágios gerando os relatórios em `specs/026-agentic-storefront/egm/`.
 - [ ] **T23 — EGM Drift Report:** Executar `egm-drift-report` para confirmar 100% de aderência entre código e documentação.
 - [ ] **T24 — Spec Kit Converge:** Fechar todos os quality gates G00 a G18 antes do deploy.
+

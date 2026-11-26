@@ -128,3 +128,4 @@ Integrar o **Elephant-Goldfish Model (EGM)** ao ciclo de desenvolvimento da **SP
    - Aba "Storefront / Vitrine" no dashboard da empresa para customização de catálogo e projetos.
    - Métricas de visualização, cliques e leads originados pela vitrine.
    - Feature gating conforme o plano de assinatura (Free: vitrine básica; Pro: portfólio ampliado; Enterprise: custom branding completo e prioridade de busca).
+

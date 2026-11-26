@@ -47,3 +47,4 @@ specs/026-agentic-storefront/
 # Executar loop de revisão automatizada até convergência
 /egm:egm-review-loop specs/026-agentic-storefront/spec.md
 ```
+

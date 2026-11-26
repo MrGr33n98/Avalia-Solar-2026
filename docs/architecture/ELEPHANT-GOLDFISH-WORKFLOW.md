@@ -212,3 +212,4 @@ agy plugin install https://github.com/google/elephant-goldfish-model
 ```
 Ou no chat através do componente oficial:
 `<plugin-card catalog-id="antigravity-plugins-official/plugin/egm"></plugin-card>`
+

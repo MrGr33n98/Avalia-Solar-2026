@@ -13,3 +13,4 @@ Este rascunho espelha a especificação canônica definida em [spec.md](../spec.
 3. Design Critique
 4. Intermediate Zoom Out
 5. Implementation Readiness
+

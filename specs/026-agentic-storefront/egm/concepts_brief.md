@@ -18,3 +18,4 @@ Empresas integradoras no Avalia Solar possuem perfis ricos em dados, mas com con
 - Manter o Rails 7 como autoridade de dados, regras de negócio e Pundit policies.
 - Expor dados via DTO público v1 e endpoint `/mcp` para agentes de IA.
 - Limite estrito de 120 KiB gzip para o widget interativo standalone.
+
