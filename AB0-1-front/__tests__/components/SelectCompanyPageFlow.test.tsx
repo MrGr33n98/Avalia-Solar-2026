@@ -88,7 +88,7 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
 
     // Deve exibir o cabeçalho e o formulário de busca sem crash
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
     });
 
     expect(screen.getByPlaceholderText(/Buscar por nome da empresa/i)).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
     expect(mockReplace).not.toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
     });
   });
 

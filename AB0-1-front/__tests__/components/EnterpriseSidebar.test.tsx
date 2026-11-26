@@ -166,7 +166,7 @@ describe('EnterpriseSidebar (Arquitetura Lateral My.G2)', () => {
     );
 
     const upgradeWidget = screen.getByRole('button', {
-      name: /desbloqueie seu potencial: conhecer planos/i,
+      name: /conhecer planos empresariais/i,
     });
     expect(upgradeWidget).toBeInTheDocument();
 

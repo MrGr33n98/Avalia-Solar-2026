@@ -39,6 +39,7 @@ jest.mock('@/lib/analytics/lazy', () => ({
   identify: jest.fn(),
   track: jest.fn(),
   reset: jest.fn(),
+  updateContext: jest.fn(),
 }));
 
 jest.mock('@/lib/analytics/identity-stitch', () => ({
