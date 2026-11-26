@@ -95,6 +95,16 @@ export function CompanyAccessStatus({
               {isRejected && 'A solicitação não foi aprovada pelo responsável corporativo.'}
               {!isPending && !isApproved && !isRejected && 'Sua solicitação está sendo processada pela moderação.'}
             </p>
+
+            {isApproved && Number.isSafeInteger(request.company_id) && request.company_id > 0 && (
+              <Link
+                href={`/dashboard?company_id=${request.company_id}`}
+                className="flex items-center justify-between rounded-md bg-[#0755F5] px-3 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#0B1F4B]"
+              >
+                <span>Gerenciar empresa no painel</span>
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            )}
           </>
         ) : (
           <>

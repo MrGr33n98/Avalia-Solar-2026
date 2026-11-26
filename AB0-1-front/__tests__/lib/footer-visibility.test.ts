@@ -17,9 +17,6 @@ describe('strategic footer visibility', () => {
     '/melhores-empresas',
     '/products',
     '/products/inversor-weg',
-    '/review-dashboard',
-    '/review-dashboard/profile',
-    '/review-dashboard/achievements',
     '/search',
     '/solucoes/energia-solar-residencial',
     '/creators/test',
@@ -42,6 +39,10 @@ describe('strategic footer visibility', () => {
     '/reset-password/token',
     '/select-company',
     '/feed',
+    // Painel do revisor virou shell de app (sidebar + nav inferior) desde 943354bde.
+    '/review-dashboard',
+    '/review-dashboard/profile',
+    '/review-dashboard/achievements',
   ])('hides on operational route %s', (pathname) => {
     expect(shouldShowStrategicFooter(pathname)).toBe(false);
   });
