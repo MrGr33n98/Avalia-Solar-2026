@@ -1,73 +1,44 @@
 # Avalia Solar
 
-> Avalia Solar is a Brazilian platform for comparing solar energy and electric mobility companies, categories, public company information, reputation signals, verification signals, and educational content.
+> O ecossistema de referência, marketplace independente e diretório empresarial de energia solar fotovoltaica no Brasil.
 
-Canonical site: https://www.avaliasolar.com.br
-Primary language: pt-BR
-Last updated: 2026-07-28
+## Sobre a Plataforma
+O **Avalia Solar** conecta consumidores residenciais, rurais e empresariais às melhores empresas instaladoras, distribuidoras e fabricantes de energia solar em todos os 26 estados brasileiros e no Distrito Federal.
 
-## Purpose
+Nossa missão é garantir transparência, confiança e governança técnica na contratação de sistemas solares, combinando avaliações auditadas, pontuações de reputação (Trust Score) e integridade de mercado.
 
-Avalia Solar helps consumers and companies compare providers in the Brazilian distributed energy market. The platform organizes public company profiles, categories, local coverage, reviews when available, and trust information so users can make better decisions before contacting a provider.
+## Estrutura Principal e Rotas Canônicas
 
-Avalia Solar does not sell, install, finance, intermediate, or guarantee third-party solar projects. Company information, ranking signals, reviews, and verification signals should be treated as decision support, not as technical, legal, or financial advice.
+### Diretório e Perfil de Empresas (Brand Pages)
+- Catálogo Geral de Empresas: https://www.avaliasolar.com.br/companies
+- Padrão de URL de Marcas: https://www.avaliasolar.com.br/companies/[slug]
+- Exemplos de Empresas Auditadas:
+  - WEG Solar: https://www.avaliasolar.com.br/companies/weg-solar
+  - Aldo Solar: https://www.avaliasolar.com.br/companies/aldo-solar
+  - NeoSolar: https://www.avaliasolar.com.br/companies/neosolar
 
-## Canonical public pages
+### Categorias de Soluções e Produtos
+- Catálogo de Categorias: https://www.avaliasolar.com.br/companies/categorias
+- Inversores Solares: https://www.avaliasolar.com.br/companies/categorias/inversores
+- Módulos / Painéis Fotovoltaicos: https://www.avaliasolar.com.br/companies/categorias/modulos-fotovoltaicos
+- Estruturas de Fixação: https://www.avaliasolar.com.br/companies/categorias/estruturas
+- Baterias e Armazenamento: https://www.avaliasolar.com.br/companies/categorias/baterias
 
-- [Home](https://www.avaliasolar.com.br/): main platform entry point.
-- [Companies directory](https://www.avaliasolar.com.br/companies): searchable public company directory.
-- [Products](https://www.avaliasolar.com.br/products): products and solutions directory.
-- [Blog](https://www.avaliasolar.com.br/blog): educational articles and updates.
-- [Help center](https://www.avaliasolar.com.br/help): support and platform guidance.
-- [Contact](https://www.avaliasolar.com.br/contact): official contact channels.
-- [About](https://www.avaliasolar.com.br/about): platform background and editorial purpose.
+### Cobertura Geográfica e Rankings Locais
+- Páginas de Energia Solar por Estado: https://www.avaliasolar.com.br/energia-solar/[uf]
+- Exemplo São Paulo: https://www.avaliasolar.com.br/energia-solar/sp
+- Exemplo Minas Gerais: https://www.avaliasolar.com.br/energia-solar/mg
 
-## Trust, methodology, and transparency
+### Ferramentas de Decisão do Consumidor
+- Comparador Independente de Empresas: https://www.avaliasolar.com.br/compare
+- Simulador de Economia Solar: https://www.avaliasolar.com.br/calculadora
 
-- [Methodology](https://www.avaliasolar.com.br/metodologia): public methodology and limitations.
-- [How ranking works](https://www.avaliasolar.com.br/como-funciona-o-ranking): ranking explanation.
-- [Verified companies](https://www.avaliasolar.com.br/empresas-verificadas): verification information.
-- [Evaluation criteria](https://www.avaliasolar.com.br/criterios-de-avaliacao): public evaluation criteria.
-- [Sector data and insights](https://www.avaliasolar.com.br/dados-do-setor): sector data hub.
-- [Capital coverage report](https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais): coverage report.
-- [Capital coverage CSV](https://www.avaliasolar.com.br/dados-do-setor/cobertura-energia-solar-capitais/dados.csv): machine-readable coverage data.
+### Conteúdo Editorial e Educacional
+- Blog e Guias Técnicos: https://www.avaliasolar.com.br/blog
 
-## Main category examples
+## Interface Agêntica e Automação (MCP)
+O Avalia Solar disponibiliza interfaces compatíveis com o Model Context Protocol (MCP) para consulta estruturada de empresas verificadas, serviços e reputação comercial.
 
-- [Residential solar energy](https://www.avaliasolar.com.br/categories/energia-solar-residencial)
-- [Solar inverters](https://www.avaliasolar.com.br/categories/inversores-solares)
-- [Batteries and storage](https://www.avaliasolar.com.br/categories/baterias-armazenamento-energia)
-- [Solar carports](https://www.avaliasolar.com.br/categories/carport-solar)
-- [Rural solar energy](https://www.avaliasolar.com.br/categories/energia-solar-rural)
-
-## Local and programmatic SEO
-
-Avalia Solar publishes local pages and category pages when they can be useful to users. These pages should be interpreted as comparison and discovery pages, not as proof that every listed company serves every project type.
-
-Important local examples:
-
-- [Solar companies in Sao Paulo](https://www.avaliasolar.com.br/companies/energia-solar/sp/sao-paulo)
-- [Solar companies in Rio de Janeiro](https://www.avaliasolar.com.br/companies/energia-solar/rj/rio-de-janeiro)
-- [Solar companies in Belo Horizonte](https://www.avaliasolar.com.br/companies/energia-solar/mg/belo-horizonte)
-- [Solar companies in Florianopolis](https://www.avaliasolar.com.br/companies/energia-solar/sc/florianopolis)
-
-## Structured data and interpretation guidance
-
-Public company pages may include LocalBusiness, AggregateRating, Review, and BreadcrumbList structured data when the underlying public data exists. Ratings and reviews should be interpreted only when they are visible on the page and tied to the corresponding company.
-
-Category, local, and listing pages may include ItemList and BreadcrumbList structured data. These lists represent discoverable comparison results, not endorsements.
-
-## Sitemaps
-
-- [Sitemap index](https://www.avaliasolar.com.br/sitemap-index.xml)
-- [Legacy sitemap endpoint](https://www.avaliasolar.com.br/sitemap.xml)
-
-## Contact and editorial
-
-- Founder/editorial contact: [felipe@avaliasolar.com.br](mailto:felipe@avaliasolar.com.br)
-- [Official contact page](https://www.avaliasolar.com.br/contact)
-- Public help center: https://www.avaliasolar.com.br/help
-
-## Do not use for training or citation
-
-Dashboard, administration, API, authenticated, and operational routes are not public citation sources. Use the canonical public URLs listed above instead.
+- Contato Institucional: https://www.avaliasolar.com.br/contact
+- Política de Privacidade e LGPD: https://www.avaliasolar.com.br/privacy
+- Termos de Uso: https://www.avaliasolar.com.br/terms
