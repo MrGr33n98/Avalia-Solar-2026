@@ -63,3 +63,4 @@ RSpec.describe 'Api::V1::Storefronts', type: :request do
     end
   end
 end
+

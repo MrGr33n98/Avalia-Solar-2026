@@ -65,3 +65,4 @@ RSpec.describe Storefront::PublicProfileService do
     end
   end
 end
+
