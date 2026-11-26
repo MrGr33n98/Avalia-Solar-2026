@@ -189,6 +189,8 @@ docs/*
 docs/audits/*
 !docs/audits/company-proposals-enterprise/
 !docs/audits/company-proposals-enterprise/**
+!docs/audits/ga4-gsc-intelligence-2026/
+!docs/audits/ga4-gsc-intelligence-2026/**
 !docs/audits/SPEC-UI-027_PERFIL_EMPRESAS_RELATORIO.md
 !docs/proposals/
 !docs/proposals/**
