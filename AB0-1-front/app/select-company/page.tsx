@@ -29,6 +29,7 @@ import { SearchEmptyPanel, SearchInitialPanel, SearchLoadingPanel } from './Flow
 import { CompanyAccessSidebar } from '@/components/company-access/CompanyAccessSidebar';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { track } from '@/lib/analytics';
+import { ApiError } from '@/lib/api-error';
 
 const SEARCH_MIN_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -72,12 +73,23 @@ interface ApiErrorShape {
 
 const extractErrorMessage = (error: unknown, fallback: string) => {
   const maybeError = error as ApiErrorShape;
+  // Mensagem própria do erro só quando veio do servidor (ApiError 4xx); falhas de
+  // rede/timeout/erros genéricos mostram o texto amigável do fallback.
+  const serverMessage =
+    error instanceof ApiError &&
+    !error.isNetworkError &&
+    !error.isTimeout &&
+    typeof error.status === 'number' &&
+    error.status >= 400 &&
+    error.status < 500
+      ? error.message
+      : undefined;
   const detailedMessage =
     maybeError?.context?.details?.message ||
     maybeError?.context?.details?.error ||
     maybeError?.context?.details?.errors?.[0] ||
     maybeError?.context?.message ||
-    maybeError?.message;
+    serverMessage;
 
   return typeof detailedMessage === 'string' && detailedMessage.trim().length > 0
     ? detailedMessage

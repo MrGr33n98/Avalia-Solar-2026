@@ -4,6 +4,7 @@ import SelectCompanyPage from '@/app/select-company/page';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { companyAccessApi } from '@/lib/api';
+import { ApiError } from '@/lib/api-error';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // Mock next/navigation
@@ -88,7 +89,7 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
 
     // Deve exibir o cabeçalho e o formulário de busca sem crash
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
     });
 
     expect(screen.getByPlaceholderText(/Buscar por nome da empresa/i)).toBeInTheDocument();
@@ -185,7 +186,7 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
     expect(mockReplace).not.toHaveBeenCalledWith(expect.stringContaining('/dashboard'));
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: /Encontre a empresa que você busca/i })).toBeInTheDocument();
     });
   });
 
@@ -216,5 +217,31 @@ describe('SelectCompanyPage — Integridade de Hooks e Fluxos de Acesso', () => 
     expect(
       screen.getByText(/Não foi possível carregar as sugestões de empresas para solicitação de acesso/i)
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Network Timeout/)).not.toBeInTheDocument();
+  });
+
+  it('mostra a mensagem do servidor quando a API de contexto responde 4xx', async () => {
+    (companyAccessApi.context as jest.Mock).mockRejectedValue(
+      new ApiError('Muitas solicitações. Aguarde um minuto.', { status: 429 })
+    );
+
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { id: 10, email: 'user@empresa.com', role: 'company' },
+      loading: false,
+      isAuthenticated: true,
+    });
+
+    (useCompanyContext as jest.Mock).mockReturnValue({
+      companies: [],
+      activeCompany: null,
+      selectCompany: mockSelectCompany,
+      isLoading: false,
+    });
+
+    render(<SelectCompanyPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Muitas solicitações. Aguarde um minuto.')).toBeInTheDocument();
+    });
   });
 });
