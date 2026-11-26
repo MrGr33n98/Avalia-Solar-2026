@@ -53,6 +53,35 @@ RSpec.describe 'Leads RBAC', type: :request do
       expect(body.map { |l| l['id'] }).to contain_exactly(lead_owned.id)
     end
 
+    context 'com limit' do
+      let!(:older_owned) { create(:lead, company: company, created_at: 2.days.ago) }
+      let!(:newest_owned) { create(:lead, company: company, created_at: 1.minute.from_now) }
+
+      it 'retorna só os N leads mais recentes do próprio tenant' do
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 2 }
+        expect(response).to have_http_status(:ok)
+        ids = JSON.parse(response.body).map { |l| l['id'] }
+        expect(ids).to eq([newest_owned.id, lead_owned.id])
+        expect(ids).not_to include(lead_other.id)
+      end
+
+      it 'ignora limit inválido e devolve a lista completa' do
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 'abc' }
+        ids = JSON.parse(response.body).map { |l| l['id'] }
+        expect(ids).to contain_exactly(lead_owned.id, older_owned.id, newest_owned.id)
+      end
+
+      it 'aplica o teto INDEX_MAX_LIMIT a limites maiores' do
+        stub_const('Api::V1::LeadsController::INDEX_MAX_LIMIT', 2)
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 10_000 }
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body).size).to eq(2)
+      end
+    end
+
     it 'denies company user with inactive company' do
       stub_auth(inactive_company_user)
       get '/api/v1/leads'
@@ -107,6 +136,59 @@ RSpec.describe 'Leads RBAC', type: :request do
     it 'requires auth' do
       get "/api/v1/leads/#{lead_owned.id}"
       expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  describe 'usuário com mais de uma empresa (company_id ativo)' do
+    let(:second_company) { create(:company, status: 'active', plan: leads_plan) }
+    let!(:lead_second) { create(:lead, company: second_company) }
+
+    before do
+      create(:company_member, user: company_user, company: second_company, status: :active)
+      stub_auth(company_user)
+    end
+
+    it 'lista os leads da empresa ativa pedida, não os da principal' do
+      get '/api/v1/leads', params: { company_id: second_company.id }
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body).map { |l| l['id'] }).to contain_exactly(lead_second.id)
+    end
+
+    it 'sem company_id continua usando a empresa principal' do
+      get '/api/v1/leads'
+      expect(JSON.parse(response.body).map { |l| l['id'] }).to contain_exactly(lead_owned.id)
+    end
+
+    it 'nega company_id sem membership ativa (IDOR)' do
+      get '/api/v1/leads', params: { company_id: other_company.id }
+      expect(response).to have_http_status(:forbidden)
+      expect(response.body).not_to include(%("id":#{lead_other.id}))
+    end
+
+    it 'nega company_id com membership revogada' do
+      third_company = create(:company, status: 'active', plan: leads_plan)
+      create(:lead, company: third_company)
+      create(:company_member, user: company_user, company: third_company, status: :revoked)
+      get '/api/v1/leads', params: { company_id: third_company.id }
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'aplica o plano da empresa ativa no gate de leads' do
+      free_plan = create(:plan, name: 'Free Leads', price: 0,
+                                features_json: PlanFeatureCatalog.defaults_for_tier('free'))
+      second_company.update!(plan: free_plan)
+      get '/api/v1/leads', params: { company_id: second_company.id }
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'abre o detalhe de lead da empresa com membership' do
+      get "/api/v1/leads/#{lead_second.id}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'nega o detalhe de lead de empresa sem membership' do
+      get "/api/v1/leads/#{lead_other.id}"
+      expect(response).to have_http_status(:forbidden)
     end
   end
 end

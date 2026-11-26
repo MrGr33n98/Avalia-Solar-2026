@@ -8,6 +8,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
   IDENTITY_KEYS = %w[anonymous_id session_id].freeze
+  INDEX_MAX_LIMIT = 100
   class EmailDeliveryFailed < StandardError
   end
 
@@ -39,7 +40,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
       end
     end
 
-    @leads = @leads.order(created_at: :desc) if ::Lead.column_names.include?('created_at')
+    @leads = order_and_limit_index(@leads)
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
@@ -474,21 +475,50 @@ class Api::V1::LeadsController < Api::V1::BaseController
     @lead = ::Lead.find(params[:id])
   end
 
+  # `limit` opcional (ex.: "leads recentes" da Visão Geral); sem ele, a lista segue completa.
+  def order_and_limit_index(leads)
+    leads = leads.order(created_at: :desc) if ::Lead.column_names.include?('created_at')
+    limit = params[:limit].to_i
+    return leads unless limit.positive?
+
+    leads.limit([limit, INDEX_MAX_LIMIT].min)
+  end
+
   def scoped_leads
     return ::Lead.all if current_user&.admin?
 
-    if current_user&.company_user? && current_user.company_id.present?
-      company = current_user.company
+    company = current_user&.company_user? ? leads_company : nil
+    if company
       unless company_active?(company)
         render_error_response(message: 'Company account is not active', status: :forbidden,
                               code: 'COMPANY_INACTIVE')
         return nil
       end
-      return ::Lead.where(company_id: current_user.company_id)
+      return ::Lead.where(company_id: company.id)
     end
     render_error_response(message: 'Not authorized to list leads', status: :forbidden,
                           code: 'FORBIDDEN')
     nil
+  end
+
+  # Empresa cujos leads o usuário pode listar: a do `company_id` pedido, só se for a
+  # empresa principal ou houver membership ativa; sem `company_id`, a principal.
+  def leads_company
+    return @leads_company if defined?(@leads_company)
+
+    requested_id = params[:company_id].presence
+    @leads_company =
+      if requested_id.nil?
+        current_user.company
+      elsif lead_company_member?(requested_id)
+        ::Company.find_by(id: requested_id)
+      end
+  end
+
+  def lead_company_member?(company_id)
+    return false if company_id.blank?
+
+    company_id.to_i == current_user.company_id || current_user.active_membership_for?(company_id)
   end
 
   def ensure_leads_access!
@@ -500,21 +530,19 @@ class Api::V1::LeadsController < Api::V1::BaseController
   def ensure_leads_feature_access!
     return if performed? || current_user&.admin?
 
-    enforce_feature_access!(:leads_marketplace, company: current_user&.company)
+    enforce_feature_access!(:leads_marketplace, company: current_user&.company_user? ? leads_company : nil)
   end
 
   def ensure_lead_access!
     return if performed? || current_user.nil?
     return if current_user&.admin?
 
-    if current_user&.company_user? && current_user.company_id.present?
-      company = current_user.company
-      unless company_active?(company)
-        render_error_response(message: 'Company account is not active', status: :forbidden,
-                              code: 'COMPANY_INACTIVE')
-        return
-      end
-      return if @lead.company_id == current_user.company_id
+    if current_user&.company_user? && lead_company_member?(@lead.company_id)
+      return if company_active?(::Company.find_by(id: @lead.company_id))
+
+      render_error_response(message: 'Company account is not active', status: :forbidden,
+                            code: 'COMPANY_INACTIVE')
+      return
     end
     render_error_response(message: 'Not authorized to access this lead', status: :forbidden,
                           code: 'FORBIDDEN')
