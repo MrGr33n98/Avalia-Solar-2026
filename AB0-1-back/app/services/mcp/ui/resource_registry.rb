@@ -72,13 +72,21 @@ module Mcp
       ).freeze
       URI_INDEX = SURFACES.values.index_by { |entry| entry[:uri] }.freeze
 
+      CANARY_FLAGS = %w[MCP_UI_STOREFRONT_ENABLED].freeze
+
       class << self
         def enabled?
           ENV[UI_FLAG] == 'true'
         end
 
         def surface_enabled?(entry)
-          enabled? && entry.present? && ENV[entry[:flag]] != 'false'
+          return false unless enabled? && entry.present?
+
+          if CANARY_FLAGS.include?(entry[:flag])
+            ENV[entry[:flag]] == 'true'
+          else
+            ENV[entry[:flag]] != 'false'
+          end
         end
 
         def server_capabilities

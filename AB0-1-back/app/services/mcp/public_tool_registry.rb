@@ -8,13 +8,13 @@ module Mcp
     CONTRACT_VERSION = '1.0.0'
     MAX_LIMIT = 20
     SERVICES_FLAG = 'MCP_PUBLIC_COMPANY_SERVICES_ENABLED'
+    STOREFRONT_FLAG = 'MCP_PUBLIC_STOREFRONT_ENABLED'
     PUBLIC_NAMES = %w[
       list_integrators
       show_integrator_profile
       list_solar_categories
       get_integrator_reputation
       compare_integrators
-      show_storefront_profile
     ].freeze
 
     STRING_FILTER = { 'type' => 'string', 'minLength' => 1, 'maxLength' => 120 }.freeze
@@ -29,6 +29,7 @@ module Mcp
 
       def find(name)
         return nil if name.to_s == 'get_company_services' && !services_enabled?
+        return nil if name.to_s == 'show_storefront_profile' && !storefront_enabled?
 
         entry = CATALOG[name.to_s]
         return nil unless entry
@@ -41,11 +42,18 @@ module Mcp
       end
 
       def names
-        PUBLIC_NAMES.dup.tap { |names| names << 'get_company_services' if services_enabled? }
+        PUBLIC_NAMES.dup.tap do |names|
+          names << 'get_company_services' if services_enabled?
+          names << 'show_storefront_profile' if storefront_enabled?
+        end
       end
 
       def services_enabled?
         ENV[SERVICES_FLAG] == 'true'
+      end
+
+      def storefront_enabled?
+        ENV[STOREFRONT_FLAG] == 'true'
       end
 
       # For the future protocol adapter only. Does not dispatch or grant access.

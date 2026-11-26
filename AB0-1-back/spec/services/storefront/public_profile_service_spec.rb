@@ -21,7 +21,6 @@ RSpec.describe Storefront::PublicProfileService do
   end
 
   before do
-    allow(company).to receive(:projects).and_return([])
     allow(company).to receive(:products).and_return([])
   end
 

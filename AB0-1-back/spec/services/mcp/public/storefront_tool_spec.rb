@@ -3,6 +3,13 @@
 require 'rails_helper'
 
 RSpec.describe 'Mcp::PublicToolRegistry storefront integration', type: :service do
+  before do
+    allow(ENV).to receive(:[]).and_call_original
+    allow(ENV).to receive(:[]).with('MCP_PUBLIC_STOREFRONT_ENABLED').and_return('true')
+    allow(ENV).to receive(:[]).with('MCP_UI_ENABLED').and_return('true')
+    allow(ENV).to receive(:[]).with('MCP_UI_STOREFRONT_ENABLED').and_return('true')
+  end
+
   describe 'show_storefront_profile registration' do
     it 'includes show_storefront_profile in public tool names' do
       expect(Mcp::PublicToolRegistry.names).to include('show_storefront_profile')
@@ -24,7 +31,7 @@ RSpec.describe 'Mcp::PublicToolRegistry storefront integration', type: :service 
       expect(input_schema['type']).to eq('object')
       expect(input_schema['properties']).to have_key('slug')
       expect(input_schema['properties']).to have_key('company_id')
-      expect(input_schema['conditions']['oneOf']).to include(
+      expect(input_schema['oneOf']).to include(
         { 'required' => ['company_id'] },
         { 'required' => ['slug'] }
       )

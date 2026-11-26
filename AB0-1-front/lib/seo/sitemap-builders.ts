@@ -482,7 +482,8 @@ export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap>
 
   try {
     for (let page = 1; page <= 50; page += 1) {
-      const records = await fetchRecords(`sitemaps/companies?page=${page}&per_page=${pageSize}`, 1800);
+      const pageData = await fetchRecordsPage('sitemaps/companies', page, pageSize, 1800);
+      const records = pageData.records;
       for (const company of records) {
         const slug = getString(company, 'slug');
         if (!slug) continue;
@@ -499,7 +500,9 @@ export async function getCompanySitemapEntries(): Promise<MetadataRoute.Sitemap>
           priority: 0.9,
         });
       }
-      if (records.length < pageSize) break;
+      if (!pageData.nextPage && (records.length < pageSize || (pageData.totalPages && page >= pageData.totalPages))) {
+        break;
+      }
     }
   } catch (error) {
     console.warn('[Sitemap][companies] Dedicated feed failed, attempting fallback:', error);
