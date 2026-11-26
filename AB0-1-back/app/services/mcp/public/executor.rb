@@ -13,6 +13,7 @@ module Mcp
         list_solar_categories
         get_integrator_reputation
         compare_integrators
+        get_company_services
       ].freeze
 
       class << self
@@ -23,6 +24,8 @@ module Mcp
           case name
           when 'get_integrator_reputation'
             ReputationService.new.call(arguments: arguments)
+          when 'get_company_services'
+            ServicesService.new.call(arguments: arguments)
           when 'compare_integrators'
             ComparisonService.new.call(arguments: arguments)
           else
