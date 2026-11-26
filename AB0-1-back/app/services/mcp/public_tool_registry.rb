@@ -8,6 +8,7 @@ module Mcp
     CONTRACT_VERSION = '1.0.0'
     MAX_LIMIT = 20
     SERVICES_FLAG = 'MCP_PUBLIC_COMPANY_SERVICES_ENABLED'
+    STOREFRONT_FLAG = 'MCP_PUBLIC_STOREFRONT_ENABLED'
     PUBLIC_NAMES = %w[
       list_integrators
       show_integrator_profile
@@ -28,6 +29,7 @@ module Mcp
 
       def find(name)
         return nil if name.to_s == 'get_company_services' && !services_enabled?
+        return nil if name.to_s == 'show_storefront_profile' && !storefront_enabled?
 
         entry = CATALOG[name.to_s]
         return nil unless entry
@@ -40,11 +42,18 @@ module Mcp
       end
 
       def names
-        PUBLIC_NAMES.dup.tap { |names| names << 'get_company_services' if services_enabled? }
+        PUBLIC_NAMES.dup.tap do |names|
+          names << 'get_company_services' if services_enabled?
+          names << 'show_storefront_profile' if storefront_enabled?
+        end
       end
 
       def services_enabled?
         ENV[SERVICES_FLAG] == 'true'
+      end
+
+      def storefront_enabled?
+        ENV[STOREFRONT_FLAG] == 'true'
       end
 
       # For the future protocol adapter only. Does not dispatch or grant access.
@@ -245,6 +254,34 @@ module Mcp
             'criteria_used' => { 'type' => 'array', 'items' => { 'type' => 'string' } }
           },
           %w[companies comparison_matrix unknown_fields criteria_used]
+        )
+      ),
+      'show_storefront_profile' => tool(
+        'show_storefront_profile',
+        title: 'Consultar vitrine do integrador (Storefront)',
+        description: 'Exibe a vitrine interativa pública de um integrador solar com catálogo de produtos, marcas parceiras, portfólio de projetos e simulador.',
+        source: 'Storefront::PublicProfileService',
+        input: COMPANY_REFERENCE,
+        output: envelope(
+          {
+            'company' => schema(
+              properties: {
+                'id' => PUBLIC_ID,
+                'name' => { 'type' => 'string' },
+                'slug' => STRING_FILTER,
+                'verified' => { 'type' => 'boolean' },
+                'logo_url' => { 'type' => %w[string null] },
+                'headquarters' => { 'type' => 'object' },
+                'rating' => { 'type' => %w[number null] },
+                'review_count' => { 'type' => 'integer', 'minimum' => 0 }
+              },
+              required: %w[id name slug verified headquarters review_count]
+            ),
+            'settings' => { 'type' => 'object' },
+            'projects' => { 'type' => 'array', 'items' => { 'type' => 'object' } },
+            'curated_products' => { 'type' => 'array', 'items' => { 'type' => 'object' } }
+          },
+          %w[company settings projects curated_products]
         )
       )
     }.freeze

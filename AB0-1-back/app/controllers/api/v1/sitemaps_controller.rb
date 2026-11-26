@@ -23,6 +23,29 @@ module Api
         render json: { error: 'Falha ao exportar sitemap de categorias' }, status: :service_unavailable
       end
 
+      # Feed leve e ultra-rápido de empresas para sitemaps, sem carregar relacionamentos pesados.
+      def companies
+        page = [params[:page].to_i, 1].max
+        per_page = [[params[:per_page].to_i, 1].max, 1000].min
+
+        scope = ::Company.where(status: 'active')
+                         .where.not(slug: [nil, ''])
+                         .order('id ASC')
+
+        records = scope.limit(per_page).offset((page - 1) * per_page)
+                       .pluck(:id, :slug, :name, :updated_at)
+
+        response.headers['Cache-Control'] = 'public, max-age=1800, stale-while-revalidate=86400'
+        render json: {
+          data: records.map do |id, slug, name, updated_at|
+            { id: id, slug: slug, name: name, updated_at: updated_at }
+          end
+        }, status: :ok
+      rescue StandardError => e
+        Rails.logger.error("[SitemapsController#companies] #{e.class}: #{e.message}")
+        render json: { data: [] }, status: :service_unavailable
+      end
+
       def local_rankings
         begin
           data = Rails.cache.fetch('sitemap_local_rankings', expires_in: 1.hour) do

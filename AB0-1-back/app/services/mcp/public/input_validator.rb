@@ -22,7 +22,7 @@ module Mcp
           case name
           when 'list_integrators'
             search(args)
-          when 'show_integrator_profile', 'get_integrator_reputation'
+          when 'show_integrator_profile', 'get_integrator_reputation', 'show_storefront_profile'
             reference(args)
           when 'get_company_services'
             result = reference(args)

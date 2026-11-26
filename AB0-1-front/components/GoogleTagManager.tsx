@@ -4,7 +4,9 @@ interface GTMProps {
   gtmId: string;
 }
 
-const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false' && process.env.NODE_ENV === 'production';
+const isAnalyticsEnabled = () =>
+  process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false' &&
+  (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test');
 
 /**
  * GoogleTagManager — Performance-optimized
@@ -16,13 +18,13 @@ const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS !== 'false' &&
  *   - Não bloqueia FCP, LCP nem TBT.
  */
 export function GoogleTagManager({ gtmId }: GTMProps) {
-  if (!analyticsEnabled || !gtmId) return null;
+  if (!isAnalyticsEnabled() || !gtmId) return null;
 
   return (
     <>
       <Script
         id="google-consent-mode"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       >{`
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
@@ -61,7 +63,7 @@ export function GoogleTagManager({ gtmId }: GTMProps) {
 }
 
 export function GoogleTagManagerNoScript({ gtmId }: GTMProps) {
-  if (!analyticsEnabled || !gtmId) return null;
+  if (!isAnalyticsEnabled() || !gtmId) return null;
 
   return (
     <noscript>

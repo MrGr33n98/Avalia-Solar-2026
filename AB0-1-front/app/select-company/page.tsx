@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCompanyContext } from '@/context/CompanyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -201,53 +201,41 @@ function SelectCompanyContent() {
   ]);
 
   // ── Carregamento resiliente do contexto (não bloqueia a busca) ───────────────
-  useEffect(() => {
+  const loadAccessContext = useCallback(async () => {
     if (authLoading) return;
-
-    let cancelled = false;
 
     if (!isAuthenticated) {
       setContextLoading(false);
-      return () => {
-        cancelled = true;
-      };
+      return;
     }
 
-    const loadContext = async () => {
-      setContextLoading(true);
-      setContextError(null);
-      try {
-        const context = await companyAccessApi.context(
-          { limit: 8 },
-          { retries: 1, timeout: 8000, useClientCache: true }
-        );
-        if (cancelled) return;
+    setContextLoading(true);
+    setContextError(null);
+    try {
+      const context = await companyAccessApi.context(
+        { limit: 8 },
+        { retries: 1, timeout: 8000, useClientCache: true }
+      );
 
-        setSuggestedCompanies(context?.suggested_companies || []);
-        const requests = context?.pending_requests || [];
-        setPendingRequests(requests);
-        setPendingRequestIds(requests.map((request) => request.company_id));
-      } catch (error) {
-        if (cancelled) return;
-        setContextError(
-          extractErrorMessage(
-            error,
-            'Não foi possível carregar as sugestões de empresas para solicitação de acesso.'
-          )
-        );
-      } finally {
-        if (!cancelled) {
-          setContextLoading(false);
-        }
-      }
-    };
-
-    void loadContext();
-
-    return () => {
-      cancelled = true;
-    };
+      setSuggestedCompanies(context?.suggested_companies || []);
+      const requests = context?.pending_requests || [];
+      setPendingRequests(requests);
+      setPendingRequestIds(requests.map((request) => request.company_id));
+    } catch (error) {
+      setContextError(
+        extractErrorMessage(
+          error,
+          'Não foi possível carregar as sugestões de empresas. Tente novamente.'
+        )
+      );
+    } finally {
+      setContextLoading(false);
+    }
   }, [authLoading, isAuthenticated]);
+
+  useEffect(() => {
+    void loadAccessContext();
+  }, [loadAccessContext]);
 
   // ── Busca debounceada ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -524,14 +512,24 @@ function SelectCompanyContent() {
                   <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
                   <span>{contextError}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setContextError(null)}
-                  className="ml-2 font-bold text-amber-600 hover:text-amber-800"
-                  aria-label="Fechar aviso"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void loadAccessContext()}
+                    className="font-semibold text-amber-900 underline hover:text-amber-950 focus:outline-none"
+                    aria-label="Tentar carregar sugestões novamente"
+                  >
+                    Tentar novamente
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContextError(null)}
+                    className="ml-2 font-bold text-amber-600 hover:text-amber-800"
+                    aria-label="Fechar aviso"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             )}
 

@@ -55,6 +55,15 @@ module Mcp
           description: 'Diretório interativo de categorias solares e filtro rápido para pesquisar integradores.',
           flag: 'MCP_UI_CATEGORIES_ENABLED',
           display_modes: %w[inline fullscreen]
+        }.freeze,
+        'show_storefront_profile' => {
+          key: 'storefront',
+          file: 'storefront.v1.html',
+          uri: 'ui://avalia-solar/storefront/v1.html',
+          name: 'Avalia Solar Storefront',
+          description: 'Vitrine digital completa do integrador solar com catálogo de produtos, projetos executados e simulador.',
+          flag: 'MCP_UI_STOREFRONT_ENABLED',
+          display_modes: %w[fullscreen inline]
         }.freeze
       }.freeze
 
@@ -63,13 +72,21 @@ module Mcp
       ).freeze
       URI_INDEX = SURFACES.values.index_by { |entry| entry[:uri] }.freeze
 
+      CANARY_FLAGS = %w[MCP_UI_STOREFRONT_ENABLED].freeze
+
       class << self
         def enabled?
           ENV[UI_FLAG] == 'true'
         end
 
         def surface_enabled?(entry)
-          enabled? && entry.present? && ENV[entry[:flag]] != 'false'
+          return false unless enabled? && entry.present?
+
+          if CANARY_FLAGS.include?(entry[:flag])
+            ENV[entry[:flag]] == 'true'
+          else
+            ENV[entry[:flag]] != 'false'
+          end
         end
 
         def server_capabilities

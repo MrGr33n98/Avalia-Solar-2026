@@ -1,0 +1,11 @@
+-- native-macos: capture_native_ui_scenario,observe_native_calls [unsupported_host]
+-- native-macos: demangle_swift,list_architectures [unsupported_host]
+-- native-macos: inspect_macho,inspect_plist,inspect_signature,observe_native_ui [unsupported_host]
+-- native-macos: inspect_native_dispatch_metadata [unsupported_host]
+OK rea-artifact-graph: decode_interface_builder,inspect_keyed_archive,trace_dylib_resolution
+OK rea-artifact-graph: extract_artifact,inspect_artifact
+OK rea-dotnet-static: inspect_managed_artifact
+OK rea-dotnet-static: inspect_managed_members
+OK rea-dotnet-static: inspect_managed_native_boundaries
+-- rea-artifact-graph: inspect_asset_catalog [unsupported_host]
+-- sqlite: inspect_sqlite_database [unsupported_version]

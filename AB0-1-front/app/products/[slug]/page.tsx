@@ -138,22 +138,27 @@ export default async function ProductDetailPage({ params }: Props) {
     description: pageData.product.description || undefined,
     image: pageData.product.image_url || undefined,
     sku: pageData.product.sku || undefined,
-    brand: pageData.product.brand?.name || pageData.company?.name || 'Avalia Solar',
-    offers: {
-      '@type': 'Offer',
-      price: pageData.product.price || undefined,
-      priceCurrency: 'BRL',
-      availability: 'https://schema.org/InStock',
-      url: canonicalUrl,
+    brand: {
+      '@type': 'Brand',
+      name: pageData.product.brand?.name || pageData.company?.name || 'Avalia Solar',
     },
-    ...(pageData.reviewsData?.summary ? {
+    ...(pageData.product.price ? {
+      offers: {
+        '@type': 'Offer',
+        price: pageData.product.price,
+        priceCurrency: 'BRL',
+        availability: 'https://schema.org/InStock',
+        url: canonicalUrl,
+      },
+    } : {}),
+    ...(pageData.reviewsData?.summary?.total_reviews && pageData.reviewsData.summary.total_reviews > 0 ? {
       aggregateRating: {
         '@type': 'AggregateRating',
         ratingValue: pageData.reviewsData.summary.average_rating,
         reviewCount: pageData.reviewsData.summary.total_reviews,
         bestRating: '5',
         worstRating: '1',
-      }
+      },
     } : {}),
   };
 

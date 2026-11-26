@@ -22,6 +22,7 @@ import { getSessionId } from './session';
 import { shouldTrackEvent, generateEventId } from './dedupe';
 import { ANALYTICS_CONTRACT_VERSION, getSurfaceKindForHostname, resolveEventContract } from './contract';
 import { pushAnalyticsDataLayerEvent } from './data-layer';
+import { gtagEvent, mapToGA4Event } from './gtag';
 import { opaqueUserId, sanitizeAnalyticsProperties } from './sanitize';
 import {
   isQueuedOfflineMutationResult,
@@ -341,7 +342,17 @@ export function track<K extends AnalyticsEventName>(
     }
   }
 
-  // 2. Disponibiliza o evento consentido no dataLayer, inclusive antes do GTM carregar.
+  // 2. Disparo direto para GA4 mapeado para Recommended Events com parâmetros sanitizados
+  if (options.sendTo?.ga4 !== false) {
+    try {
+      const ga4 = mapToGA4Event(eventName, matrixProps);
+      gtagEvent(ga4.name, ga4.params);
+    } catch (e) {
+      console.error('[Analytics] GA4 event dispatch failed:', e);
+    }
+  }
+
+  // 3. Disponibiliza o evento consentido no dataLayer, inclusive antes do GTM carregar.
   // O GTM permanece responsável por pixels; não criar tags GA4 duplicadas.
   pushAnalyticsDataLayerEvent(mapToGtmEvent(eventName), matrixProps);
 

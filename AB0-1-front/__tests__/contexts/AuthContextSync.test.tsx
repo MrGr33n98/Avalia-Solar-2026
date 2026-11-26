@@ -308,6 +308,76 @@ describe('AuthContext sync & concurrency', () => {
     expect(destination).not.toContain('/feed');
   });
 
+  it('routes review user with creator enabled but without slug to /review-dashboard', async () => {
+    const initial = createDeferred<any>();
+    (authApi.me as jest.Mock).mockReturnValue(initial.promise);
+    (companyAccessApi.context as jest.Mock).mockResolvedValue({ active_memberships: [] });
+    (reviewerProfileApi.get as jest.Mock).mockResolvedValue({
+      profile: { creator_enabled: true, public_slug: null },
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    const creatorWithoutSlug = {
+      id: 58,
+      email: 'noslug@gmail.com',
+      name: 'No Slug Creator',
+      role: 'review' as const,
+    };
+
+    const destination = await result.current.getPostLoginDestination(creatorWithoutSlug as any);
+    expect(destination).toContain('/review-dashboard');
+    expect(destination).not.toContain('/feed');
+  });
+
+  it('preserves authorized returnTo destination for review user', async () => {
+    const initial = createDeferred<any>();
+    (authApi.me as jest.Mock).mockReturnValue(initial.promise);
+    (companyAccessApi.context as jest.Mock).mockResolvedValue({ active_memberships: [] });
+    (reviewerProfileApi.get as jest.Mock).mockResolvedValue({
+      profile: { creator_enabled: false, public_slug: null },
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    const reviewUser = {
+      id: 59,
+      email: 'reviewer@gmail.com',
+      name: 'Reviewer With Return',
+      role: 'review' as const,
+    };
+
+    const destination = await result.current.getPostLoginDestination(
+      reviewUser as any,
+      '/review-dashboard/reputation'
+    );
+    expect(destination).toBe('/review-dashboard/reputation');
+  });
+
+  it('ignores unsafe returnTo destination (like auth pages) and falls back to /review-dashboard', async () => {
+    const initial = createDeferred<any>();
+    (authApi.me as jest.Mock).mockReturnValue(initial.promise);
+    (companyAccessApi.context as jest.Mock).mockResolvedValue({ active_memberships: [] });
+    (reviewerProfileApi.get as jest.Mock).mockResolvedValue({
+      profile: { creator_enabled: false, public_slug: null },
+    });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    const reviewUser = {
+      id: 60,
+      email: 'reviewer@gmail.com',
+      name: 'Reviewer Unsafe Return',
+      role: 'review' as const,
+    };
+
+    const destination = await result.current.getPostLoginDestination(
+      reviewUser as any,
+      '/login'
+    );
+    expect(destination).toBe('/review-dashboard');
+  });
+
   it('routes review user with active company membership to company dashboard', async () => {
     const initial = createDeferred<any>();
     (authApi.me as jest.Mock).mockReturnValue(initial.promise);

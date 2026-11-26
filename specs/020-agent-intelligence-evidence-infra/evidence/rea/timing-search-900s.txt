@@ -1,0 +1,4 @@
+	Command being timed: "rea analyze-javascript-application $SCRATCH/targets/mcp-ui-js --artifact-format directory --source-path search.v1.js --analysis-timeout-ms 900000 --detail summary --evidence_output $SCRATCH/rea/search-js-long2.evidence.json --format json"
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:46.70
+	Maximum resident set size (kbytes): 748124
+	Exit status: 0

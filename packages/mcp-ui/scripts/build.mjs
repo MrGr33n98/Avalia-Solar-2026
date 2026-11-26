@@ -22,6 +22,7 @@ const SURFACES = [
   { id: 'reputation', entry: 'entries/reputation.html', uri: 'ui://avalia-solar/reputation/v1.html' },
   { id: 'compare', entry: 'entries/compare.html', uri: 'ui://avalia-solar/compare/v1.html' },
   { id: 'categories', entry: 'entries/categories.html', uri: 'ui://avalia-solar/categories/v1.html' },
+  { id: 'storefront', entry: 'entries/storefront.html', uri: 'ui://avalia-solar/storefront/v1.html' },
 ];
 
 async function run() {

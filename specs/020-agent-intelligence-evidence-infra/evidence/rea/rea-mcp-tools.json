@@ -1,0 +1,2632 @@
+[
+ {
+  "name": "annotate_native_function",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Annotate Native Function"
+ },
+ {
+  "name": "inspect_native_load_image",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Load Image"
+ },
+ {
+  "name": "inspect_native_data_type",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Data Type"
+ },
+ {
+  "name": "inspect_native_instruction",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Instruction"
+ },
+ {
+  "name": "resolve_native_call_targets",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Resolve Native Call Targets"
+ },
+ {
+  "name": "address_name",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Address Name"
+ },
+ {
+  "name": "comment",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Comment"
+ },
+ {
+  "name": "current_address",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Current Address"
+ },
+ {
+  "name": "current_procedure",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Current Procedure"
+ },
+ {
+  "name": "current_document",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Current Document"
+ },
+ {
+  "name": "goto_address",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Goto Address"
+ },
+ {
+  "name": "inline_comment",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inline Comment"
+ },
+ {
+  "name": "list_bookmarks",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "List Bookmarks"
+ },
+ {
+  "name": "list_documents",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Documents"
+ },
+ {
+  "name": "list_names",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "List Names"
+ },
+ {
+  "name": "list_procedures",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Procedures"
+ },
+ {
+  "name": "list_segments",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "List Segments"
+ },
+ {
+  "name": "list_strings",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Strings"
+ },
+ {
+  "name": "next_address",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Next Address"
+ },
+ {
+  "name": "prev_address",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Prev Address"
+ },
+ {
+  "name": "procedure_address",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Procedure Address"
+ },
+ {
+  "name": "procedure_assembly",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Procedure Assembly"
+ },
+ {
+  "name": "procedure_callees",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Procedure Callees"
+ },
+ {
+  "name": "procedure_callers",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Procedure Callers"
+ },
+ {
+  "name": "procedure_info",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Procedure Info"
+ },
+ {
+  "name": "read_function_instructions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Read Function Instructions"
+ },
+ {
+  "name": "search_bytes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Search Bytes"
+ },
+ {
+  "name": "read_bytes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Read Bytes"
+ },
+ {
+  "name": "address_to_file_offset",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Address To File Offset"
+ },
+ {
+  "name": "procedure_references",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Procedure References"
+ },
+ {
+  "name": "procedure_pseudo_code",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Procedure Pseudo Code"
+ },
+ {
+  "name": "resolve_containing_procedure",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Resolve Containing Procedure"
+ },
+ {
+  "name": "search_procedures",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Search Procedures"
+ },
+ {
+  "name": "search_strings",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Search Strings"
+ },
+ {
+  "name": "set_address_name",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Set Address Name"
+ },
+ {
+  "name": "set_addresses_names",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Set Addresses Names"
+ },
+ {
+  "name": "set_bookmark",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Set Bookmark"
+ },
+ {
+  "name": "set_comment",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Set Comment"
+ },
+ {
+  "name": "set_inline_comment",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Set Inline Comment"
+ },
+ {
+  "name": "unset_bookmark",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Unset Bookmark"
+ },
+ {
+  "name": "xrefs",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Xrefs"
+ },
+ {
+  "name": "inspect_native_dispatch_metadata",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Dispatch Metadata"
+ },
+ {
+  "name": "get_objc_classes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Get Objc Classes"
+ },
+ {
+  "name": "get_objc_protocols",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Get Objc Protocols"
+ },
+ {
+  "name": "batch_decompile",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Batch Decompile"
+ },
+ {
+  "name": "decompile_all",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Decompile All"
+ },
+ {
+  "name": "get_call_graph",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Get Call Graph"
+ },
+ {
+  "name": "analyze_swift_types",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Analyze Swift Types"
+ },
+ {
+  "name": "find_xrefs_to_name",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Find Xrefs To Name"
+ },
+ {
+  "name": "binary_overview",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Binary Overview"
+ },
+ {
+  "name": "analyze_function",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Analyze Function"
+ },
+ {
+  "name": "inspect_native_api",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Inspect Native Api"
+ },
+ {
+  "name": "trace_feature",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Trace Feature"
+ },
+ {
+  "name": "trace_call_path",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Trace Call Path"
+ },
+ {
+  "name": "trace_native_ui_action",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Trace Native Ui Action"
+ },
+ {
+  "name": "trace_native_values",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Trace Native Values"
+ },
+ {
+  "name": "observe_native_ui",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Observe Native Ui"
+ },
+ {
+  "name": "capture_native_ui_scenario",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Capture Native Ui Scenario"
+ },
+ {
+  "name": "observe_native_calls",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Observe Native Calls"
+ },
+ {
+  "name": "inspect_macho",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Macho"
+ },
+ {
+  "name": "inspect_signature",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Signature"
+ },
+ {
+  "name": "inspect_plist",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Plist"
+ },
+ {
+  "name": "list_architectures",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Architectures"
+ },
+ {
+  "name": "demangle_swift",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Demangle Swift"
+ },
+ {
+  "name": "inspect_with_objdump",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect With Objdump"
+ },
+ {
+  "name": "execute_rizin_command",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Execute Rizin Command"
+ },
+ {
+  "name": "list_cutter_sessions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Cutter Sessions"
+ },
+ {
+  "name": "cutter_command",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Cutter Command"
+ },
+ {
+  "name": "start_gdb_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Gdb Session"
+ },
+ {
+  "name": "gdb_console",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Gdb Console"
+ },
+ {
+  "name": "gdb_session_status",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Gdb Session Status"
+ },
+ {
+  "name": "close_gdb_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Close Gdb Session"
+ },
+ {
+  "name": "start_rizin_debug_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Rizin Debug Session"
+ },
+ {
+  "name": "rizin_debug_command",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Rizin Debug Command"
+ },
+ {
+  "name": "rizin_debug_session_status",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Rizin Debug Session Status"
+ },
+ {
+  "name": "close_rizin_debug_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Close Rizin Debug Session"
+ },
+ {
+  "name": "inspect_devicetree",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Devicetree"
+ },
+ {
+  "name": "inspect_pe_load_config",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Pe Load Config"
+ },
+ {
+  "name": "inspect_binary_hardening",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Binary Hardening"
+ },
+ {
+  "name": "inspect_native_initializers",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Initializers"
+ },
+ {
+  "name": "inspect_elf_notes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Elf Notes"
+ },
+ {
+  "name": "inspect_dwarf_units",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Dwarf Units"
+ },
+ {
+  "name": "inspect_elf_debug_link",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Elf Debug Link"
+ },
+ {
+  "name": "inspect_elf_unwind_ranges",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Elf Unwind Ranges"
+ },
+ {
+  "name": "inspect_apple_ips",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Apple Ips"
+ },
+ {
+  "name": "inspect_kernel_module",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Kernel Module"
+ },
+ {
+  "name": "inspect_elf_dependencies",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Elf Dependencies"
+ },
+ {
+  "name": "inspect_kernel_build_config",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Kernel Build Config"
+ },
+ {
+  "name": "inspect_byte_entropy",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Byte Entropy"
+ },
+ {
+  "name": "inspect_pe_certificates",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Pe Certificates"
+ },
+ {
+  "name": "inspect_pe_imports",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Pe Imports"
+ },
+ {
+  "name": "inspect_windows_shortcut",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Windows Shortcut"
+ },
+ {
+  "name": "inspect_pe_resources",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Pe Resources"
+ },
+ {
+  "name": "inspect_native_exports",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Native Exports"
+ },
+ {
+  "name": "inspect_binary_layout",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Binary Layout"
+ },
+ {
+  "name": "inspect_recorded_crash",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Recorded Crash"
+ },
+ {
+  "name": "audit_release_exposure",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Audit Release Exposure"
+ },
+ {
+  "name": "inspect_artifact",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Artifact"
+ },
+ {
+  "name": "extract_artifact",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Extract Artifact"
+ },
+ {
+  "name": "decode_interface_builder",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Decode Interface Builder"
+ },
+ {
+  "name": "inspect_keyed_archive",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Keyed Archive"
+ },
+ {
+  "name": "inspect_asset_catalog",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Asset Catalog"
+ },
+ {
+  "name": "trace_dylib_resolution",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Trace Dylib Resolution"
+ },
+ {
+  "name": "inspect_desktop_application",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Desktop Application"
+ },
+ {
+  "name": "inspect_evm_interface",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Evm Interface"
+ },
+ {
+  "name": "inspect_go_binary",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Go Binary"
+ },
+ {
+  "name": "inspect_il2cpp_metadata",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Il2cpp Metadata"
+ },
+ {
+  "name": "inspect_model_artifact",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Model Artifact"
+ },
+ {
+  "name": "inspect_gpu_code_objects",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Gpu Code Objects"
+ },
+ {
+  "name": "inspect_rust_binary",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Rust Binary"
+ },
+ {
+  "name": "inspect_python_pyc",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Python Pyc"
+ },
+ {
+  "name": "inspect_nuget_nupkg",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Nuget Nupkg"
+ },
+ {
+  "name": "inspect_erlang_beam",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Erlang Beam"
+ },
+ {
+  "name": "inspect_v8_code_cache",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect V8 Code Cache"
+ },
+ {
+  "name": "inspect_maven_gradle_metadata",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Maven Gradle Metadata"
+ },
+ {
+  "name": "inspect_wasm_artifact",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Wasm Artifact"
+ },
+ {
+  "name": "compare_wasm_interfaces",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Wasm Interfaces"
+ },
+ {
+  "name": "inspect_apk_signature",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Apk Signature"
+ },
+ {
+  "name": "inspect_sqlite_database",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Sqlite Database"
+ },
+ {
+  "name": "inspect_packet_fields",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Packet Fields"
+ },
+ {
+  "name": "inspect_packet_capture",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Packet Capture"
+ },
+ {
+  "name": "inspect_signal_decoders",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Signal Decoders"
+ },
+ {
+  "name": "decode_signal_recording",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Decode Signal Recording"
+ },
+ {
+  "name": "inspect_managed_artifact",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Managed Artifact"
+ },
+ {
+  "name": "inspect_managed_members",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Managed Members"
+ },
+ {
+  "name": "inspect_managed_native_boundaries",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Managed Native Boundaries"
+ },
+ {
+  "name": "compare_managed_members",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Managed Members"
+ },
+ {
+  "name": "verify_managed_native_boundaries",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Verify Managed Native Boundaries"
+ },
+ {
+  "name": "import_managed_reconstruction",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Import Managed Reconstruction"
+ },
+ {
+  "name": "project_managed_application_graph",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Project Managed Application Graph"
+ },
+ {
+  "name": "inspect_firmware_regions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Firmware Regions"
+ },
+ {
+  "name": "extract_firmware",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Extract Firmware"
+ },
+ {
+  "name": "inspect_uefi_firmware",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Uefi Firmware"
+ },
+ {
+  "name": "extract_uefi_firmware",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Extract Uefi Firmware"
+ },
+ {
+  "name": "inspect_uefi_nvram",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Uefi Nvram"
+ },
+ {
+  "name": "inspect_android_jni_bindings",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Android Jni Bindings"
+ },
+ {
+  "name": "inspect_android_package",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Android Package"
+ },
+ {
+  "name": "search_android_classes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Search Android Classes"
+ },
+ {
+  "name": "inspect_android_class",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Android Class"
+ },
+ {
+  "name": "inspect_android_method",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Android Method"
+ },
+ {
+  "name": "trace_android_references",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Trace Android References"
+ },
+ {
+  "name": "inspect_pcap_client",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Pcap Client"
+ },
+ {
+  "name": "inspect_pcap_capture",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Pcap Capture"
+ },
+ {
+  "name": "identify_flutter_build",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Identify Flutter Build"
+ },
+ {
+  "name": "inspect_dart_aot",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Dart Aot"
+ },
+ {
+  "name": "list_frida_devices",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Frida Devices"
+ },
+ {
+  "name": "list_frida_processes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Frida Processes"
+ },
+ {
+  "name": "start_frida_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Frida Session"
+ },
+ {
+  "name": "load_frida_script",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Load Frida Script"
+ },
+ {
+  "name": "resume_frida_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Resume Frida Session"
+ },
+ {
+  "name": "unload_frida_script",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Unload Frida Script"
+ },
+ {
+  "name": "frida_session_status",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Frida Session Status"
+ },
+ {
+  "name": "close_frida_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Close Frida Session"
+ },
+ {
+  "name": "instrument_with_frida",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Instrument With Frida"
+ },
+ {
+  "name": "inspect_apktool_client",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Apktool Client"
+ },
+ {
+  "name": "decode_android_resources",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Decode Android Resources"
+ },
+ {
+  "name": "inspect_jeb_client",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Jeb Client"
+ },
+ {
+  "name": "open_jeb_project",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Open Jeb Project"
+ },
+ {
+  "name": "list_jeb_units",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Jeb Units"
+ },
+ {
+  "name": "decompile_jeb_item",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Decompile Jeb Item"
+ },
+ {
+  "name": "inspect_adb_client",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Adb Client"
+ },
+ {
+  "name": "list_adb_devices",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Devices"
+ },
+ {
+  "name": "inspect_adb_device",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Adb Device"
+ },
+ {
+  "name": "list_adb_packages",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Packages"
+ },
+ {
+  "name": "pull_adb_package",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Pull Adb Package"
+ },
+ {
+  "name": "read_adb_logcat",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Read Adb Logcat"
+ },
+ {
+  "name": "inspect_adb_package",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Adb Package"
+ },
+ {
+  "name": "pull_adb_file",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Pull Adb File"
+ },
+ {
+  "name": "push_adb_file",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Push Adb File"
+ },
+ {
+  "name": "capture_adb_screen",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Capture Adb Screen"
+ },
+ {
+  "name": "list_adb_processes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Processes"
+ },
+ {
+  "name": "list_adb_directory",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Directory"
+ },
+ {
+  "name": "list_adb_features",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Features"
+ },
+ {
+  "name": "list_adb_services",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Adb Services"
+ },
+ {
+  "name": "inspect_adb_display",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Adb Display"
+ },
+ {
+  "name": "inspect_adb_window",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Adb Window"
+ },
+ {
+  "name": "read_adb_setting",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Read Adb Setting"
+ },
+ {
+  "name": "collect_adb_bugreport",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Collect Adb Bugreport"
+ },
+ {
+  "name": "resolve_adb_packages",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Resolve Adb Packages"
+ },
+ {
+  "name": "install_adb_package",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Install Adb Package"
+ },
+ {
+  "name": "uninstall_adb_package",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Uninstall Adb Package"
+ },
+ {
+  "name": "start_adb_app",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Adb App"
+ },
+ {
+  "name": "start_adb_activity",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Adb Activity"
+ },
+ {
+  "name": "stop_adb_app",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Stop Adb App"
+ },
+ {
+  "name": "list_browser_targets",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Browser Targets"
+ },
+ {
+  "name": "inspect_web_page",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Web Page"
+ },
+ {
+  "name": "analyze_web_bundle",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Analyze Web Bundle"
+ },
+ {
+  "name": "observe_web_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Observe Web Session"
+ },
+ {
+  "name": "discover_webmcp_tools",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Discover Webmcp Tools"
+ },
+ {
+  "name": "compare_web_captures",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Web Captures"
+ },
+ {
+  "name": "capture_web_screenshot",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Capture Web Screenshot"
+ },
+ {
+  "name": "compare_web_screenshots",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Web Screenshots"
+ },
+ {
+  "name": "capture_browser_scenario",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Capture Browser Scenario"
+ },
+ {
+  "name": "observe_web_execution",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Observe Web Execution"
+ },
+ {
+  "name": "inspect_web_event_listeners",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Web Event Listeners"
+ },
+ {
+  "name": "inspect_web_network_capture",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Web Network Capture"
+ },
+ {
+  "name": "list_electron_targets",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Electron Targets"
+ },
+ {
+  "name": "inspect_electron_page",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Electron Page"
+ },
+ {
+  "name": "analyze_javascript_application",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Analyze Javascript Application"
+ },
+ {
+  "name": "reconcile_javascript_runtime",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Reconcile Javascript Runtime"
+ },
+ {
+  "name": "capture_electron_scenario",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Capture Electron Scenario"
+ },
+ {
+  "name": "inspect_electron_fuses",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Electron Fuses"
+ },
+ {
+  "name": "list_javascript_runtime_targets",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "List Javascript Runtime Targets"
+ },
+ {
+  "name": "observe_javascript_runtime",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Observe Javascript Runtime"
+ },
+ {
+  "name": "inspect_analysis_settings",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Analysis Settings"
+ },
+ {
+  "name": "update_analysis_settings",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Update Analysis Settings"
+ },
+ {
+  "name": "inspect_analysis_view",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Analysis View"
+ },
+ {
+  "name": "inspect_api_contract",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Api Contract"
+ },
+ {
+  "name": "inspect_ntfs_journal",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Ntfs Journal"
+ },
+ {
+  "name": "inspect_playwright_trace",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Inspect Playwright Trace"
+ },
+ {
+  "name": "search_guidance",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Search Guidance"
+ },
+ {
+  "name": "guided_workflows",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Guided Workflows"
+ },
+ {
+  "name": "read_guidance_section",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Read Guidance Section"
+ },
+ {
+  "name": "trace_application_feature",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Trace Application Feature"
+ },
+ {
+  "name": "trace_javascript_semantics",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Trace Javascript Semantics"
+ },
+ {
+  "name": "compare_application_versions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Application Versions"
+ },
+ {
+  "name": "compare_static_and_observed_endpoints",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Static And Observed Endpoints"
+ },
+ {
+  "name": "compare_source_to_bundle",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Source To Bundle"
+ },
+ {
+  "name": "compare_javascript_export_shapes",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Javascript Export Shapes"
+ },
+ {
+  "name": "build_reconstruction_obligation_ledger",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Build Reconstruction Obligation Ledger"
+ },
+ {
+  "name": "evaluate_reconstruction_coverage",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Evaluate Reconstruction Coverage"
+ },
+ {
+  "name": "project_android_application_graph",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Project Android Application Graph"
+ },
+ {
+  "name": "project_apple_application_graph",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Project Apple Application Graph"
+ },
+ {
+  "name": "project_harmony_application_graph",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Project Harmony Application Graph"
+ },
+ {
+  "name": "trace_web_source_location",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Trace Web Source Location"
+ },
+ {
+  "name": "trace_web_module_imports",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Trace Web Module Imports"
+ },
+ {
+  "name": "export_web_scripts",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": false
+  },
+  "title": "Export Web Scripts"
+ },
+ {
+  "name": "export_environment_bundle",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": false
+  },
+  "title": "Export Environment Bundle"
+ },
+ {
+  "name": "recover_javascript_sources",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Recover Javascript Sources"
+ },
+ {
+  "name": "start_build_computer",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Build Computer"
+ },
+ {
+  "name": "act_on_build_computer",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Act On Build Computer"
+ },
+ {
+  "name": "start_build_capture",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Start Build Capture"
+ },
+ {
+  "name": "mark_build_checkpoint",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Mark Build Checkpoint"
+ },
+ {
+  "name": "stop_build_capture",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Stop Build Capture"
+ },
+ {
+  "name": "export_build_environment",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Export Build Environment"
+ },
+ {
+  "name": "check_build_task",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Check Build Task"
+ },
+ {
+  "name": "record_build_consent",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": false
+  },
+  "title": "Record Build Consent"
+ },
+ {
+  "name": "close_build_computer",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Close Build Computer"
+ },
+ {
+  "name": "measure_build_task",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Measure Build Task"
+ },
+ {
+  "name": "close_binary",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Close Binary"
+ },
+ {
+  "name": "reset_investigation",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Reset Investigation"
+ },
+ {
+  "name": "binary_session",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Binary Session"
+ },
+ {
+  "name": "open_binary",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Open Binary"
+ },
+ {
+  "name": "open_bundle_resources",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Open Bundle Resources"
+ },
+ {
+  "name": "export_evidence_bundle",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Export Evidence Bundle"
+ },
+ {
+  "name": "import_evidence_bundle",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Import Evidence Bundle"
+ },
+ {
+  "name": "capture_process_scenario",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": true,
+   "idempotentHint": false,
+   "openWorldHint": true
+  },
+  "title": "Capture Process Scenario"
+ },
+ {
+  "name": "compare_process_captures",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Process Captures"
+ },
+ {
+  "name": "compare_artifacts",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Artifacts"
+ },
+ {
+  "name": "compare_functions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Functions"
+ },
+ {
+  "name": "compare_bundles",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Compare Bundles"
+ },
+ {
+  "name": "find_changed_behavior",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Find Changed Behavior"
+ },
+ {
+  "name": "build_call_path",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Build Call Path"
+ },
+ {
+  "name": "correlate_static_and_runtime",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Correlate Static And Runtime"
+ },
+ {
+  "name": "verify_reconstruction",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Verify Reconstruction"
+ },
+ {
+  "name": "list_unknowns",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "List Unknowns"
+ },
+ {
+  "name": "record_unknown",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": false
+  },
+  "title": "Record Unknown"
+ },
+ {
+  "name": "update_unknown",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": false,
+   "openWorldHint": false
+  },
+  "title": "Update Unknown"
+ },
+ {
+  "name": "verify_unknown_resolution",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Verify Unknown Resolution"
+ },
+ {
+  "name": "get_evidence_bundle",
+  "annotations": {
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Get Evidence Bundle"
+ },
+ {
+  "name": "get_navigation_context",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Get Navigation Context"
+ },
+ {
+  "name": "inspect_address_context",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": true
+  },
+  "title": "Inspect Address Context"
+ },
+ {
+  "name": "match_native_functions",
+  "annotations": {
+   "readOnlyHint": false,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  },
+  "title": "Match Native Functions"
+ }
+]
