@@ -9,7 +9,7 @@ import EnterpriseSidebar from './EnterpriseSidebar';
 import DashboardToolbar from './DashboardToolbar';
 import MobileDashboardQuickAccess from './MobileDashboardQuickAccess';
 
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { DashboardTabPanel, DashboardTabPanels } from './DashboardTabPanels';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Hooks
@@ -371,6 +371,14 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     [featureAccess]
   );
 
+  const tabLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        getFlatNavigationByContext('operational').map((item) => [item.id, item.label])
+      ) as Record<string, string>,
+    []
+  );
+
   const visibleTabIds = useMemo(
     () =>
       getFlatNavigationByContext('operational')
@@ -593,8 +601,8 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
             />
 
             {/* Content based on active tab using Shadcn Tabs */}
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-0">
-              <TabsContent
+            <DashboardTabPanels activeTab={activeTab} labels={tabLabels} className="space-y-0">
+              <DashboardTabPanel
                 value="overview"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="overview"
@@ -609,46 +617,46 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   health={health}
                   nextBestActions={nextBestActions}
                 />
-              </TabsContent>
+              </DashboardTabPanel>
 
               {/* Sprint 5: Ranking Performance Tab */}
-              <TabsContent
+              <DashboardTabPanel
                 value="ranking-performance"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="ranking"
               >
                 <RankingPerformanceTab company={company} stats={stats} themeMode={themeMode} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="style-analysis" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="style-analysis" className="mt-0 focus-visible:outline-none">
                 <StyleAnalysis themeMode={themeMode} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="integrations" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="integrations" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab('integrations', <WebhooksManagement companyId={companyId} />)}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="marketing-widgets" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="marketing-widgets" className="mt-0 focus-visible:outline-none">
                 <ReputationMarketingWidgets company={company} companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="trust-widget" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="trust-widget" className="mt-0 focus-visible:outline-none">
                 <ContentStudioWorkspace company={company} companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="avalia-badges" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="avalia-badges" className="mt-0 focus-visible:outline-none">
                 <AvaliaBadgesWorkspace company={company} companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="tracking-attribution"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="tracking-attribution"
               >
                 <TrackingAttributionWorkspace companyId={companyId} company={company} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="analytics"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="analytics"
@@ -667,9 +675,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                       <PerformanceMetrics companyId={companyId} companyName={dashboardCompany?.name || companyId} themeMode={themeMode} />
                     </div>
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="benchmark" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="benchmark" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -681,17 +689,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompetitorBenchmark companyId={companyId} themeMode={themeMode} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="ai-assistant" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="ai-assistant" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab('ai-assistant', <CompanyAiStudio companyId={companyId} />)}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-general" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-general" className="mt-0 focus-visible:outline-none">
                 <CompanyInfo companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-categories" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-categories" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -703,9 +711,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CategoriesManagement companyId={companyId} company={company} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-pricing" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-pricing" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -722,13 +730,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                      isCheckoutLoading={isCheckoutLoading}
                    />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-support" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-support" className="mt-0 focus-visible:outline-none">
                 <SupportTrainingDashboard companyId={companyId} company={company} stats={stats} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-banner" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-banner" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-banner',
                   <div>
@@ -743,9 +751,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <BannersSponsorship companyId={companyId} />
                   </div>
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="product-sponsored-description"
                 className="mt-0 focus-visible:outline-none"
               >
@@ -765,27 +773,27 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     </p>
                   </div>
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-catalog" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-catalog" className="mt-0 focus-visible:outline-none">
                 <ProductsManagement companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-downloads" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-downloads" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'product-downloads',
                   <ProjectsMaterialsHub companyId={companyId} onForbidden={refreshData} />
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="materials" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="materials" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'materials',
                   <ProjectsMaterialsHub companyId={companyId} defaultTab="materials" onForbidden={refreshData} />
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-features" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-features" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -800,17 +808,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     funcionalidades específicas será disponibilizada nesta seção.
                   </p>
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-videos" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-videos" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab('product-videos', <ProjectsMaterialsHub companyId={companyId} />)}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="product-images" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="product-images" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab('product-images', <ProjectsMaterialsHub companyId={companyId} />)}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="info" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="info" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -822,9 +830,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CompanyInfo companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="categories" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="categories" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -836,9 +844,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CategoriesManagement companyId={companyId} company={company} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="products" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="products" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -850,9 +858,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ProductsManagement companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="reviews"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="reviews"
@@ -868,23 +876,23 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ReviewsManagement companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="review-forms"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="review-forms"
               >
                 <ReviewFormsManagement companyId={companyId} companyName={company?.name} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="sector-questions" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="sector-questions" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <SectorQuestionsManager companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="media" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="media" className="mt-0 focus-visible:outline-none">
                 {renderGuardedTab(
                   'media',
                   <div>
@@ -899,9 +907,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <MediaGallery companyId={companyId} />
                   </div>
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="leads"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="leads"
@@ -920,17 +928,17 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                     <LeadsOpportunities companyId={companyId} />
                   </div>
                 )}
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="proposals"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="proposals"
               >
                 <CompanyMarketplaceProposalsWorkspace companyId={companyId} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="approvals" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="approvals" className="mt-0 focus-visible:outline-none">
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -942,9 +950,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <ApprovalsPanel companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="campaigns" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="campaigns" className="mt-0 focus-visible:outline-none">
                 <div>
                   <div className="mb-6">
                     <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
@@ -956,40 +964,40 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
                   </div>
                   <CampaignsMarketing companyId={companyId} />
                 </div>
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="settings"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="settings"
               >
                 <CompanySettings companyId={companyId} company={company} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent
+              <DashboardTabPanel
                 value="team-management"
                 className="mt-0 focus-visible:outline-none"
                 data-tour="team-management"
               >
                 <TeamManagementWorkspace />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="buyer-intent" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="buyer-intent" className="mt-0 focus-visible:outline-none">
                 <BuyerIntentWorkspace companyId={companyId} company={company} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="icp-config" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="icp-config" className="mt-0 focus-visible:outline-none">
                 <BuyerIntentWorkspace companyId={companyId} company={company} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="prospects" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="prospects" className="mt-0 focus-visible:outline-none">
                 <TrackingAttributionWorkspace companyId={companyId} company={company} />
-              </TabsContent>
+              </DashboardTabPanel>
 
-              <TabsContent value="track-your-prospects" className="mt-0 focus-visible:outline-none">
+              <DashboardTabPanel value="track-your-prospects" className="mt-0 focus-visible:outline-none">
                 <TrackingAttributionWorkspace companyId={companyId} company={company} />
-              </TabsContent>
-            </Tabs>
+              </DashboardTabPanel>
+            </DashboardTabPanels>
           </div>
         </main>
       </div>
