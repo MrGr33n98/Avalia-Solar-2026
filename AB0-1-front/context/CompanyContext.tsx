@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { companiesApi, companyAccessApi, hasPossibleAuthSession, Company } from '@/lib/api';
 import { invalidateAnalyticsAvailability } from '@/lib/api-analytics';
@@ -28,6 +28,9 @@ const readActiveCompanyIdFromCookie = (): number | null => {
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
+  // Seleção em andamento: mesma empresa reaproveita a promise; outra empresa
+  // vence a anterior (só a última seleção é aplicada).
+  const pendingSelectionRef = useRef<{ id: Company['id']; promise: Promise<void>; token: object } | null>(null);
 
   const { data: companies = [], isLoading, refetch } = useQuery({
     queryKey: ['my-companies'],
@@ -69,23 +72,37 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const selectCompany = async (company: Company) => {
-    if (!company?.id) return;
-    if (activeCompany?.id === company.id) return;
+  const selectCompany = (company: Company): Promise<void> => {
+    if (!company?.id) return Promise.resolve();
+    const pending = pendingSelectionRef.current;
+    if (pending && pending.id === company.id) return pending.promise;
+    if (!pending && activeCompany?.id === company.id) return Promise.resolve();
 
     const previous = activeCompany;
     invalidateAnalyticsAvailability(previous?.id);
     invalidateAnalyticsAvailability(company.id);
-    try {
-      // Confirma seleção no backend primeiro (backend assina e define cookie seguro)
-      await companyAccessApi.selectActiveCompany(company.id);
-      setActiveCompany(company);
-    } catch (error) {
-      console.warn('[CompanyContext] Failed to persist active company selection', error);
-      invalidateAnalyticsAvailability(company.id);
-      invalidateAnalyticsAvailability(previous?.id);
-      throw error;
-    }
+
+    const token = {};
+    const isLatest = () => pendingSelectionRef.current?.token === token;
+    const entry = { id: company.id, token, promise: Promise.resolve() };
+    pendingSelectionRef.current = entry;
+    const promise = (async () => {
+      try {
+        // Confirma seleção no backend primeiro (backend assina e define cookie seguro)
+        await companyAccessApi.selectActiveCompany(company.id);
+        if (isLatest()) setActiveCompany(company);
+      } catch (error) {
+        console.warn('[CompanyContext] Failed to persist active company selection', error);
+        invalidateAnalyticsAvailability(company.id);
+        invalidateAnalyticsAvailability(previous?.id);
+        throw error;
+      } finally {
+        if (isLatest()) pendingSelectionRef.current = null;
+      }
+    })();
+
+    entry.promise = promise;
+    return promise;
   };
 
   const hasCompanyAccess = (id: number | string): boolean => {

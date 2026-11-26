@@ -1,0 +1,8 @@
+# Modelo de dados e contratos
+Não criar migrations por redesign. Entidades já usadas: usuário, empresa, membership, role, plan/feature access, stats/metrics, review, category, product/service, project/material/asset/form, lead, proposal, campaign, ranking, intent signal, notification, integration, approval. Identificar modelo/API real por tela antes de implementar; nomes aqui são conceitos, não novas tabelas.
+
+Contrato UI proposto (TypeScript discriminated union): `idle | loading | success | empty | partial | error | forbidden | locked | offline | stale`. Métrica usa `{value:number|null, unit, period, updatedAt, definition, comparison?, availability}`; null ≠ zero; proibir NaN, Infinity e divisão por zero. `DashboardFilterState` contém tenant resolvido, período, busca, sort, paginação/cursor, domainFilters; somente campos permitidos na URL, sem PII. `TableState` usa IDs estáveis, seleção limitada ao tenant/página conforme regra, reset explícito ao filtro; `MutationState` pending/success/error, idempotency quando existente, confirmação destrutiva.
+
+Eventos: preservar nomes/propriedades atuais; mapear dashboard viewed/tab, export, filter, CTA, lead/proposal, plan upgrade; não duplicar analytics por render. Payload mínimo, sem conteúdo pessoal. Consentimento conforme política. Qualquer novo evento aprovado e registrado com esquema, origem, actor scope e dedup.
+
+Contrato de API: para cada ação, método, endpoint confirmado, schema, status, policy/feature, query key, invalidation, retry, idempotência, error mapping; preencher templates/api-parity.csv. 401 login preservando return_to permitido; 403 não mostrar conteúdo, 404 estado neutro, 422 campo, 429 retry limitado, 5xx erro com request_id sanitizado. Não converter erro em array vazio.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
@@ -22,11 +22,26 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 import DashboardLayout from './components/DashboardLayout';
 import StatsCard from './components/StatsCard';
-import ChartCard from './components/ChartCard';
 import RecentActivity from './components/RecentActivity';
-import DataTable from './components/DataTable';
-import { DashboardCharts } from './components/DashboardCharts';
 import { dashboardApi } from '@/lib/api-dashboard';
+
+// Visão system_admin: Recharts e tabela só carregam para administradores do
+// sistema, fora do First Load do workspace empresarial (Spec 022, D0 H07).
+const AdminChartLoading = () => (
+  <div className="h-[300px] flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+const ChartCard = dynamic(() => import('./components/ChartCard'));
+const DataTable = dynamic(() => import('./components/DataTable'));
+const AdminAreaChart = dynamic(
+  () => import('./components/DashboardCharts').then((m) => m.DashboardCharts.AreaChart),
+  { ssr: false, loading: AdminChartLoading }
+);
+const AdminBarChart = dynamic(
+  () => import('./components/DashboardCharts').then((m) => m.DashboardCharts.BarChart),
+  { ssr: false, loading: AdminChartLoading }
+);
 
 // ✅ Code splitting - lazy load EnterpriseDashboard for company users
 const EnterpriseDashboard = dynamic(() => import('./components/EnterpriseDashboard'), {
@@ -41,6 +56,26 @@ function DashboardPageContent() {
   const { user, loading: authLoading, error: authError } = useAuth();
   const { activeCompany, companies, isLoading: companyLoading, selectCompany } = useCompanyContext();
   
+  // Seleção de empresa disparada pelo efeito: falha vira toast, não rejeição solta (D0 H04)
+  const safeSelectCompany = useCallback(
+    (company: Parameters<typeof selectCompany>[0]) => {
+      const notifyFailure = (error: unknown) => {
+        console.error('[Dashboard] Falha ao selecionar empresa', error);
+        toast({
+          title: 'Não foi possível abrir a empresa',
+          description: 'Tente selecionar a empresa novamente.',
+          variant: 'destructive',
+        });
+      };
+      try {
+        Promise.resolve(selectCompany(company)).catch(notifyFailure);
+      } catch (error) {
+        notifyFailure(error);
+      }
+    },
+    [selectCompany, toast]
+  );
+
   const [viewMode, setViewMode] = useState<'loading' | 'system_admin' | 'company_admin' | 'redirecting'>('loading');
   const [statsLoading, setStatsLoading] = useState(false);
   const [chartLoading, setChartLoading] = useState(false);
@@ -125,7 +160,7 @@ function DashboardPageContent() {
         const match = companies.find((c) => Number(c.id) === targetCompanyId);
         if (match) {
           if (!activeCompany || Number(activeCompany.id) !== targetCompanyId) {
-            void selectCompany(match);
+            safeSelectCompany(match);
           }
         }
         setViewMode('company_admin');
@@ -142,7 +177,7 @@ function DashboardPageContent() {
       if (targetMatch) {
         // Acesso autorizado: URL tem precedência sobre o localStorage prévio
         if (!activeCompany || Number(activeCompany.id) !== targetCompanyId) {
-          void selectCompany(targetMatch);
+          safeSelectCompany(targetMatch);
         }
         setViewMode('company_admin');
         return;
@@ -162,7 +197,7 @@ function DashboardPageContent() {
           setViewMode('company_admin');
           return;
         } else if (companies.length === 1) {
-          void selectCompany(companies[0]);
+          safeSelectCompany(companies[0]);
           router.replace('/dashboard');
           setViewMode('company_admin');
           return;
@@ -179,7 +214,7 @@ function DashboardPageContent() {
     if (activeCompany) {
       setViewMode('company_admin');
     } else if (companies.length === 1) {
-      void selectCompany(companies[0]);
+      safeSelectCompany(companies[0]);
       setViewMode('company_admin');
     } else if (companies.length > 1) {
       router.replace('/select-company');
@@ -188,7 +223,7 @@ function DashboardPageContent() {
       router.replace('/select-company');
       setViewMode('redirecting');
     }
-  }, [activeCompany, authLoading, companyLoading, companies, router, searchParams, user, selectCompany, toast]);
+  }, [activeCompany, authLoading, companyLoading, companies, router, searchParams, user, safeSelectCompany, toast]);
 
   if (authError) {
     return (
@@ -315,7 +350,7 @@ function DashboardPageContent() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <DashboardCharts.AreaChart data={chartData || []} />
+                <AdminAreaChart data={chartData || []} />
               )}
             </ChartCard>
 
@@ -328,7 +363,7 @@ function DashboardPageContent() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <DashboardCharts.BarChart data={chartData || []} />
+                <AdminBarChart data={chartData || []} />
               )}
             </ChartCard>
           </div>

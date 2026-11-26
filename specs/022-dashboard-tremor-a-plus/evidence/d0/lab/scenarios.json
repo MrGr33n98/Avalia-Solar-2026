@@ -1,0 +1,116 @@
+{
+ "tabs": [
+  {
+   "label": "Visão Geral",
+   "url": "?company_id=9001&tab=overview",
+   "requests": [
+    "GET RSC /dashboard?company_id,tab"
+   ]
+  },
+  {
+   "label": "Performance",
+   "url": "?company_id=9001&tab=overview",
+   "requests": []
+  },
+  {
+   "label": "Reputação",
+   "url": "?company_id=9001&tab=overview",
+   "requests": []
+  },
+  {
+   "label": "Oportunidades",
+   "url": "?company_id=9001&tab=overview",
+   "requests": []
+  },
+  {
+   "label": "Perfil da Empresa",
+   "url": "?company_id=9001&tab=overview",
+   "requests": []
+  },
+  {
+   "label": "Divulgação",
+   "url": "?company_id=9001&tab=overview",
+   "requests": []
+  },
+  {
+   "label": "Integrações",
+   "url": "?company_id=9001&tab=integrations",
+   "requests": [
+    "GET RSC /dashboard?company_id,tab",
+    "GET /api/v1/company_webhooks?company_id"
+   ]
+  }
+ ],
+ "alias_tab_info": [
+  {
+   "run": 1,
+   "crashed": true,
+   "react185": false
+  },
+  {
+   "run": 2,
+   "crashed": true,
+   "react185": false
+  },
+  {
+   "run": 3,
+   "crashed": true,
+   "react185": false
+  },
+  {
+   "run": 1,
+   "crashed": true,
+   "react185": true
+  },
+  {
+   "run": 1,
+   "crashed": true,
+   "react185": true
+  },
+  {
+   "run": 2,
+   "crashed": true,
+   "react185": true
+  }
+ ],
+ "race_A_to_B": [
+  {
+   "run": 1,
+   "url": "?company_id=9002",
+   "companyFetches": 2
+  },
+  {
+   "run": 2,
+   "url": "?company_id=9002",
+   "companyFetches": 2
+  },
+  {
+   "run": 3,
+   "url": "?company_id=9002",
+   "companyFetches": 2
+  },
+  {
+   "run": 1,
+   "url": "?company_id=9002",
+   "bodyHasA": false,
+   "companyFetches": 2
+  }
+ ],
+ "cold_request_inventory": {
+  "GET /api/v1/companies/mine?": 1,
+  "GET /api/v1/auth/me?": 1,
+  "GET /api/v1/banners?audience_key,limit,position": 1,
+  "POST /api/v1/analytics/web-vitals?": 2,
+  "GET /api/v1/companies/:id?": 1,
+  "GET /api/v1/companies/:id/feature_access?": 1,
+  "GET /api/v1/company_dashboard/stats?company_id": 1,
+  "GET /api/v1/company_dashboard/notifications?company_id": 1,
+  "GET RSC /privacy?": 1,
+  "GET /api/v1/company_dashboard/analytics/overview?company_id": 1,
+  "GET /api/v1/company_dashboard/analytics/timeseries?company_id,days": 1,
+  "GET /api/v1/company_dashboard/analytics/top_campaigns?company_id,limit": 1,
+  "GET /api/v1/leads?company_id": 1,
+  "GET /api/v1/company_dashboard/intent_summary?company_id": 1,
+  "GET /api/v1/company_dashboard/analytics/attribution?attribution_model,company_id,from,limit,preset,timezone,to": 1
+ }
+}

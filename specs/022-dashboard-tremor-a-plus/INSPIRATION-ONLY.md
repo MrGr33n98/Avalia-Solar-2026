@@ -1,0 +1,9 @@
+# Diretriz vinculante — TREMOR UI INSPIRATION ONLY (rev. 1.1)
+
+Tremor UI é a única referência visual externa desta Spec. Database inspira acabamento, e Dashboard/Insights e demais blocos Tremor inspiram padrões de layout e interação. A identidade Avalia Solar continua proprietária. Usar apenas documentação e demos públicas como referência de observação; não instalar, clonar, fazer fork, importar, comprar ou copiar código, CSS, fontes, assets ou templates Tremor. Não adicionar dependências para reproduzir a estética. Não utilizar Astryx, IBM Carbon, Swiss Design ou mcpcn como referências visuais concorrentes nesta Spec; preservar correções funcionais das Specs anteriores, inclusive 017–021. Ferramentas de engenharia, testes e auditoria continuam permitidas.
+
+Implementar internamente com React 18, Next.js 14, Tailwind 3.3.3, CSS variables, Radix/shadcn existentes, Recharts, Lucide e Framer Motion já presentes. A estética não autoriza mudança de dependências, regra de negócio, autenticação, rotas, planos ou dados. Se uma necessidade funcional independente exigir dependência, registrar proposta em ADR separado e aguardar aprovação; não condicionar este redesign à instalação do Tremor.
+
+W0: registrar links públicos e padrões observados, desenhar mapeamento componente atual → adaptação própria → critério de aceite; criar protótipos usando exclusivamente stack existente. W1–W11: preservar escopo e TDD do pack. Gate G02: revisão de referências, autoria e diff de dependências/lockfile sem adições motivadas pela estética. T002 valida esta diretriz. Nenhuma licença comercial precisa ser adquirida para esta abordagem de inspiração visual.
+
+Esta diretriz prevalece sobre qualquer redação residual que sugira importar, instalar, portar ou clonar Tremor, ou usar outra referência visual externa. Não modifica as metas nem amplia o escopo funcional do pack.

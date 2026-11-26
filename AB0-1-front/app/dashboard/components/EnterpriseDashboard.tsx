@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Hooks
 import { useCompanyDashboardData } from '../hooks/useCompanyDashboardData';
+import { useDashboardTabState } from '../hooks/useDashboardTabState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import {
@@ -299,11 +300,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   } = useCompanyDashboardData(companyId);
 
   const { resolvedTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState(() => {
-    const param = searchParams.get('tab');
-    if (param === 'info') return 'product-general';
-    return param || 'overview';
-  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -436,23 +432,13 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   );
 
 
-  // Sync tab change with URL
-  const handleTabChange = (tab: string) => {
-    const normalizedTab = tab === 'info' ? 'product-general' : tab;
-    if (normalizedTab === 'live-inbox') {
-      router.push('/dashboard/inbox');
-      return;
-    }
-    if (normalizedTab === 'icp-config') {
-      router.push('/dashboard/icp');
-      return;
-    }
-    if (normalizedTab === 'proposals') {
-      router.push('/dashboard/proposals');
-      return;
-    }
+  const { activeTab, selectTab } = useDashboardTabState(visibleTabIds);
 
-    setActiveTab(normalizedTab);
+  // Troca de aba: resolução/URL no hook; aqui só o tracking
+  const handleTabChange = (rawTab: string) => {
+    const resolved = selectTab(rawTab);
+    if (resolved.kind !== 'tab') return;
+    const tab = resolved.tab;
 
     // Canonical Dashboard View tracking
     trackDashboardViewed(companyId, tab, {
@@ -478,47 +464,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       company_id: companyId,
       user_id: user?.id,
     });
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', tab);
-    router.push(`${pathname}?${params.toString()}`);
   };
-
-  // Sync URL changes back to state (e.g. back button)
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'icp-config') {
-      router.push('/dashboard/icp');
-      return;
-    }
-    if (tab === 'proposals') {
-      router.push('/dashboard/proposals');
-      return;
-    }
-    if (tab === 'prospects' || tab === 'track-your-prospects') {
-      setActiveTab('tracking-attribution');
-      return;
-    }
-    if (tab === 'buyer_intent') {
-      setActiveTab('buyer-intent');
-      return;
-    }
-    if (tab && tab !== activeTab) {
-      setActiveTab(tab);
-    }
-  }, [searchParams, activeTab, router]);
-
-  useEffect(() => {
-    if (visibleTabIds.length === 0 || visibleTabIds.includes(activeTab)) return;
-
-    const fallbackTab = visibleTabIds.includes('overview') ? 'overview' : visibleTabIds[0];
-    if (!fallbackTab) return;
-
-    setActiveTab(fallbackTab);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', fallbackTab);
-    router.replace(`${pathname}?${params.toString()}`);
-  }, [activeTab, pathname, router, searchParams, visibleTabIds]);
 
   const handleThemeChange = (theme: string) => {
     // Track using unified analytics

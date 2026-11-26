@@ -1,0 +1,41 @@
+﻿id,tab,label_or_purpose,component,tremor_pattern,runtime
+TAB01,overview,Início,OverviewTab,KPI + charts + feed,PENDING
+TAB02,ranking-performance,Ranking,RankingPerformanceTab,KPI + benchmark + evidências,PENDING
+TAB03,style-analysis,Análise de estilo,StyleAnalysis,Cards + relatório,PENDING
+TAB04,integrations,Integração de leads,WebhooksManagement,Tabela + formulário,PENDING
+TAB05,marketing-widgets,Widgets de reputação,ReputationMarketingWidgets,Grid + preview,PENDING
+TAB06,trust-widget,Widget de confiança,ContentStudioWorkspace,Editor + preview,PENDING
+TAB07,avalia-badges,Selos,AvaliaBadgesWorkspace,Grid + status,PENDING
+TAB08,tracking-attribution,Track Your Prospects,TrackingAttributionWorkspace,Tabela + filtros + gráficos,PENDING
+TAB09,analytics,Analytics,PerformanceMetrics,Overview + charts,PENDING
+TAB10,benchmark,Benchmark,CompetitorBenchmark,Tabela + comparação,PENDING
+TAB11,ai-assistant,Assistente IA,CompanyAiStudio,Configuração + preview,PENDING
+TAB12,product-general,Informações gerais,CompanyInfo,Formulários,PENDING
+TAB13,product-categories,Categorias,CategoriesManagement,Grid + seleção,PENDING
+TAB14,product-pricing,Plano e assinatura,PlanAndSubscription,Billing & usage,PENDING
+TAB15,product-support,Suporte,SupportTrainingDashboard,Feed + ajuda,PENDING
+TAB16,product-banner,Publicidade,BannersSponsorship,Grid + status,PENDING
+TAB17,product-sponsored-description,Descrição patrocinada,Markup no shell,Estado/CTA; validar ação,PENDING
+TAB18,product-catalog,Produtos e serviços,ProductsManagement,Database table + drawer,PENDING
+TAB19,product-downloads,Projetos,ProjectsMaterialsHub,Tabela + upload,PENDING
+TAB20,materials,Materiais,ProjectsMaterialsHub,Tabela + upload,PENDING
+TAB21,product-features,Recursos (legado a verificar),Markup no shell,Validar destino,PENDING
+TAB22,product-videos,Vídeos (alias a verificar),ProjectsMaterialsHub,Galeria,PENDING
+TAB23,product-images,Imagens (alias a verificar),ProjectsMaterialsHub,Galeria,PENDING
+TAB24,info,Alias info,CompanyInfo,Preservar alias,PENDING
+TAB25,categories,Alias categories,CategoriesManagement,Preservar alias,PENDING
+TAB26,products,Alias products,ProductsManagement,Preservar alias,PENDING
+TAB27,reviews,Avaliações,ReviewsManagement,Tabela + detalhe,PENDING
+TAB28,review-forms,Coletar avaliações,ReviewFormsManagement,Formulários + QR,PENDING
+TAB29,sector-questions,Perguntas,SectorQuestionsManager,Tabela + formulário,PENDING
+TAB30,media,Fotos e vídeos,MediaGallery,Grid + upload,PENDING
+TAB31,leads,Leads,LeadsOpportunities,Tabela + drawer,PENDING
+TAB32,proposals,Propostas,CompanyMarketplaceProposalsWorkspace,Workspace + wizard,PENDING
+TAB33,approvals,Aprovações,ApprovalsPanel,Inbox + status,PENDING
+TAB34,campaigns,Campanhas,CampaignsMarketing,Tabela + métricas,PENDING
+TAB35,settings,Configurações,CompanySettings,Settings forms,PENDING
+TAB36,team-management,Equipe,TeamManagementWorkspace,User management,PENDING
+TAB37,buyer-intent,Intenção de compra,BuyerIntentWorkspace,Charts + database,PENDING
+TAB38,icp-config,ICP (redireciona),BuyerIntentWorkspace,Formulário,PENDING
+TAB39,prospects,Prospects (alias),TrackingAttributionWorkspace,Tabela + jornada,PENDING
+TAB40,track-your-prospects,Track (alias),TrackingAttributionWorkspace,Tabela + jornada,PENDING

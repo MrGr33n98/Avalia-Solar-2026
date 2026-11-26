@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchApi, companiesApi, FeatureAccessEntry } from '@/lib/api';
 import { subscribeCompanyDashboard } from '@/lib/cable';
 
@@ -58,6 +58,9 @@ interface Notification {
   read: boolean;
 }
 
+// Janela para agrupar rajadas de eventos realtime num único refresh (D0 H02)
+export const REALTIME_REFRESH_DEBOUNCE_MS = 400;
+
 const toSafeDate = (value: unknown): Date => {
   if (!value) return new Date();
   const parsed = new Date(String(value));
@@ -78,11 +81,17 @@ export function useCompanyDashboardData(companyId: string) {
   const [health, setHealth] = useState<any>(null);
   const [nextBestActions, setNextBestActions] = useState<any[]>([]);
 
+  // Empresa cujas respostas ainda podem ser aplicadas. Respostas de outra
+  // empresa (troca A→B) ou após unmount são descartadas (D0 H03).
+  const activeCompanyRef = useRef<string | null>(companyId);
+  const isCurrent = useCallback((requestCompanyId: string) => activeCompanyRef.current === requestCompanyId, []);
+
   const fetchCompanyData = useCallback(async () => {
     try {
       console.debug('[CompanyDashboardData] Fetching company data', { companyId });
 
       const data = await companiesApi.getById(Number(companyId));
+      if (!isCurrent(companyId)) return;
       if (!data) {
         console.warn('[CompanyDashboardData] Company not found for dashboard user', { companyId });
         setCompanyError('Empresa nao encontrada ou nao associada a sua conta.');
@@ -90,6 +99,7 @@ export function useCompanyDashboardData(companyId: string) {
         setCompany(data);
       }
     } catch (error) {
+      if (!isCurrent(companyId)) return;
       console.error('[CompanyDashboardData] Error fetching company', {
         companyId,
         endpoint: '/companies/:id',
@@ -97,7 +107,7 @@ export function useCompanyDashboardData(companyId: string) {
       });
       setCompanyError('Falha ao carregar dados da empresa.');
     }
-  }, [companyId]);
+  }, [companyId, isCurrent]);
 
   const fetchDashboardStats = useCallback(async () => {
     setStatsLoading(true);
@@ -113,6 +123,7 @@ export function useCompanyDashboardData(companyId: string) {
       }>('/company_dashboard/stats', {
         params: { company_id: companyId },
       });
+      if (!isCurrent(companyId)) return;
       const s = data?.stats || {};
 
       setStats({
@@ -134,15 +145,16 @@ export function useCompanyDashboardData(companyId: string) {
       setHealth(data?.health || null);
       setNextBestActions(data?.next_best_actions || []);
     } catch (error) {
+      if (!isCurrent(companyId)) return;
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
         endpoint: '/company_dashboard/stats',
         error,
       });
     } finally {
-      setStatsLoading(false);
+      if (isCurrent(companyId)) setStatsLoading(false);
     }
-  }, [companyId]);
+  }, [companyId, isCurrent]);
 
   const fetchFeatureAccess = useCallback(async (noCache = false) => {
     setFeatureAccessLoading(true);
@@ -151,8 +163,10 @@ export function useCompanyDashboardData(companyId: string) {
       console.debug('[CompanyDashboardData] Fetching canonical feature access', { companyId });
 
       const data = await companiesApi.getFeatureAccess(companyId, noCache);
+      if (!isCurrent(companyId)) return;
       setFeatureAccess(data?.features || {});
     } catch (error) {
+      if (!isCurrent(companyId)) return;
       console.error('[CompanyDashboardData] Error fetching feature access', {
         companyId,
         endpoint: '/companies/:id/feature_access',
@@ -161,9 +175,9 @@ export function useCompanyDashboardData(companyId: string) {
       setFeatureAccess({});
       setFeatureAccessError(true);
     } finally {
-      setFeatureAccessLoading(false);
+      if (isCurrent(companyId)) setFeatureAccessLoading(false);
     }
-  }, [companyId]);
+  }, [companyId, isCurrent]);
 
   const fetchNotifications = useCallback(async () => {
     setNotificationsLoading(true);
@@ -173,6 +187,7 @@ export function useCompanyDashboardData(companyId: string) {
       const data = await fetchApi<{ notifications: any[] }>('/company_dashboard/notifications', {
         params: { company_id: companyId },
       });
+      if (!isCurrent(companyId)) return;
       const list = data?.notifications || [];
 
       setNotifications(
@@ -186,15 +201,16 @@ export function useCompanyDashboardData(companyId: string) {
         }))
       );
     } catch (error) {
+      if (!isCurrent(companyId)) return;
       console.error('[CompanyDashboardData] Error fetching notifications', {
         companyId,
         endpoint: '/company_dashboard/notifications',
         error,
       });
     } finally {
-      setNotificationsLoading(false);
+      if (isCurrent(companyId)) setNotificationsLoading(false);
     }
-  }, [companyId]);
+  }, [companyId, isCurrent]);
 
   const refreshData = useCallback(() => {
     fetchDashboardStats();
@@ -203,6 +219,7 @@ export function useCompanyDashboardData(companyId: string) {
   }, [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]);
 
   useEffect(() => {
+    activeCompanyRef.current = companyId;
     setCompany(null);
     setCompanyError(null);
     setStats(null);
@@ -226,7 +243,7 @@ export function useCompanyDashboardData(companyId: string) {
 
       // Desbloqueia o shell assim que a etapa crítica terminar
       await criticalPromise;
-      setLoading(false);
+      if (isCurrent(companyId)) setLoading(false);
 
       // Aguarda as secundárias sem travar a interface
       await secondaryPromise;
@@ -234,12 +251,21 @@ export function useCompanyDashboardData(companyId: string) {
 
     loadAll();
 
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
     const subscription = subscribeCompanyDashboard(companyId, () => {
-      refreshData();
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        refreshData();
+      }, REALTIME_REFRESH_DEBOUNCE_MS);
     });
 
-    return () => cleanupRealtimeSubscription(subscription);
-  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchFeatureAccess, fetchNotifications, refreshData]);
+    return () => {
+      activeCompanyRef.current = null;
+      if (refreshTimer) clearTimeout(refreshTimer);
+      cleanupRealtimeSubscription(subscription);
+    };
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchFeatureAccess, fetchNotifications, refreshData, isCurrent]);
 
   const markNotificationAsRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
