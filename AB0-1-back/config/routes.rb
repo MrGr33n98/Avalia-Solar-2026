@@ -438,6 +438,7 @@ Rails.application.routes.draw do
       end
 
       resources :financial_institutions, only: %i[index show]
+      resources :storefronts, only: %i[show], param: :slug
 
       resources :companies do
         collection do

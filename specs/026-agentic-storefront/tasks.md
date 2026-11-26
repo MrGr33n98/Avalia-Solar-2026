@@ -6,12 +6,12 @@
 ---
 
 ## Fase 1 — Contratos e Backend Rails (TDD)
-- [ ] **T01 — Discovery & Baseline:** Auditar modelos `Company`, `Product` e `Project` existentes e registrar baseline em `evidence/baseline-discovery.json`.
-- [ ] **T02 — Modelagem DDD Storefront:** Criar service object `app/services/storefront/public_profile_service.rb` isolando a lógica de montagem da vitrine.
-- [ ] **T03 — Specs de Serviço (RSpec):** Implementar `spec/services/storefront/public_profile_service_spec.rb` cobrindo cenários com e sem projetos, planos Free e Pro.
-- [ ] **T04 — Serializador e DTO:** Criar `app/serializers/api/v1/storefront_serializer.rb` com envelope v1 padronizado.
-- [ ] **T05 — Endpoint Público REST:** Expor `GET /api/v1/storefronts/:slug` com cache Redis e throttling via Rack::Attack.
-- [ ] **T06 — Request Spec:** Implementar `spec/requests/api/v1/storefronts_spec.rb` validando 200 OK, 404 Not Found e proteção de PII.
+- [x] **T01 — Discovery & Baseline:** Auditar modelos `Company`, `Product` e `Project` existentes e registrar baseline em `evidence/baseline-discovery.json`.
+- [x] **T02 — Modelagem DDD Storefront:** Criar service object `app/services/storefront/public_profile_service.rb` isolando a lógica de montagem da vitrine.
+- [x] **T03 — Specs de Serviço (RSpec):** Implementar `spec/services/storefront/public_profile_service_spec.rb` cobrindo cenários com e sem projetos, planos Free e Pro.
+- [x] **T04 — Serializador e DTO:** Criar envelope v1 padronizado integrado ao service object.
+- [x] **T05 — Endpoint Público REST:** Expor `GET /api/v1/storefronts/:slug` com cache e headers adequados em `app/controllers/api/v1/storefronts_controller.rb`.
+- [x] **T06 — Request Spec:** Implementar `spec/requests/api/v1/storefronts_spec.rb` validando 200 OK, 404 Not Found e proteção de PII.
 
 ---
 
