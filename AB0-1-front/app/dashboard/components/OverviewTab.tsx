@@ -357,7 +357,7 @@ export default function OverviewTab({
   });
   const leadsQuery = useQuery({
     queryKey: ['overview-recent-leads', companyId],
-    queryFn: () => fetchApi<LeadRow[]>('/leads', { params: { company_id: companyId } }),
+    queryFn: () => fetchApi<LeadRow[]>('/leads', { params: { company_id: companyId, limit: 6 } }),
     enabled: Boolean(companyId),
     retry: false,
   });

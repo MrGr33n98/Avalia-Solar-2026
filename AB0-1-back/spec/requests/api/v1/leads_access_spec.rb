@@ -53,6 +53,35 @@ RSpec.describe 'Leads RBAC', type: :request do
       expect(body.map { |l| l['id'] }).to contain_exactly(lead_owned.id)
     end
 
+    context 'com limit' do
+      let!(:older_owned) { create(:lead, company: company, created_at: 2.days.ago) }
+      let!(:newest_owned) { create(:lead, company: company, created_at: 1.minute.from_now) }
+
+      it 'retorna só os N leads mais recentes do próprio tenant' do
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 2 }
+        expect(response).to have_http_status(:ok)
+        ids = JSON.parse(response.body).map { |l| l['id'] }
+        expect(ids).to eq([newest_owned.id, lead_owned.id])
+        expect(ids).not_to include(lead_other.id)
+      end
+
+      it 'ignora limit inválido e devolve a lista completa' do
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 'abc' }
+        ids = JSON.parse(response.body).map { |l| l['id'] }
+        expect(ids).to contain_exactly(lead_owned.id, older_owned.id, newest_owned.id)
+      end
+
+      it 'aplica o teto INDEX_MAX_LIMIT a limites maiores' do
+        stub_const('Api::V1::LeadsController::INDEX_MAX_LIMIT', 2)
+        stub_auth(company_user)
+        get '/api/v1/leads', params: { limit: 10_000 }
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body).size).to eq(2)
+      end
+    end
+
     it 'denies company user with inactive company' do
       stub_auth(inactive_company_user)
       get '/api/v1/leads'

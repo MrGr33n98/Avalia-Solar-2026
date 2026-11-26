@@ -8,6 +8,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   ALLOWED_UTM_KEYS = %w[utm_source utm_medium utm_campaign utm_content utm_term gclid fbclid msclkid].freeze
   IDENTITY_KEYS = %w[anonymous_id session_id].freeze
+  INDEX_MAX_LIMIT = 100
   class EmailDeliveryFailed < StandardError
   end
 
@@ -39,7 +40,7 @@ class Api::V1::LeadsController < Api::V1::BaseController
       end
     end
 
-    @leads = @leads.order(created_at: :desc) if ::Lead.column_names.include?('created_at')
+    @leads = order_and_limit_index(@leads)
     render json: @leads
   rescue StandardError => e
     Rails.logger.error("Leads error: #{e.message}")
@@ -472,6 +473,15 @@ class Api::V1::LeadsController < Api::V1::BaseController
 
   def set_lead
     @lead = ::Lead.find(params[:id])
+  end
+
+  # `limit` opcional (ex.: "leads recentes" da Visão Geral); sem ele, a lista segue completa.
+  def order_and_limit_index(leads)
+    leads = leads.order(created_at: :desc) if ::Lead.column_names.include?('created_at')
+    limit = params[:limit].to_i
+    return leads unless limit.positive?
+
+    leads.limit([limit, INDEX_MAX_LIMIT].min)
   end
 
   def scoped_leads
