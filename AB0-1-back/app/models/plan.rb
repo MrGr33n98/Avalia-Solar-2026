@@ -28,6 +28,7 @@ class Plan < ApplicationRecord
   validate :validate_feature_dependencies
   validate :validate_feature_limits
   validate :validate_stripe_price_ids, if: :stripe_price_ids_changed?
+  after_commit -> { Rails.cache.delete(CompanyFeatureAccessResolver::PUBLIC_PLANS_CACHE_KEY) }
 
   def normalize_feature_fields
     return if plan_feature_fields.nil? && plan_tier_template.blank?

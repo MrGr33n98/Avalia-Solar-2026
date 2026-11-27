@@ -11,6 +11,9 @@ class CompanyFeatureAccessResolver
     'sector_question_limit' => ->(company) { company.sector_question_limit }
   }.freeze
 
+  UPSELL_STATES = %w[locked hidden].freeze
+  PUBLIC_PLANS_CACHE_KEY = 'company_feature_access/public_upgrade_plans/v1'.freeze
+
   def self.call(company:)
     new(company: company).call
   end
@@ -47,7 +50,7 @@ class CompanyFeatureAccessResolver
     value = resolved_value_for(key)
     state = PlanFeatureCatalog.access_state_for(key, value)
 
-    {
+    payload = {
       'state' => state,
       'value' => value,
       'group' => definition[:group],
@@ -55,6 +58,29 @@ class CompanyFeatureAccessResolver
       'reason' => reason_for(definition, state, value),
       'upsell_copy' => state == 'locked' ? upsell_copy_for(key) : nil
     }.compact
+    payload['unlock_plan'] = unlock_plan_for(key) if UPSELL_STATES.include?(state)
+    payload
+  end
+
+  # Spec 027 (T015): menor plano público (por preço) que libera a chave, sem contar o plano atual.
+  # `nil` = nenhum plano público libera → o front oferece contato comercial.
+  def unlock_plan_for(key)
+    plan = public_upgrade_plans.find do |candidate|
+      candidate['id'] != company.plan_id &&
+        PlanFeatureCatalog.access_state_for(key, candidate['features'][key]) == 'enabled'
+    end
+    plan&.slice('id', 'name', 'tier')
+  end
+
+  # Cache curto: `feature_access` roda por empresa nas listagens; o catálogo público muda raramente.
+  def public_upgrade_plans
+    @public_upgrade_plans ||= Rails.cache.fetch(PUBLIC_PLANS_CACHE_KEY, expires_in: 5.minutes) do
+      Plan.where(is_public: true).order(:price, :display_order, :id).map do |plan|
+        tier = plan.inferred_plan_tier
+        { 'id' => plan.id, 'name' => plan.name, 'tier' => tier,
+          'features' => PlanFeatureCatalog.normalize(plan.feature_flags, plan_tier: tier) }
+      end
+    end
   end
 
   def resolved_value_for(key)
