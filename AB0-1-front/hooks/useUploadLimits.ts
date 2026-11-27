@@ -27,8 +27,9 @@ interface UploadLimits {
   can_upgrade: boolean;
   next_tier: string | null;
   next_tier_pricing: {
-    monthly: number;
-    yearly: number;
+    plan_id: number;
+    name: string;
+    price: number;
   } | null;
 }
 
@@ -41,9 +42,10 @@ interface CheckResult {
     available: boolean;
     tier: string;
     pricing: {
-      monthly: number;
-      yearly: number;
-    };
+      plan_id: number;
+      name: string;
+      price: number;
+    } | null;
   };
 }
 
