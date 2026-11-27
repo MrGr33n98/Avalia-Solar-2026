@@ -11,6 +11,7 @@
 | **D1** | Leituras de `window.innerWidth` em componentes **globais** (`WebVitalsReporter`, `PostHogProvider`, `useComparison`) | Substituídas por `matchMedia` + `useSyncExternalStore` (mesmo padrão do C1) e `getDeviceClass()` sem forçar layout síncrono. | **CONCLUÍDO (Testes Verdes)** |
 | **D2** | Avaliação de módulos (`__webpack_require__`) do Recharts no First Load | Extração dos gráficos de `OverviewTab` para `OverviewCharts.tsx` com `next/dynamic()`, eliminando o Recharts síncrono no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **D4** | Montagem dos flyouts (`DashboardNavigationFlyout`) na sidebar | Renderização condicional `{open && <PopoverPrimitive.Portal forceMount>...}` para não avaliar nem montar a árvore dos ~27 submenus fechados no cold load. | **CONCLUÍDO (Testes Verdes)** |
+| **D6** | Desativação de busca de banners no `/dashboard` (`NavbarBannerSlot.tsx`) | Adicionado `/dashboard` e `/dashboard/*` a `hiddenRoute`, eliminando requisição de rede e render desnecessário no cold load. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
 1. **`AB0-1-front/hooks/useComparison.tsx`:**
