@@ -49,6 +49,10 @@ def is_allowed_doc_path(path_str: str) -> bool:
         ext = os.path.splitext(lower)[1]
         return ext in ALLOWED_DOC_EXTENSIONS
 
+    # specs/ directory: product specs are documentation, Markdown only
+    if lower.startswith("specs/"):
+        return lower.endswith(".md")
+
     # Root markdown or doc files
     if "/" not in lower:
         if lower in ALLOWED_ROOT_FILES or lower.endswith(".md"):

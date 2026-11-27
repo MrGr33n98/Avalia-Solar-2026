@@ -37,6 +37,14 @@ class TestValidateDocsPr(unittest.TestCase):
         self.assertFalse(vdp.is_allowed_doc_path("docker-compose.yml"))
         self.assertFalse(vdp.is_allowed_doc_path(".gitignore"))
 
+    def test_specs_markdown_is_allowed_but_not_other_spec_files(self):
+        # Specs de produto são documentação: somente Markdown é aceito.
+        self.assertTrue(vdp.is_allowed_doc_path("specs/027-feature/README.md"))
+        self.assertTrue(vdp.is_allowed_doc_path("specs/027-feature/evidence/report.md"))
+        self.assertFalse(vdp.is_allowed_doc_path("specs/022-feature/scripts/lab.mjs"))
+        self.assertFalse(vdp.is_allowed_doc_path("specs/022-feature/tasks.csv"))
+        self.assertFalse(vdp.is_allowed_doc_path("specs/022-feature/evidence/trace.json"))
+
     def test_valid_markdown_file(self):
         target_doc = self.root / "docs" / "target.md"
         target_doc.parent.mkdir(parents=True)
