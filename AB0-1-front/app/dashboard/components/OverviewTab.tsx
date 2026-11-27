@@ -557,6 +557,7 @@ export default function OverviewTab({
         companyId={companyId}
         days={period}
         premium={detailedAnalyticsAvailable}
+        onTabChange={onNavigateToTab}
       />
       <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>

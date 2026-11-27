@@ -13,6 +13,7 @@
 | **D4** | Montagem dos flyouts (`DashboardNavigationFlyout`) na sidebar | Renderização condicional `{open && <PopoverPrimitive.Portal forceMount>...}` para não avaliar nem montar a árvore dos ~27 submenus fechados no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **D6** | Desativação de busca de banners no `/dashboard` (`NavbarBannerSlot.tsx`) | Adicionado `/dashboard` e `/dashboard/*` a `hiddenRoute`, eliminando requisição de rede e render desnecessário no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **B0** | Prevenção de concorrência e vazamento de tenant ao trocar de empresa rapidamente (`useCompanyDashboardData.ts`) | AbortController cancela requisições em voo da empresa anterior, impedindo que responses tardias sobrescrevam o estado da empresa ativa. | **CONCLUÍDO (Testes Verdes)** |
+| **B1** | Sincronização de abas do dashboard sem round-trip de Server Component (`RoleBasedDashboardLayout.tsx`, `AttributionOverview.tsx`) | Canonicalização de aliases com `resolveDashboardTab` e suporte a navegação por tab sem disparar requisições RSC desnecessárias. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
 1. **`AB0-1-front/hooks/useComparison.tsx`:**
@@ -64,3 +65,12 @@
 2. **`AB0-1-front/lib/api-client.ts` & `AB0-1-front/lib/api.ts`:**
    - Suporte a `signal?: AbortSignal` em `companiesApiSafe.getById` e `companiesApi.getFeatureAccess`.
 - **Suíte TDD:** `AB0-1-front/__tests__/hooks/useCompanyDashboardDataRace.spec.ts` (2/2 testes passando com simulação de resposta atrasada da Empresa 1 após seleção da Empresa 2).
+
+### Detalhes da Implementação B1:
+1. **`AB0-1-front/app/dashboard/components/RoleBasedDashboardLayout.tsx`:**
+   - Adicionada canonicalização imediata de aliases via `resolveDashboardTab(rawTab)`.
+   - Impede loops de redirecionamento ou requisições desnecessárias para aliases de rotas.
+2. **`AB0-1-front/app/dashboard/components/analytics/AttributionOverview.tsx` & `OverviewTab.tsx`:**
+   - Adicionada propriedade `onTabChange` para permitir transição de aba local sem recarregar rota via `router.push`.
+   - Fallback inteligente: se estiver no `/dashboard`, atualiza `window.history.pushState` sem disparar requisição Server Component (RSC).
+- **Suíte TDD:** `AB0-1-front/__tests__/components/RoleBasedDashboardLayoutTab.spec.tsx` (3/3 testes passando) e `app/dashboard/components/analytics/AttributionOverview.spec.tsx` (2/2 testes passando).
