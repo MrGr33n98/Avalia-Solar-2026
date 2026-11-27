@@ -22,6 +22,7 @@ RSpec.describe Storefront::PublicProfileService do
 
   before do
     allow(company).to receive(:products).and_return([])
+    allow(company).to receive(:feature_enabled?).with('projects_showcase').and_return(false)
   end
 
   describe '.call' do
