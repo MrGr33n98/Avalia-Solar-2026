@@ -37,9 +37,9 @@ module Mcp
                       elsif company_id.present?
                         Company.find_by(id: company_id)
                       end
-            raise InputValidator::Invalid, 'Company not found or inactive.' unless company&.active?
+            raise InputValidator::Invalid, 'Company not found or inactive.' unless company&.active_status?
 
-            ::Storefront::PublicProfileService.new(company).call
+            ::Storefront::PublicProfileService.new(company: company).call
           else
             DirectoryService.new(principal: principal).call(name: name, arguments: arguments)
           end
