@@ -12,6 +12,7 @@
 | **D2** | Avaliação de módulos (`__webpack_require__`) do Recharts no First Load | Extração dos gráficos de `OverviewTab` para `OverviewCharts.tsx` com `next/dynamic()`, eliminando o Recharts síncrono no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **D4** | Montagem dos flyouts (`DashboardNavigationFlyout`) na sidebar | Renderização condicional `{open && <PopoverPrimitive.Portal forceMount>...}` para não avaliar nem montar a árvore dos ~27 submenus fechados no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **D6** | Desativação de busca de banners no `/dashboard` (`NavbarBannerSlot.tsx`) | Adicionado `/dashboard` e `/dashboard/*` a `hiddenRoute`, eliminando requisição de rede e render desnecessário no cold load. | **CONCLUÍDO (Testes Verdes)** |
+| **B0** | Prevenção de concorrência e vazamento de tenant ao trocar de empresa rapidamente (`useCompanyDashboardData.ts`) | AbortController cancela requisições em voo da empresa anterior, impedindo que responses tardias sobrescrevam o estado da empresa ativa. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
 1. **`AB0-1-front/hooks/useComparison.tsx`:**
@@ -53,3 +54,13 @@
    - Preserva comportamento integral de teclado (Escape, Enter, Setas), acessibilidade e transições quando o flyout é aberto por clique ou hover.
 - **Suíte TDD:** `AB0-1-front/__tests__/components/DashboardNavigationFlyout.test.tsx` (8/8 testes passando, incluindo teste de unmount com flyout fechado).
 - **Regressão de Sidebar:** `EnterpriseSidebar.test.tsx` e `EnterpriseSidebarViewport.spec.tsx` (13/13 passando).
+
+### Detalhes da Implementação B0:
+1. **`AB0-1-front/app/dashboard/hooks/useCompanyDashboardData.ts`:**
+   - Criação de `AbortController` por ciclo de empresa ativa.
+   - Cancelamento imediato (`abortController.abort()`) de todas as requisições em voo quando `companyId` muda ou no unmount do componente.
+   - Propagação do `AbortSignal` para `companiesApiSafe.getById`, `companiesApi.getFeatureAccess`, `fetchDashboardStats` e `fetchNotifications`.
+   - Tratamento de `AbortError` / `CanceledError` sem disparo de toasts falsos ou sobrescrita do estado de erro.
+2. **`AB0-1-front/lib/api-client.ts` & `AB0-1-front/lib/api.ts`:**
+   - Suporte a `signal?: AbortSignal` em `companiesApiSafe.getById` e `companiesApi.getFeatureAccess`.
+- **Suíte TDD:** `AB0-1-front/__tests__/hooks/useCompanyDashboardDataRace.spec.ts` (2/2 testes passando com simulação de resposta atrasada da Empresa 1 após seleção da Empresa 2).

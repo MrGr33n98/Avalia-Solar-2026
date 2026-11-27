@@ -704,13 +704,14 @@ export const companiesApiSafe = {
     }
   },
 
-  getById: async (id: number | string): Promise<Company | null> => {
+  getById: async (id: number | string, options?: { signal?: AbortSignal }): Promise<Company | null> => {
     const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
 
     try {
       console.log(`[companiesApiSafe.getById] Fetching company by ID: ${id}`);
       const response = await fetchApiSafe<any>(`companies/${encodeURIComponent(id)}`, {
         retries: 1,
+        signal: options?.signal,
       });
 
       if (response) {

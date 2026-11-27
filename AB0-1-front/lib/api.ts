@@ -2999,9 +2999,14 @@ export const companiesApi = {
       return null;
     }
   },
-  getFeatureAccess: (id: number | string, noCache = false): Promise<CompanyFeatureAccessResponse> =>
+  getFeatureAccess: (
+    id: number | string,
+    noCache = false,
+    options?: { signal?: AbortSignal }
+  ): Promise<CompanyFeatureAccessResponse> =>
     fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`, {
       noCache,
+      signal: options?.signal,
     }),
   getReviews: (id: number, params?: any) => {
     try {
