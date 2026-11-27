@@ -28,7 +28,7 @@ P026,B1,Canonicalizar aliases/params,TP04 e history verdes,DONE
 P027,B1,Persistir shell e loading local,"TP05/10, sem vazamento",PENDING
 P028,B1,Prefetch seletivo autorizado,TP12 e budgets,PENDING
 P029,B2,Fábrica de query keys e dedupe,"TP06, 0 duplicação evitável",PENDING
-P030,B2,Refresh seletivo e burst control,"TP07/08, revogação imediata",PENDING
+P030,B2,Refresh seletivo e burst control,"TP07/08, revogação imediata",DONE
 P031,B2,Filtros/cancelamento,TP09 e dados corretos,PENDING
 P032,B2,Separar falhas parciais,TP10 e retry local,PENDING
 P033,B3,Isolar boundaries e render hotspots,perfil antes/depois,PENDING

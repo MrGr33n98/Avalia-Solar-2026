@@ -14,6 +14,7 @@
 | **D6** | Desativação de busca de banners no `/dashboard` (`NavbarBannerSlot.tsx`) | Adicionado `/dashboard` e `/dashboard/*` a `hiddenRoute`, eliminando requisição de rede e render desnecessário no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **B0** | Prevenção de concorrência e vazamento de tenant ao trocar de empresa rapidamente (`useCompanyDashboardData.ts`) | AbortController cancela requisições em voo da empresa anterior, impedindo que responses tardias sobrescrevam o estado da empresa ativa. | **CONCLUÍDO (Testes Verdes)** |
 | **B1** | Sincronização de abas do dashboard sem round-trip de Server Component (`RoleBasedDashboardLayout.tsx`, `AttributionOverview.tsx`) | Canonicalização de aliases com `resolveDashboardTab` e suporte a navegação por tab sem disparar requisições RSC desnecessárias. | **CONCLUÍDO (Testes Verdes)** |
+| **B2** | Coalescência de eventos WebSocket em tempo real e refresh seletivo (`useCompanyDashboardData.ts`) | Agrupamento de rajadas ActionCable (burst control 400ms), IDOR guard para mensagens de outros tenants, revogação imediata para membership_revoked e refresh seletivo de stats/notifications/features. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
 1. **`AB0-1-front/hooks/useComparison.tsx`:**
@@ -74,3 +75,11 @@
    - Adicionada propriedade `onTabChange` para permitir transição de aba local sem recarregar rota via `router.push`.
    - Fallback inteligente: se estiver no `/dashboard`, atualiza `window.history.pushState` sem disparar requisição Server Component (RSC).
 - **Suíte TDD:** `AB0-1-front/__tests__/components/RoleBasedDashboardLayoutTab.spec.tsx` (3/3 testes passando) e `app/dashboard/components/analytics/AttributionOverview.spec.tsx` (2/2 testes passando).
+
+### Detalhes da Implementação B2:
+1. **`AB0-1-front/app/dashboard/hooks/useCompanyDashboardData.ts`:**
+   - **IDOR Guard no WebSocket:** Verificação imediata de `msg.company_id` contra o `companyId` ativo; mensagens de outros tenants são descartadas na borda antes de agendar qualquer re-render ou chamada de rede.
+   - **Revogação Imediata (TP07/TP08):** Eventos de segurança (`membership_revoked`, `access_revoked`, `plan_changed`) cancelam timers de debounce e disparam refresh imediato de `featureAccess` com `noCache = true`.
+   - **Refresh Seletivo e Coalescência de Rajadas (TP07):** Múltiplos eventos recebidos em rajada durante a janela `REALTIME_REFRESH_DEBOUNCE_MS` (400ms) acumulam alvos (`stats`, `notifications`, `features`) em um `Set` coordenado e disparam uma única rodada de requisições por fatia afetada, evitando múltiplos re-renders.
+   - **Cancelamento por AbortSignal:** `refreshData` propaga `controller.signal`, cancelando chamadas em voo se a empresa for alternada.
+- **Suíte TDD:** `AB0-1-front/app/dashboard/hooks/useCompanyDashboardData.spec.ts` (6/6 testes passando, incluindo isolamento de tenant, revogação imediata e refresh seletivo) e `__tests__/hooks/useCompanyDashboardDataRace.spec.ts` (2/2 testes passando).

@@ -122,4 +122,82 @@ describe('useCompanyDashboardData', () => {
     jest.advanceTimersByTime(REALTIME_REFRESH_DEBOUNCE_MS * 2);
     expect(mockFetchApi.mock.calls.length).toBe(callsBefore);
   });
+
+  it('ignora mensagens de WebSocket com company_id de outro tenant (IDOR guard)', async () => {
+    mockGetById.mockResolvedValue({ id: 9001 });
+    let onEvent: (msg?: any) => void = () => {};
+    mockSubscribe.mockImplementation((_id: string, cb: (msg?: any) => void) => {
+      onEvent = cb;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useCompanyDashboardData('9001'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    jest.useFakeTimers();
+    const callsBefore = mockFetchApi.mock.calls.length;
+
+    act(() => {
+      onEvent({ company_id: 9999, type: 'lead_received' });
+    });
+    jest.advanceTimersByTime(REALTIME_REFRESH_DEBOUNCE_MS * 2);
+
+    expect(mockFetchApi.mock.calls.length).toBe(callsBefore);
+  });
+
+  it('executa revogação imediata para membership_revoked sem aguardar debounce (TP07)', async () => {
+    mockGetById.mockResolvedValue({ id: 9001 });
+    let onEvent: (msg?: any) => void = () => {};
+    mockSubscribe.mockImplementation((_id: string, cb: (msg?: any) => void) => {
+      onEvent = cb;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useCompanyDashboardData('9001'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    mockGetFeatureAccess.mockClear();
+
+    // Evento de revogação imediata
+    await act(async () => {
+      onEvent({ company_id: 9001, type: 'membership_revoked' });
+    });
+
+    // Deve chamar getFeatureAccess com noCache=true imediatamente, sem avançar timers
+    expect(mockGetFeatureAccess).toHaveBeenCalledTimes(1);
+    expect(mockGetFeatureAccess).toHaveBeenCalledWith('9001', true, expect.objectContaining({ signal: expect.any(Object) }));
+  });
+
+  it('executa refresh seletivo apenas de estatísticas ao receber rajada de leads (TP07)', async () => {
+    mockGetById.mockResolvedValue({ id: 9001 });
+    let onEvent: (msg?: any) => void = () => {};
+    mockSubscribe.mockImplementation((_id: string, cb: (msg?: any) => void) => {
+      onEvent = cb;
+      return () => {};
+    });
+
+    const { result } = renderHook(() => useCompanyDashboardData('9001'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    jest.useFakeTimers();
+    const statsCallsBefore = mockFetchApi.mock.calls.filter(([p]) => p.endsWith('/stats')).length;
+    const notifCallsBefore = mockFetchApi.mock.calls.filter(([p]) => p.endsWith('/notifications')).length;
+
+    act(() => {
+      onEvent({ company_id: 9001, type: 'lead_received' });
+      onEvent({ company_id: 9001, type: 'lead_received' });
+    });
+
+    await act(async () => {
+      jest.advanceTimersByTime(REALTIME_REFRESH_DEBOUNCE_MS);
+    });
+
+    const statsCallsAfter = mockFetchApi.mock.calls.filter(([p]) => p.endsWith('/stats')).length;
+    const notifCallsAfter = mockFetchApi.mock.calls.filter(([p]) => p.endsWith('/notifications')).length;
+
+    // Atualizou estatísticas exatamente 1 vez
+    expect(statsCallsAfter - statsCallsBefore).toBe(1);
+    // Não disparou requisição desnecessária de notificações
+    expect(notifCallsAfter - notifCallsBefore).toBe(0);
+  });
 });

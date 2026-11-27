@@ -219,11 +219,22 @@ export function useCompanyDashboardData(companyId: string) {
     }
   }, [companyId, isCurrent]);
 
-  const refreshData = useCallback(() => {
-    fetchDashboardStats();
-    fetchFeatureAccess(true);
-    fetchNotifications();
-  }, [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]);
+  const refreshData = useCallback(
+    (options?: { signal?: AbortSignal; only?: 'stats' | 'features' | 'notifications' | 'all' }) => {
+      const signal = options?.signal ?? abortControllerRef.current?.signal;
+      const target = options?.only ?? 'all';
+      if (target === 'all' || target === 'stats') {
+        fetchDashboardStats(signal);
+      }
+      if (target === 'all' || target === 'features') {
+        fetchFeatureAccess(true, signal);
+      }
+      if (target === 'all' || target === 'notifications') {
+        fetchNotifications(signal);
+      }
+    },
+    [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]
+  );
 
   useEffect(() => {
     abortControllerRef.current?.abort();
@@ -269,11 +280,49 @@ export function useCompanyDashboardData(companyId: string) {
     loadAll();
 
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
-    const subscription = subscribeCompanyDashboard(companyId, () => {
+    const pendingTargets = new Set<'stats' | 'features' | 'notifications'>();
+
+    const subscription = subscribeCompanyDashboard(companyId, (msg?: any) => {
+      // IDOR Guard / Isolamento de tenant: descarta mensagens cujo company_id seja de outra empresa
+      if (msg?.company_id && String(msg.company_id) !== String(companyId)) {
+        return;
+      }
+
+      // Revogação imediata (TP07/TP08): se o acesso ou plano foi revogado/alterado, dispara refresh imediato sem debounce
+      if (
+        msg?.type === 'membership_revoked' ||
+        msg?.type === 'access_revoked' ||
+        msg?.type === 'plan_changed'
+      ) {
+        if (refreshTimer) {
+          clearTimeout(refreshTimer);
+          refreshTimer = null;
+        }
+        pendingTargets.clear();
+        fetchFeatureAccess(true, controller.signal);
+        return;
+      }
+
+      // Refresh seletivo e coalescência de rajada (TP07)
+      if (msg?.type === 'notification' || msg?.type === 'notification_created') {
+        pendingTargets.add('notifications');
+      } else if (msg?.type === 'stats' || msg?.type === 'lead_received' || msg?.counters) {
+        pendingTargets.add('stats');
+      } else {
+        pendingTargets.add('stats');
+        pendingTargets.add('notifications');
+        pendingTargets.add('features');
+      }
+
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(() => {
         refreshTimer = null;
-        refreshData();
+        const targets = new Set(pendingTargets);
+        pendingTargets.clear();
+
+        if (targets.has('stats')) fetchDashboardStats(controller.signal);
+        if (targets.has('features')) fetchFeatureAccess(true, controller.signal);
+        if (targets.has('notifications')) fetchNotifications(controller.signal);
       }, REALTIME_REFRESH_DEBOUNCE_MS);
     });
 
