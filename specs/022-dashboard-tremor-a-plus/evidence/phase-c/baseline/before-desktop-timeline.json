@@ -1,0 +1,50 @@
+{
+  "label": "before-desktop",
+  "mobile": false,
+  "median": {
+    "Executar JS (callbacks/eventos)": 2881,
+    "Pintura/composição": 595,
+    "Recalcular estilo": 573,
+    "Layout": 425,
+    "Avaliar JS (topo)": 352,
+    "GC": 51,
+    "Parse CSS": 50,
+    "Parse HTML": 47,
+    "Compilar JS": 19
+  },
+  "runs": [
+    {
+      "Recalcular estilo": 490,
+      "Pintura/composição": 151,
+      "Parse HTML": 32,
+      "Executar JS (callbacks/eventos)": 2107,
+      "Layout": 425,
+      "Parse CSS": 50,
+      "Avaliar JS (topo)": 414,
+      "Compilar JS": 19,
+      "GC": 51
+    },
+    {
+      "Recalcular estilo": 573,
+      "Pintura/composição": 660,
+      "Parse HTML": 47,
+      "Executar JS (callbacks/eventos)": 2881,
+      "Layout": 691,
+      "Parse CSS": 61,
+      "Avaliar JS (topo)": 352,
+      "Compilar JS": 12,
+      "GC": 86
+    },
+    {
+      "Recalcular estilo": 605,
+      "Pintura/composição": 595,
+      "Parse HTML": 124,
+      "Executar JS (callbacks/eventos)": 3122,
+      "Layout": 335,
+      "Parse CSS": 50,
+      "Avaliar JS (topo)": 293,
+      "Compilar JS": 19,
+      "GC": 47
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "label": "B-mobile",
+  "mobile": true,
+  "totalMs": 209,
+  "calls": 5,
+  "rows": [
+    {
+      "key": "innerWidth | app: (sem frame do app) | lib: (sem lib)",
+      "calls": 5,
+      "ms": 209
+    }
+  ]
+}
