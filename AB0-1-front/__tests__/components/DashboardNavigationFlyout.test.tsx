@@ -179,4 +179,19 @@ describe('DashboardNavigationFlyout (Padrão My.G2)', () => {
       expect(screen.queryByText('Informações Gerais')).not.toBeInTheDocument();
     });
   });
+
+  it('não renderiza o conteúdo do submenu no DOM quando o flyout está fechado (Spec 022 D4)', () => {
+    render(
+      <DashboardNavigationFlyout
+        item={mockItem}
+        activeTab="overview"
+        onTabChange={jest.fn()}
+        isCompactRail={false}
+      />
+    );
+
+    expect(screen.queryByText('Informações Gerais')).not.toBeInTheDocument();
+    expect(screen.queryByText('Categorias')).not.toBeInTheDocument();
+    expect(screen.queryByText('Produtos e Serviços')).not.toBeInTheDocument();
+  });
 });

@@ -9,6 +9,7 @@
 | Item | Alvo | Mudança Implementada | Status |
 |---|---|---|:---:|
 | **D1** | Leituras de `window.innerWidth` em componentes **globais** (`WebVitalsReporter`, `PostHogProvider`, `useComparison`) | Substituídas por `matchMedia` + `useSyncExternalStore` (mesmo padrão do C1) e `getDeviceClass()` sem forçar layout síncrono. | **CONCLUÍDO (Testes Verdes)** |
+| **D4** | Montagem dos flyouts (`DashboardNavigationFlyout`) na sidebar | Renderização condicional `{open && <PopoverPrimitive.Portal forceMount>...}` para não avaliar nem montar a árvore dos ~27 submenus fechados no cold load. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
 1. **`AB0-1-front/hooks/useComparison.tsx`:**
@@ -35,5 +36,10 @@
     - `✓ useComparison não lê window.innerWidth na montagem nem na resolução de limite`
     - `✓ PostHogProvider não lê window.innerWidth na montagem ou inicialização`
     - `✓ WebVitalsReporter não lê window.innerWidth ao reportar métricas`
-- **Regressão de Políticas:** `AB0-1-front/__tests__/comparison/comparison-policy.test.ts` (5/5 passando).
-- **TypeScript & Lint:** `tsc --noEmit` limpo e `eslint` zerado nos arquivos alterados.
+### Detalhes da Implementação D4:
+1. **`AB0-1-front/app/dashboard/components/DashboardNavigationFlyout.tsx`:**
+   - Adicionada condição `{open && ...}` ao redor de `<PopoverPrimitive.Portal forceMount>`.
+   - Evita a execução e instanciação prévia de ~100 subitens de navegação, ícones Lucide, crachás de notificação e cadeados de recurso quando a sidebar é carregada com todos os flyouts fechados.
+   - Preserva comportamento integral de teclado (Escape, Enter, Setas), acessibilidade e transições quando o flyout é aberto por clique ou hover.
+- **Suíte TDD:** `AB0-1-front/__tests__/components/DashboardNavigationFlyout.test.tsx` (8/8 testes passando, incluindo teste de unmount com flyout fechado).
+- **Regressão de Sidebar:** `EnterpriseSidebar.test.tsx` e `EnterpriseSidebarViewport.spec.tsx` (13/13 passando).

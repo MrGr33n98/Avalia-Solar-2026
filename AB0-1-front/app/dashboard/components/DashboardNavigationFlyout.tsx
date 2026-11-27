@@ -183,94 +183,96 @@ export function DashboardNavigationFlyout({
           </button>
         </PopoverPrimitive.Trigger>
 
-        {/* Radix Portal avoids clipping by parent overflow-y-auto */}
-        <PopoverPrimitive.Portal>
-          <PopoverPrimitive.Content
-            ref={contentRef}
-            side="right"
-            align="start"
-            sideOffset={isCompactRail ? 10 : 8}
-            collisionPadding={16}
-            avoidCollisions
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onKeyDown={handleContentKeyDown}
-            className={cn(
-              'z-[60] w-[260px] rounded-2xl border border-slate-100 bg-white p-1.5 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.18)] outline-none',
-              'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-              'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=right]:slide-in-from-left-2',
-              'dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.6)]'
-            )}
-          >
-            {/* Header com o título do grupo */}
-            <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {item.label}
-              </span>
-            </div>
+        {/* Radix Portal avoids clipping by parent overflow-y-auto — só monta quando aberto (Spec 022 D4) */}
+        {open && (
+          <PopoverPrimitive.Portal forceMount>
+            <PopoverPrimitive.Content
+              ref={contentRef}
+              side="right"
+              align="start"
+              sideOffset={isCompactRail ? 10 : 8}
+              collisionPadding={16}
+              avoidCollisions
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onKeyDown={handleContentKeyDown}
+              className={cn(
+                'z-[60] w-[260px] rounded-2xl border border-slate-100 bg-white p-1.5 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.18)] outline-none',
+                'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+                'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=right]:slide-in-from-left-2',
+                'dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.6)]'
+              )}
+            >
+              {/* Header com o título do grupo */}
+              <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {item.label}
+                </span>
+              </div>
 
-            {/* Lista dos subitens */}
-            <div className="space-y-0.5 pt-1">
-              {children.map((child) => {
-                const ChildIcon = child.icon;
-                const isChildActive = child.id === activeTab;
-                const childBadge =
-                  child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
-                const hasMessageBadge = child.badge && child.id === 'live-inbox';
-                const isLocked = lockedTabIds?.has(child.id) ?? false;
+              {/* Lista dos subitens */}
+              <div className="space-y-0.5 pt-1">
+                {children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const isChildActive = child.id === activeTab;
+                  const childBadge =
+                    child.badge && child.id === 'reviews' ? pendingReviewsCount : 0;
+                  const hasMessageBadge = child.badge && child.id === 'live-inbox';
+                  const isLocked = lockedTabIds?.has(child.id) ?? false;
 
-                return (
-                  <button
-                    key={child.id}
-                    type="button"
-                    data-flyout-item="true"
-                    onClick={() => handleChildSelect(child.id)}
-                    aria-current={isChildActive ? 'page' : undefined}
-                    aria-disabled={isLocked ? true : undefined}
-                    className={cn(
-                      'group/item flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition-colors outline-none',
-                      isChildActive
-                        ? 'border border-blue-100 bg-blue-50/90 font-semibold text-blue-700 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-400'
-                        : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 focus-visible:bg-slate-100 focus-visible:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:bg-slate-800'
-                    )}
-                  >
-                    <ChildIcon
+                  return (
+                    <button
+                      key={child.id}
+                      type="button"
+                      data-flyout-item="true"
+                      onClick={() => handleChildSelect(child.id)}
+                      aria-current={isChildActive ? 'page' : undefined}
+                      aria-disabled={isLocked ? true : undefined}
                       className={cn(
-                        'h-4 w-4 shrink-0 transition-colors',
+                        'group/item flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition-colors outline-none',
                         isChildActive
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-slate-500 group-hover/item:text-slate-700 dark:text-slate-400 dark:group-hover/item:text-slate-200'
+                          ? 'border border-blue-100 bg-blue-50/90 font-semibold text-blue-700 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-400'
+                          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 focus-visible:bg-slate-100 focus-visible:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white dark:focus-visible:bg-slate-800'
                       )}
-                    />
-
-                    <span className="flex-1 truncate">{child.label}</span>
-
-                    {isLocked && (
-                      <LockKeyhole
-                        className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400"
-                        aria-label="Recurso bloqueado"
-                        data-testid={`navigation-lock-${child.id}`}
+                    >
+                      <ChildIcon
+                        className={cn(
+                          'h-4 w-4 shrink-0 transition-colors',
+                          isChildActive
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-slate-500 group-hover/item:text-slate-700 dark:text-slate-400 dark:group-hover/item:text-slate-200'
+                        )}
                       />
-                    )}
 
-                    {childBadge > 0 && !isLocked && (
-                      <Badge className="ml-auto h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
-                        {childBadge}
-                      </Badge>
-                    )}
+                      <span className="flex-1 truncate">{child.label}</span>
 
-                    {hasMessageBadge && (
-                      <span
-                        className="ml-auto h-2.5 w-2.5 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"
-                        aria-label="Novas mensagens"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </PopoverPrimitive.Content>
-        </PopoverPrimitive.Portal>
+                      {isLocked && (
+                        <LockKeyhole
+                          className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400"
+                          aria-label="Recurso bloqueado"
+                          data-testid={`navigation-lock-${child.id}`}
+                        />
+                      )}
+
+                      {childBadge > 0 && !isLocked && (
+                        <Badge className="ml-auto h-5 min-w-5 rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
+                          {childBadge}
+                        </Badge>
+                      )}
+
+                      {hasMessageBadge && (
+                        <span
+                          className="ml-auto h-2.5 w-2.5 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-900"
+                          aria-label="Novas mensagens"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverPrimitive.Content>
+          </PopoverPrimitive.Portal>
+        )}
       </div>
     </PopoverPrimitive.Root>
   );
