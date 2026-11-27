@@ -32,7 +32,9 @@ export default function NavbarBannerSlot() {
   const hiddenRoute =
     pathname === '/' ||
     pathname === '/review-dashboard' ||
-    pathname?.startsWith('/review-dashboard/');
+    pathname?.startsWith('/review-dashboard/') ||
+    pathname === '/dashboard' ||
+    pathname?.startsWith('/dashboard/');
 
   if (hiddenRoute) return null;
 

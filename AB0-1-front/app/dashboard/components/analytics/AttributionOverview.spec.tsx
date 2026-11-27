@@ -46,4 +46,14 @@ describe('AttributionOverview', () => {
     expect(screen.queryByText(/Internal/)).not.toBeInTheDocument();
     expect(screen.queryByText(/System\/Auth/)).not.toBeInTheDocument();
   });
+
+  it('ao clicar em "Abrir Tracking & Atribuição", usa onTabChange quando fornecido', () => {
+    const mockOnTabChange = jest.fn();
+    render(<AttributionOverview companyId="372" premium={true} onTabChange={mockOnTabChange} />);
+
+    const button = screen.getByRole('button', { name: /Abrir Tracking & Atribuição/i });
+    button.click();
+
+    expect(mockOnTabChange).toHaveBeenCalledWith('tracking-attribution');
+  });
 });

@@ -12,6 +12,7 @@ import {
   isFeatureHiddenEntry,
   isFeatureLockedEntry,
 } from "@/lib/feature-access";
+import { resolveDashboardTab } from "../lib/dashboard-tabs";
 
 // System Admin Layout Components
 import DashboardSidebar from "./DashboardSidebar";
@@ -106,17 +107,12 @@ export default function RoleBasedDashboardLayout({
 
   const isAdmin = (user?.role as string) === 'admin' || (user?.role as string) === 'super_admin';
 
-  const handleTabChange = (tab: string) => {
-    if (tab === 'live-inbox') {
-      router.push('/dashboard/inbox');
-    } else if (tab === 'icp-config') {
-      router.push('/dashboard/icp');
-    } else if (tab === 'quote-form') {
-      router.push(`/dashboard/quote-form?company_id=${companyId}`);
-    } else if (tab === 'proposals') {
-      router.push('/dashboard/proposals');
+  const handleTabChange = (rawTab: string) => {
+    const resolved = resolveDashboardTab(rawTab);
+    if (resolved.kind === 'route') {
+      router.push(resolved.href);
     } else {
-      router.push(`/dashboard?tab=${tab}`);
+      router.push(`/dashboard?tab=${resolved.tab}`);
     }
   };
 

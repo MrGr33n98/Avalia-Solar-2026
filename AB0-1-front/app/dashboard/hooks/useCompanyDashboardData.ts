@@ -84,22 +84,24 @@ export function useCompanyDashboardData(companyId: string) {
   // Empresa cujas respostas ainda podem ser aplicadas. Respostas de outra
   // empresa (troca A→B) ou após unmount são descartadas (D0 H03).
   const activeCompanyRef = useRef<string | null>(companyId);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const isCurrent = useCallback((requestCompanyId: string) => activeCompanyRef.current === requestCompanyId, []);
 
-  const fetchCompanyData = useCallback(async () => {
+  const fetchCompanyData = useCallback(async (signal?: AbortSignal) => {
     try {
       console.debug('[CompanyDashboardData] Fetching company data', { companyId });
+      if (signal?.aborted || !isCurrent(companyId)) return;
 
-      const data = await companiesApi.getById(Number(companyId));
-      if (!isCurrent(companyId)) return;
+      const data = await companiesApi.getById(Number(companyId), { signal });
+      if (signal?.aborted || !isCurrent(companyId)) return;
       if (!data) {
         console.warn('[CompanyDashboardData] Company not found for dashboard user', { companyId });
         setCompanyError('Empresa nao encontrada ou nao associada a sua conta.');
       } else {
         setCompany(data);
       }
-    } catch (error) {
-      if (!isCurrent(companyId)) return;
+    } catch (error: any) {
+      if (signal?.aborted || !isCurrent(companyId) || error?.name === 'AbortError') return;
       console.error('[CompanyDashboardData] Error fetching company', {
         companyId,
         endpoint: '/companies/:id',
@@ -109,10 +111,11 @@ export function useCompanyDashboardData(companyId: string) {
     }
   }, [companyId, isCurrent]);
 
-  const fetchDashboardStats = useCallback(async () => {
+  const fetchDashboardStats = useCallback(async (signal?: AbortSignal) => {
     setStatsLoading(true);
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard stats', { companyId });
+      if (signal?.aborted || !isCurrent(companyId)) return;
 
       const data = await fetchApi<{
         stats: any;
@@ -122,8 +125,9 @@ export function useCompanyDashboardData(companyId: string) {
         next_best_actions?: any[];
       }>('/company_dashboard/stats', {
         params: { company_id: companyId },
+        signal,
       });
-      if (!isCurrent(companyId)) return;
+      if (signal?.aborted || !isCurrent(companyId)) return;
       const s = data?.stats || {};
 
       setStats({
@@ -144,29 +148,30 @@ export function useCompanyDashboardData(companyId: string) {
       });
       setHealth(data?.health || null);
       setNextBestActions(data?.next_best_actions || []);
-    } catch (error) {
-      if (!isCurrent(companyId)) return;
+    } catch (error: any) {
+      if (signal?.aborted || !isCurrent(companyId) || error?.name === 'AbortError') return;
       console.error('[CompanyDashboardData] Error fetching dashboard stats', {
         companyId,
         endpoint: '/company_dashboard/stats',
         error,
       });
     } finally {
-      if (isCurrent(companyId)) setStatsLoading(false);
+      if (!signal?.aborted && isCurrent(companyId)) setStatsLoading(false);
     }
   }, [companyId, isCurrent]);
 
-  const fetchFeatureAccess = useCallback(async (noCache = false) => {
+  const fetchFeatureAccess = useCallback(async (noCache = false, signal?: AbortSignal) => {
     setFeatureAccessLoading(true);
     setFeatureAccessError(false);
     try {
       console.debug('[CompanyDashboardData] Fetching canonical feature access', { companyId });
+      if (signal?.aborted || !isCurrent(companyId)) return;
 
-      const data = await companiesApi.getFeatureAccess(companyId, noCache);
-      if (!isCurrent(companyId)) return;
+      const data = await companiesApi.getFeatureAccess(companyId, noCache, { signal });
+      if (signal?.aborted || !isCurrent(companyId)) return;
       setFeatureAccess(data?.features || {});
-    } catch (error) {
-      if (!isCurrent(companyId)) return;
+    } catch (error: any) {
+      if (signal?.aborted || !isCurrent(companyId) || error?.name === 'AbortError') return;
       console.error('[CompanyDashboardData] Error fetching feature access', {
         companyId,
         endpoint: '/companies/:id/feature_access',
@@ -175,19 +180,21 @@ export function useCompanyDashboardData(companyId: string) {
       setFeatureAccess({});
       setFeatureAccessError(true);
     } finally {
-      if (isCurrent(companyId)) setFeatureAccessLoading(false);
+      if (!signal?.aborted && isCurrent(companyId)) setFeatureAccessLoading(false);
     }
   }, [companyId, isCurrent]);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (signal?: AbortSignal) => {
     setNotificationsLoading(true);
     try {
       console.debug('[CompanyDashboardData] Fetching dashboard notifications', { companyId });
+      if (signal?.aborted || !isCurrent(companyId)) return;
 
       const data = await fetchApi<{ notifications: any[] }>('/company_dashboard/notifications', {
         params: { company_id: companyId },
+        signal,
       });
-      if (!isCurrent(companyId)) return;
+      if (signal?.aborted || !isCurrent(companyId)) return;
       const list = data?.notifications || [];
 
       setNotifications(
@@ -200,26 +207,41 @@ export function useCompanyDashboardData(companyId: string) {
           read: !!n.read,
         }))
       );
-    } catch (error) {
-      if (!isCurrent(companyId)) return;
+    } catch (error: any) {
+      if (signal?.aborted || !isCurrent(companyId) || error?.name === 'AbortError') return;
       console.error('[CompanyDashboardData] Error fetching notifications', {
         companyId,
         endpoint: '/company_dashboard/notifications',
         error,
       });
     } finally {
-      if (isCurrent(companyId)) setNotificationsLoading(false);
+      if (!signal?.aborted && isCurrent(companyId)) setNotificationsLoading(false);
     }
   }, [companyId, isCurrent]);
 
-  const refreshData = useCallback(() => {
-    fetchDashboardStats();
-    fetchFeatureAccess(true);
-    fetchNotifications();
-  }, [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]);
+  const refreshData = useCallback(
+    (options?: { signal?: AbortSignal; only?: 'stats' | 'features' | 'notifications' | 'all' }) => {
+      const signal = options?.signal ?? abortControllerRef.current?.signal;
+      const target = options?.only ?? 'all';
+      if (target === 'all' || target === 'stats') {
+        fetchDashboardStats(signal);
+      }
+      if (target === 'all' || target === 'features') {
+        fetchFeatureAccess(true, signal);
+      }
+      if (target === 'all' || target === 'notifications') {
+        fetchNotifications(signal);
+      }
+    },
+    [fetchDashboardStats, fetchFeatureAccess, fetchNotifications]
+  );
 
   useEffect(() => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     activeCompanyRef.current = companyId;
+
     setCompany(null);
     setCompanyError(null);
     setStats(null);
@@ -236,14 +258,20 @@ export function useCompanyDashboardData(companyId: string) {
       setNotificationsLoading(true);
 
       // 1. Etapa Crítica: Empresa e Acesso a Funcionalidades liberam o shell imediatamente
-      const criticalPromise = Promise.all([fetchCompanyData(), fetchFeatureAccess()]);
+      const criticalPromise = Promise.all([
+        fetchCompanyData(controller.signal),
+        fetchFeatureAccess(false, controller.signal),
+      ]);
 
       // 2. Etapa Progressiva: Métricas e Notificações rodam independentemente
-      const secondaryPromise = Promise.allSettled([fetchDashboardStats(), fetchNotifications()]);
+      const secondaryPromise = Promise.allSettled([
+        fetchDashboardStats(controller.signal),
+        fetchNotifications(controller.signal),
+      ]);
 
       // Desbloqueia o shell assim que a etapa crítica terminar
       await criticalPromise;
-      if (isCurrent(companyId)) setLoading(false);
+      if (!controller.signal.aborted && isCurrent(companyId)) setLoading(false);
 
       // Aguarda as secundárias sem travar a interface
       await secondaryPromise;
@@ -252,15 +280,54 @@ export function useCompanyDashboardData(companyId: string) {
     loadAll();
 
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
-    const subscription = subscribeCompanyDashboard(companyId, () => {
+    const pendingTargets = new Set<'stats' | 'features' | 'notifications'>();
+
+    const subscription = subscribeCompanyDashboard(companyId, (msg?: any) => {
+      // IDOR Guard / Isolamento de tenant: descarta mensagens cujo company_id seja de outra empresa
+      if (msg?.company_id && String(msg.company_id) !== String(companyId)) {
+        return;
+      }
+
+      // Revogação imediata (TP07/TP08): se o acesso ou plano foi revogado/alterado, dispara refresh imediato sem debounce
+      if (
+        msg?.type === 'membership_revoked' ||
+        msg?.type === 'access_revoked' ||
+        msg?.type === 'plan_changed'
+      ) {
+        if (refreshTimer) {
+          clearTimeout(refreshTimer);
+          refreshTimer = null;
+        }
+        pendingTargets.clear();
+        fetchFeatureAccess(true, controller.signal);
+        return;
+      }
+
+      // Refresh seletivo e coalescência de rajada (TP07)
+      if (msg?.type === 'notification' || msg?.type === 'notification_created') {
+        pendingTargets.add('notifications');
+      } else if (msg?.type === 'stats' || msg?.type === 'lead_received' || msg?.counters) {
+        pendingTargets.add('stats');
+      } else {
+        pendingTargets.add('stats');
+        pendingTargets.add('notifications');
+        pendingTargets.add('features');
+      }
+
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(() => {
         refreshTimer = null;
-        refreshData();
+        const targets = new Set(pendingTargets);
+        pendingTargets.clear();
+
+        if (targets.has('stats')) fetchDashboardStats(controller.signal);
+        if (targets.has('features')) fetchFeatureAccess(true, controller.signal);
+        if (targets.has('notifications')) fetchNotifications(controller.signal);
       }, REALTIME_REFRESH_DEBOUNCE_MS);
     });
 
     return () => {
+      controller.abort();
       activeCompanyRef.current = null;
       if (refreshTimer) clearTimeout(refreshTimer);
       cleanupRealtimeSubscription(subscription);

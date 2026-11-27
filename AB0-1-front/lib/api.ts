@@ -2963,21 +2963,26 @@ export const companiesApi = {
       throw error;
     }
   },
-  getById: async (id: number | string): Promise<Company | null> => {
+  getById: async (id: number | string, options?: { signal?: AbortSignal }): Promise<Company | null> => {
     const slugCandidate = typeof id === 'string' && !/^\d+$/.test(id);
     try {
-      const response = await fetchApi<{ company: Company }>(`/companies/${encodeURIComponent(id)}`);
+      const response = await fetchApi<{ company: Company }>(`/companies/${encodeURIComponent(id)}`, {
+        signal: options?.signal,
+      });
       if (response?.company) return response.company;
       return (response as any)?.id ? (response as any) : null;
-    } catch (error) {
+    } catch (error: any) {
+      if (options?.signal?.aborted || error?.name === 'AbortError') throw error;
       if (slugCandidate) {
         try {
           const response = await fetchApi<{ company: Company }>(
-            `/companies/by_slug/${encodeURIComponent(id)}`
+            `/companies/by_slug/${encodeURIComponent(id)}`,
+            { signal: options?.signal }
           );
           if (response?.company) return response.company;
           return (response as any)?.id ? (response as any) : null;
-        } catch (slugError) {
+        } catch (slugError: any) {
+          if (options?.signal?.aborted || slugError?.name === 'AbortError') throw slugError;
           console.error(`Error fetching company with slug ${id}:`, slugError);
         }
       }
@@ -2999,9 +3004,14 @@ export const companiesApi = {
       return null;
     }
   },
-  getFeatureAccess: (id: number | string, noCache = false): Promise<CompanyFeatureAccessResponse> =>
+  getFeatureAccess: (
+    id: number | string,
+    noCache = false,
+    options?: { signal?: AbortSignal }
+  ): Promise<CompanyFeatureAccessResponse> =>
     fetchApi<CompanyFeatureAccessResponse>(`/companies/${encodeURIComponent(id)}/feature_access`, {
       noCache,
+      signal: options?.signal,
     }),
   getReviews: (id: number, params?: any) => {
     try {

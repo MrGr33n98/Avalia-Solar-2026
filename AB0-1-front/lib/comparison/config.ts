@@ -35,18 +35,30 @@ export const COMPARISON_BREAKPOINT_PX = 768;
  * Seguro para uso em SSR (retorna 'desktop' quando window não existe).
  */
 export function getComparisonLimit(widthPx?: number): number {
-  const width = widthPx ?? (typeof window !== 'undefined' ? window.innerWidth : Infinity);
-  return width < COMPARISON_BREAKPOINT_PX
-    ? COMPARISON_LIMITS.mobile
-    : COMPARISON_LIMITS.desktop;
+  if (typeof widthPx === 'number') {
+    return widthPx < COMPARISON_BREAKPOINT_PX
+      ? COMPARISON_LIMITS.mobile
+      : COMPARISON_LIMITS.desktop;
+  }
+  const isMobile =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia(`(max-width: ${COMPARISON_BREAKPOINT_PX - 1}px)`).matches
+      : false;
+  return isMobile ? COMPARISON_LIMITS.mobile : COMPARISON_LIMITS.desktop;
 }
 
 /**
  * Retorna a experiência ('mobile' | 'desktop') baseada na largura do viewport.
  */
 export function getComparisonExperience(widthPx?: number): ComparisonExperience {
-  const width = widthPx ?? (typeof window !== 'undefined' ? window.innerWidth : Infinity);
-  return width < COMPARISON_BREAKPOINT_PX ? 'mobile' : 'desktop';
+  if (typeof widthPx === 'number') {
+    return widthPx < COMPARISON_BREAKPOINT_PX ? 'mobile' : 'desktop';
+  }
+  const isMobile =
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia(`(max-width: ${COMPARISON_BREAKPOINT_PX - 1}px)`).matches
+      : false;
+  return isMobile ? 'mobile' : 'desktop';
 }
 
 /**

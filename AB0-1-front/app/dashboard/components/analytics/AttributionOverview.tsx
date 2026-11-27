@@ -15,6 +15,7 @@ type Props = {
   preset?: '7d' | '30d' | '90d' | 'custom';
   days?: number;
   premium: boolean;
+  onTabChange?: (tab: string) => void;
 };
 
 const labels: Record<string, string> = {
@@ -32,6 +33,7 @@ export default function AttributionOverview({
   preset = 'custom',
   days = 30,
   premium,
+  onTabChange,
 }: Props) {
   const router = useRouter();
   const [model, setModel] = useState<AttributionModel>('last_touch');
@@ -61,6 +63,17 @@ export default function AttributionOverview({
   };
 
   const openWorkspace = () => {
+    if (onTabChange) {
+      onTabChange('tracking-attribution');
+      return;
+    }
+    if (typeof window !== 'undefined' && window.location.pathname === '/dashboard') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', 'tracking-attribution');
+      window.history.pushState(null, '', `${window.location.pathname}?${params.toString()}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return;
+    }
     router.push(`/dashboard?company_id=${encodeURIComponent(companyId)}&tab=tracking-attribution`);
   };
 

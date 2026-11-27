@@ -25,19 +25,7 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import {
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +33,27 @@ import { companyDashboardApi, fetchApi, type FeatureAccessEntry } from '@/lib/ap
 import AttributionOverview from './analytics/AttributionOverview';
 import { cn } from '@/lib/utils';
 import { formatDate, formatNumber, formatRange } from '../lib/overview-format';
+
+// Lazy load dos gráficos com Recharts para evitar travar a thread de cold load (Spec 022 D2/B3)
+const OverviewPerformanceChart = dynamic(
+  () => import('./OverviewCharts').then((m) => m.OverviewPerformanceChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full animate-pulse rounded-lg bg-[hsl(var(--dashboard-surface))]" />
+    ),
+  }
+);
+
+const OverviewSourcesChart = dynamic(
+  () => import('./OverviewCharts').then((m) => m.OverviewSourcesChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-32 w-32 animate-pulse rounded-full bg-[hsl(var(--dashboard-surface))]" />
+    ),
+  }
+);
 
 type CompanyOverview = {
   name?: string;
@@ -548,6 +557,7 @@ export default function OverviewTab({
         companyId={companyId}
         days={period}
         premium={detailedAnalyticsAvailable}
+        onTabChange={onNavigateToTab}
       />
       <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
@@ -686,62 +696,7 @@ export default function OverviewTab({
                       </tbody>
                     </table>
                   </div>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={currentRows.map((row) => ({ ...row, label: formatDate(row.date) }))}
-                      margin={{ top: 8, right: 8, left: -18, bottom: 0 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="hsl(var(--dashboard-chart-grid))"
-                        strokeDasharray="3 3"
-                      />
-                      <XAxis
-                        dataKey="label"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: 'hsl(var(--dashboard-muted))', fontSize: 10 }}
-                        minTickGap={26}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: 'hsl(var(--dashboard-muted))', fontSize: 10 }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: 10,
-                          borderColor: 'hsl(var(--dashboard-border))',
-                          fontSize: 12,
-                        }}
-                        labelStyle={{ fontWeight: 700 }}
-                      />
-                      <Legend
-                        iconType="circle"
-                        iconSize={8}
-                        wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="views"
-                        name="Visualizações"
-                        stroke="hsl(var(--dashboard-chart-1))"
-                        strokeWidth={2.5}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="clicks"
-                        name="Interações (CTAs)"
-                        stroke="hsl(var(--dashboard-chart-2))"
-                        strokeWidth={2.25}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <OverviewPerformanceChart rows={currentRows} />
                 </div>
               ) : (
                 <EmptyChart>
@@ -781,25 +736,7 @@ export default function OverviewTab({
                     </table>
                   </div>
                   <div className="h-32 w-32 shrink-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={sources}
-                          dataKey="visits"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={38}
-                          outerRadius={58}
-                          paddingAngle={2}
-                        >
-                          {sources.map((source) => (
-                            <Cell key={source.name} fill={source.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <OverviewSourcesChart sources={sources} />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1.5">
                     {sources.slice(0, 5).map((source) => (
