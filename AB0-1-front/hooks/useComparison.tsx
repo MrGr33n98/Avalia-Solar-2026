@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
 import { companiesApi, type Company } from '@/lib/api';
 import { toast } from 'sonner';
 import { CheckCircle2, Info, AlertTriangle, Trash2 } from 'lucide-react';
@@ -23,26 +23,37 @@ const STORAGE_KEY = COMPARISON_STORAGE_KEY;
 // Event system for cross-component communication
 const comparisonEvents = new EventTarget();
 
+const MOBILE_QUERY = '(max-width: 767px)';
+
+function subscribeComparisonViewport(onChange: () => void) {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const media = window.matchMedia(MOBILE_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+const getIsMobileComparison = () =>
+  typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia(MOBILE_QUERY).matches
+    : false;
+
+const getServerIsMobileComparison = () => false;
+
 export function useComparison() {
   const [comparisonList, setComparisonList] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hydrationError, setHydrationError] = useState(false);
   const [hydrationAttempt, setHydrationAttempt] = useState(0);
   const retryHydration = useCallback(() => setHydrationAttempt((attempt) => attempt + 1), []);
-  const [windowWidth, setWindowWidth] = useState<number>(
-    typeof window !== 'undefined' ? window.innerWidth : 1024
+  const isMobile = useSyncExternalStore(
+    subscribeComparisonViewport,
+    getIsMobileComparison,
+    getServerIsMobileComparison
   );
   const skipEmitRef = useRef(false);
 
-  // Monitor viewport width
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const experience: ComparisonExperience = getComparisonExperience(windowWidth);
-  const maxComparison = getComparisonLimit(windowWidth);
+  const experience: ComparisonExperience = isMobile ? 'mobile' : 'desktop';
+  const maxComparison = isMobile ? COMPARISON_LIMITS.mobile : COMPARISON_LIMITS.desktop;
 
   // Legacy JSON arrays are migrated to IDs, then fetched from the API.
   // Never trust browser-stored financial terms, ratings, or entitlements.
@@ -175,12 +186,8 @@ export function useComparison() {
           return prev;
         }
 
-        const currentLimit = getComparisonLimit(
-          typeof window !== 'undefined' ? window.innerWidth : 1024
-        );
-        const currentExp = getComparisonExperience(
-          typeof window !== 'undefined' ? window.innerWidth : 1024
-        );
+        const currentLimit = getComparisonLimit();
+        const currentExp = getComparisonExperience();
 
         if (prev.length >= currentLimit) {
           toast.warning('Limite atingido', {
@@ -214,9 +221,7 @@ export function useComparison() {
     setComparisonList((prev) => {
       const company = prev.find((c) => c.id === companyId);
       const newList = prev.filter((c) => c.id !== companyId);
-      const currentLimit = getComparisonLimit(
-        typeof window !== 'undefined' ? window.innerWidth : 1024
-      );
+      const currentLimit = getComparisonLimit();
 
       if (company) {
         toast.info('Empresa removida', {
@@ -245,9 +250,7 @@ export function useComparison() {
 
   const replaceComparison = useCallback((companies: Company[]) => {
     setHydrationError(false);
-    const currentLimit = getComparisonLimit(
-      typeof window !== 'undefined' ? window.innerWidth : 1024
-    );
+    const currentLimit = getComparisonLimit();
     const uniqueCompanies = companies
       .filter(
         (company, index, list) =>

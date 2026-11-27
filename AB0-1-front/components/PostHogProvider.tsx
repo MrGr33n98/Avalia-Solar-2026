@@ -197,7 +197,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         if (!posthog.__loaded) {
           const hasConsent = hasAnalyticsConsent();
 
-          const isMobile = window.innerWidth < 768;
+          const isMobile =
+            typeof window !== 'undefined' && window.matchMedia
+              ? window.matchMedia('(max-width: 767px)').matches
+              : false;
           const navConn = (navigator as NavigatorWithConnection).connection;
           const isSaveData = navConn?.saveData === true;
           const isSlowConn = ['slow-2g', '2g', '3g'].includes(navConn?.effectiveType ?? '');

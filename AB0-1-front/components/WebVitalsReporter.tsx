@@ -31,14 +31,15 @@ export default function WebVitalsReporter() {
 
     const pagePath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '/');
     const pageTemplate = getPageTemplateInfo(pagePath);
-    const deviceClass = getDeviceClass(
-      typeof window !== 'undefined' ? window.innerWidth : undefined
-    );
+    const deviceClass = getDeviceClass();
     const displayMode =
-      typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+      typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
         ? 'standalone'
         : 'browser';
-    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : undefined;
+    const viewportWidth =
+      typeof window !== 'undefined'
+        ? Math.round(window.visualViewport?.width ?? (window.screen ? window.screen.width : 0))
+        : undefined;
     const dashboardTab =
       typeof window !== 'undefined' && pagePath.startsWith('/dashboard')
         ? new URLSearchParams(window.location.search).get('tab') || 'overview'

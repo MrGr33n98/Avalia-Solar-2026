@@ -33,10 +33,17 @@ const trimPath = (value: string): string => {
 };
 
 export function getDeviceClass(width?: number): DeviceClass {
-  if (typeof width !== 'number' || Number.isNaN(width) || width <= 0) return 'unknown';
-  if (width < 768) return 'mobile';
-  if (width < 1024) return 'tablet';
-  return 'desktop';
+  if (typeof width === 'number' && !Number.isNaN(width) && width > 0) {
+    if (width < 768) return 'mobile';
+    if (width < 1024) return 'tablet';
+    return 'desktop';
+  }
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    if (window.matchMedia('(max-width: 767px)').matches) return 'mobile';
+    if (window.matchMedia('(max-width: 1023px)').matches) return 'tablet';
+    return 'desktop';
+  }
+  return 'unknown';
 }
 
 export function getPageTemplateInfo(pathname: string): PageTemplateInfo {

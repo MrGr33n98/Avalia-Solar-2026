@@ -14,7 +14,10 @@ const nextEventId = (prefix: string): string => {
 
 const getDeviceType = (): 'mobile' | 'desktop' => {
   if (typeof window === 'undefined') return 'desktop';
-  return window.innerWidth < 768 ? 'mobile' : 'desktop';
+  if (window.matchMedia) {
+    return window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop';
+  }
+  return 'desktop';
 };
 
 const extractBaseProperties = (item?: RecommendationItem | null, meta?: RecommendationMeta | null) => {
