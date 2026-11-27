@@ -9,6 +9,7 @@
 | Item | Alvo | Mudança Implementada | Status |
 |---|---|---|:---:|
 | **D1** | Leituras de `window.innerWidth` em componentes **globais** (`WebVitalsReporter`, `PostHogProvider`, `useComparison`) | Substituídas por `matchMedia` + `useSyncExternalStore` (mesmo padrão do C1) e `getDeviceClass()` sem forçar layout síncrono. | **CONCLUÍDO (Testes Verdes)** |
+| **D2** | Avaliação de módulos (`__webpack_require__`) do Recharts no First Load | Extração dos gráficos de `OverviewTab` para `OverviewCharts.tsx` com `next/dynamic()`, eliminando o Recharts síncrono no cold load. | **CONCLUÍDO (Testes Verdes)** |
 | **D4** | Montagem dos flyouts (`DashboardNavigationFlyout`) na sidebar | Renderização condicional `{open && <PopoverPrimitive.Portal forceMount>...}` para não avaliar nem montar a árvore dos ~27 submenus fechados no cold load. | **CONCLUÍDO (Testes Verdes)** |
 
 ### Detalhes da Implementação D1:
@@ -36,6 +37,14 @@
     - `✓ useComparison não lê window.innerWidth na montagem nem na resolução de limite`
     - `✓ PostHogProvider não lê window.innerWidth na montagem ou inicialização`
     - `✓ WebVitalsReporter não lê window.innerWidth ao reportar métricas`
+### Detalhes da Implementação D2:
+1. **`AB0-1-front/app/dashboard/components/OverviewCharts.tsx`:**
+   - Componente isolado para os gráficos `OverviewPerformanceChart` (`LineChart`) e `OverviewSourcesChart` (`PieChart`).
+   - Removeu todos os imports estáticos de `recharts` do módulo principal `OverviewTab.tsx`.
+   - Carregamento assíncrono via `next/dynamic` com placeholders esqueleto elegantes (`animate-pulse`).
+   - Preservou 100% das tabelas semânticas acessíveis em SSR para screen readers (`aria-label`).
+- **Suíte TDD:** `AB0-1-front/__tests__/components/OverviewCharts.spec.tsx` (2/2 testes passando).
+
 ### Detalhes da Implementação D4:
 1. **`AB0-1-front/app/dashboard/components/DashboardNavigationFlyout.tsx`:**
    - Adicionada condição `{open && ...}` ao redor de `<PopoverPrimitive.Portal forceMount>`.
