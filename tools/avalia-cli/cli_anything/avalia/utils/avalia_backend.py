@@ -533,6 +533,41 @@ class AvaliaBackend:
         self.run_sql_json(mutate_sql)
         return preview
 
+    def category_sync_counters(self, reason: str, dry_run: bool = True) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        listing = self.category_list(empty_only=False)
+        drifted = [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cached_companies_count": c["cached_companies_count"],
+                "actual_companies_count": c["actual_companies_count"],
+            }
+            for c in listing.get("categories", [])
+            if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        ]
+        preview = {
+            "action": "category.sync-counters",
+            "drifted_categories_count": len(drifted),
+            "drifted_categories": drifted,
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run or not drifted:
+            return preview
+
+        mutate_sql = """
+        BEGIN;
+        UPDATE categories cat
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id),
+            updated_at = NOW()
+        WHERE COALESCE(cat.companies_count, 0) <> (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id);
+        COMMIT;
+        SELECT json_build_object('synced', TRUE)::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
     # -------------------------------------------------------------------------
     # 5. REPUTATION & REVIEWS (R0 / R2)
     # -------------------------------------------------------------------------
@@ -603,6 +638,41 @@ class AvaliaBackend:
         WHERE id = {int(review_id)};
         COMMIT;
         SELECT json_build_object('moderated_review_id', {int(review_id)}, 'status', {sql_literal(new_status)})::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    def category_sync_counters(self, reason: str, dry_run: bool = True) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        listing = self.category_list(empty_only=False)
+        drifted = [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cached_companies_count": c["cached_companies_count"],
+                "actual_companies_count": c["actual_companies_count"],
+            }
+            for c in listing.get("categories", [])
+            if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        ]
+        preview = {
+            "action": "category.sync-counters",
+            "drifted_categories_count": len(drifted),
+            "drifted_categories": drifted,
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run or not drifted:
+            return preview
+
+        mutate_sql = """
+        BEGIN;
+        UPDATE categories cat
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id),
+            updated_at = NOW()
+        WHERE COALESCE(cat.companies_count, 0) <> (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id);
+        COMMIT;
+        SELECT json_build_object('synced', TRUE)::text;
         """
         self.run_sql_json(mutate_sql)
         return preview
@@ -700,6 +770,360 @@ class AvaliaBackend:
         if not detect_duplicates:
             res.pop("duplicate_names", None)
         return res
+
+    def curation_pending_changes(self, status: str = "pending", limit: int = 30) -> Dict[str, Any]:
+        sql = f"""
+        SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
+          SELECT pc.id, pc.company_id, c.name AS company_name, pc.user_id,
+                 pc.change_type, pc.status, pc.data, pc.created_at
+          FROM pending_changes pc
+          LEFT JOIN companies c ON c.id = pc.company_id
+          WHERE pc.status = {sql_literal(status)}
+          ORDER BY pc.created_at DESC
+          LIMIT {int(limit)}
+        ) t;
+        """
+        changes = self.run_sql_json(sql)
+        return {"status_filter": status, "count": len(changes), "pending_changes": changes}
+
+    def curation_resolve_change(
+        self,
+        change_id: int,
+        action: str,
+        reason: str,
+        dry_run: bool = True,
+    ) -> Dict[str, Any]:
+        if action not in ("approve", "reject"):
+            raise AvaliaValidationError("Ação inválida: use 'approve' ou 'reject'.")
+        cleaned_reason = validate_reason(reason)
+        new_status = "approved" if action == "approve" else "rejected"
+
+        sql = f"""
+        SELECT COALESCE((
+          SELECT row_to_json(t) FROM (
+            SELECT pc.id, pc.company_id, c.name AS company_name,
+                   pc.change_type, pc.status, pc.data
+            FROM pending_changes pc
+            LEFT JOIN companies c ON c.id = pc.company_id
+            WHERE pc.id = {int(change_id)}
+          ) t
+        ), '{{}}'::json)::text;
+        """
+        pc = self.run_sql_json(sql)
+        if not pc or not pc.get("id"):
+            raise AvaliaValidationError(f"PendingChange ID {change_id} não encontrada.")
+
+        preview = {
+            "action": f"curation.resolve-change.{action}",
+            "change_id": pc["id"],
+            "company_id": pc.get("company_id"),
+            "company_name": pc.get("company_name"),
+            "change_type": pc.get("change_type"),
+            "before": {"status": pc.get("status")},
+            "after": {"status": new_status},
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run:
+            return preview
+
+        ts_col = "approved_at = NOW()" if action == "approve" else f"rejected_at = NOW(), rejection_reason = {sql_literal(cleaned_reason)}"
+        mutate_sql = f"""
+        BEGIN;
+        UPDATE pending_changes
+        SET status = {sql_literal(new_status)},
+            {ts_col},
+            updated_at = NOW()
+        WHERE id = {int(change_id)};
+        COMMIT;
+        SELECT json_build_object('resolved_change_id', {int(change_id)}, 'status', {sql_literal(new_status)})::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    def category_sync_counters(self, reason: str, dry_run: bool = True) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        listing = self.category_list(empty_only=False)
+        drifted = [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cached_companies_count": c["cached_companies_count"],
+                "actual_companies_count": c["actual_companies_count"],
+            }
+            for c in listing.get("categories", [])
+            if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        ]
+        preview = {
+            "action": "category.sync-counters",
+            "drifted_categories_count": len(drifted),
+            "drifted_categories": drifted,
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run or not drifted:
+            return preview
+
+        mutate_sql = """
+        BEGIN;
+        UPDATE categories cat
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id),
+            updated_at = NOW()
+        WHERE COALESCE(cat.companies_count, 0) <> (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id);
+        COMMIT;
+        SELECT json_build_object('synced', TRUE)::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    def curation_deactivate_duplicate(
+        self,
+        duplicate_id: int,
+        keep_id: int,
+        reason: str,
+        dry_run: bool = True,
+    ) -> Dict[str, Any]:
+        if int(duplicate_id) == int(keep_id):
+            raise AvaliaValidationError("O ID duplicado e o ID mantido (--keep) devem ser diferentes.")
+        cleaned_reason = validate_reason(reason)
+
+        sql = f"""
+        SELECT json_build_object(
+          'duplicate', (SELECT row_to_json(d) FROM (SELECT id, name, city, state, status, reviews_count FROM companies WHERE id = {int(duplicate_id)}) d),
+          'master', (SELECT row_to_json(m) FROM (SELECT id, name, city, state, status, reviews_count FROM companies WHERE id = {int(keep_id)}) m)
+        )::text;
+        """
+        pair = self.run_sql_json(sql)
+        dup = pair.get("duplicate")
+        master = pair.get("master")
+        if not dup:
+            raise AvaliaValidationError(f"Empresa duplicada ID {duplicate_id} não encontrada.")
+        if not master:
+            raise AvaliaValidationError(f"Empresa principal (--keep) ID {keep_id} não encontrada.")
+
+        preview = {
+            "action": "curation.deactivate-duplicate",
+            "duplicate_company": dup,
+            "keep_master_company": master,
+            "before": {"duplicate_status": dup.get("status")},
+            "after": {"duplicate_status": "inactive"},
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run:
+            return preview
+
+        mutate_sql = f"""
+        BEGIN;
+        UPDATE companies
+        SET status = 'inactive',
+            rejected_reason = {sql_literal(f"Duplicata de ID {keep_id}: {cleaned_reason}")},
+            updated_at = NOW()
+        WHERE id = {int(duplicate_id)};
+        COMMIT;
+        SELECT json_build_object('deactivated_id', {int(duplicate_id)}, 'kept_id', {int(keep_id)})::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    def category_sync_counters(self, reason: str, dry_run: bool = True) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        listing = self.category_list(empty_only=False)
+        drifted = [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cached_companies_count": c["cached_companies_count"],
+                "actual_companies_count": c["actual_companies_count"],
+            }
+            for c in listing.get("categories", [])
+            if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        ]
+        preview = {
+            "action": "category.sync-counters",
+            "drifted_categories_count": len(drifted),
+            "drifted_categories": drifted,
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run or not drifted:
+            return preview
+
+        mutate_sql = """
+        BEGIN;
+        UPDATE categories cat
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id),
+            updated_at = NOW()
+        WHERE COALESCE(cat.companies_count, 0) <> (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id);
+        COMMIT;
+        SELECT json_build_object('synced', TRUE)::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    # -------------------------------------------------------------------------
+    # 8B. CATEGORIES MANAGEMENT & ACTIONS (R0 / R2)
+    # -------------------------------------------------------------------------
+    def category_list(self, empty_only: bool = False) -> Dict[str, Any]:
+        sql = """
+        SELECT COALESCE(json_agg(row_to_json(t)), '[]'::json)::text FROM (
+          SELECT cat.id, cat.name, cat.seo_url, cat.parent_id, cat.kind,
+                 cat.status, cat.featured,
+                 COALESCE(cat.companies_count, 0) AS cached_companies_count,
+                 (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id) AS actual_companies_count,
+                 (SELECT COUNT(*) FROM companies c WHERE c.primary_category_id = cat.id) AS primary_companies_count,
+                 (cat.seo_title IS NOT NULL AND cat.seo_title <> '') AS has_seo_title
+          FROM categories cat
+          ORDER BY cat.parent_id NULLS FIRST, cat.id ASC
+        ) t;
+        """
+        cats = self.run_sql_json(sql)
+        if empty_only:
+            cats = [c for c in cats if int(c.get("actual_companies_count") or 0) == 0]
+        drift_count = sum(
+            1 for c in cats if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        )
+        return {
+            "count": len(cats),
+            "empty_only": empty_only,
+            "counter_cache_drift_count": drift_count,
+            "categories": cats,
+        }
+
+    def category_uncategorized_companies(
+        self,
+        state: Optional[str] = None,
+        limit: int = 30,
+    ) -> Dict[str, Any]:
+        state_filter = f"AND c.state = {sql_literal(state.upper())}" if state else ""
+        sql = f"""
+        SELECT json_build_object(
+          'total_uncategorized_active', (
+            SELECT COUNT(*)
+            FROM companies c
+            LEFT JOIN categories_companies cc ON cc.company_id = c.id
+            WHERE c.status = 'active' AND cc.category_id IS NULL {state_filter}
+          ),
+          'companies', COALESCE((
+            SELECT json_agg(row_to_json(t)) FROM (
+              SELECT c.id, c.name, c.city, c.state, c.primary_category_id, c.verified
+              FROM companies c
+              LEFT JOIN categories_companies cc ON cc.company_id = c.id
+              WHERE c.status = 'active' AND cc.category_id IS NULL {state_filter}
+              ORDER BY c.verified DESC, c.id ASC
+              LIMIT {int(limit)}
+            ) t
+          ), '[]'::json)
+        )::text;
+        """
+        return self.run_sql_json(sql)
+
+    def category_assign(
+        self,
+        company_id: int,
+        category_id: int,
+        reason: str,
+        set_primary: bool = True,
+        dry_run: bool = True,
+    ) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        sql = f"""
+        SELECT json_build_object(
+          'company', (SELECT row_to_json(c) FROM (SELECT id, name, city, state, primary_category_id FROM companies WHERE id = {int(company_id)}) c),
+          'category', (SELECT row_to_json(cat) FROM (SELECT id, name, seo_url, status FROM categories WHERE id = {int(category_id)}) cat),
+          'already_linked', EXISTS(SELECT 1 FROM categories_companies WHERE company_id = {int(company_id)} AND category_id = {int(category_id)})
+        )::text;
+        """
+        info = self.run_sql_json(sql)
+        comp = info.get("company")
+        cat = info.get("category")
+        if not comp:
+            raise AvaliaValidationError(f"Empresa ID {company_id} não encontrada.")
+        if not cat:
+            raise AvaliaValidationError(f"Categoria ID {category_id} não encontrada.")
+
+        already = bool(info.get("already_linked"))
+        preview = {
+            "action": "category.assign",
+            "company_id": comp["id"],
+            "company_name": comp["name"],
+            "category_id": cat["id"],
+            "category_name": cat["name"],
+            "before": {
+                "already_linked": already,
+                "primary_category_id": comp.get("primary_category_id"),
+            },
+            "after": {
+                "linked": True,
+                "primary_category_id": cat["id"] if set_primary else comp.get("primary_category_id"),
+            },
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run:
+            return preview
+
+        insert_link_sql = (
+            ""
+            if already
+            else f"INSERT INTO categories_companies (company_id, category_id) VALUES ({int(company_id)}, {int(category_id)});"
+        )
+        primary_sql = (
+            f"UPDATE companies SET primary_category_id = {int(category_id)}, updated_at = NOW() WHERE id = {int(company_id)};"
+            if set_primary
+            else ""
+        )
+        sync_counter_sql = f"""
+        UPDATE categories
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies WHERE category_id = {int(category_id)}),
+            updated_at = NOW()
+        WHERE id = {int(category_id)};
+        """
+        mutate_sql = f"""
+        BEGIN;
+        {insert_link_sql}
+        {primary_sql}
+        {sync_counter_sql}
+        COMMIT;
+        SELECT json_build_object('assigned', TRUE, 'company_id', {int(company_id)}, 'category_id', {int(category_id)})::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
+
+    def category_sync_counters(self, reason: str, dry_run: bool = True) -> Dict[str, Any]:
+        cleaned_reason = validate_reason(reason)
+        listing = self.category_list(empty_only=False)
+        drifted = [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cached_companies_count": c["cached_companies_count"],
+                "actual_companies_count": c["actual_companies_count"],
+            }
+            for c in listing.get("categories", [])
+            if int(c.get("cached_companies_count") or 0) != int(c.get("actual_companies_count") or 0)
+        ]
+        preview = {
+            "action": "category.sync-counters",
+            "drifted_categories_count": len(drifted),
+            "drifted_categories": drifted,
+            "reason": cleaned_reason,
+            "applied": not dry_run,
+        }
+        if dry_run or not drifted:
+            return preview
+
+        mutate_sql = """
+        BEGIN;
+        UPDATE categories cat
+        SET companies_count = (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id),
+            updated_at = NOW()
+        WHERE COALESCE(cat.companies_count, 0) <> (SELECT COUNT(*) FROM categories_companies cc WHERE cc.category_id = cat.id);
+        COMMIT;
+        SELECT json_build_object('synced', TRUE)::text;
+        """
+        self.run_sql_json(mutate_sql)
+        return preview
 
     # -------------------------------------------------------------------------
     # 9. AEO VALIDATE STOREFRONT (R0)

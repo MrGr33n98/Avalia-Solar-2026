@@ -600,6 +600,233 @@ def curation_audit_cmd(ctx: CliContext, state: Optional[str], detect_duplicates:
     )
 
 
+@curation_group.command("pending-changes")
+@click.option("--status", default="pending", show_default=True, help="Status (pending, approved, rejected).")
+@click.option("--limit", type=int, default=30, show_default=True)
+@pass_ctx
+def curation_pending_changes_cmd(ctx: CliContext, status: str, limit: int) -> None:
+    """Lista alterações cadastrais pendentes de aprovação (PendingChange) [R0]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        rows = [
+            [
+                str(pc["id"]),
+                str(pc.get("company_id") or "-"),
+                str(pc.get("company_name") or "-")[:28],
+                str(pc.get("change_type") or "-"),
+                str(pc.get("status") or "-"),
+            ]
+            for pc in data.get("pending_changes", [])
+        ]
+        skin.table(["Change ID", "Company ID", "Empresa", "Tipo de Alteração", "Status"], rows)
+
+    execute_command(
+        ctx,
+        "curation.pending-changes",
+        "R0",
+        lambda: ctx.backend.curation_pending_changes(status=status, limit=limit),
+        render,
+    )
+
+
+@curation_group.command("resolve-change")
+@click.argument("change_id", type=int)
+@click.option("--action", type=click.Choice(["approve", "reject"]), required=True, help="Aprovar ou rejeitar alteração.")
+@click.option("--reason", type=str, required=True, help="Justificativa obrigatória para auditoria.")
+@click.option("--dry-run/--apply", default=True, show_default=True, help="Simula (Plan) ou aplica (Apply).")
+@pass_ctx
+def curation_resolve_change_cmd(ctx: CliContext, change_id: int, action: str, reason: str, dry_run: bool) -> None:
+    """Aprova ou rejeita uma PendingChange cadastral com Plan/Apply [R2]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Resolve PendingChange ID {change_id} ({'DRY-RUN' if dry_run else 'APLICADO'})")
+        skin.status("Empresa", f"{data.get('company_name')} (ID {data.get('company_id')})")
+        skin.status("Tipo", str(data.get("change_type")))
+        skin.status("Antes -> Depois", f"{data['before']['status']} -> {data['after']['status']}")
+        skin.status("Motivo", data["reason"])
+
+    execute_command(
+        ctx,
+        "curation.resolve-change",
+        "R2",
+        lambda: ctx.backend.curation_resolve_change(change_id, action, reason, dry_run=dry_run),
+        render,
+        dry_run=dry_run,
+    )
+
+
+@curation_group.command("deactivate-duplicate")
+@click.argument("duplicate_id", type=int)
+@click.option("--keep", "keep_id", type=int, required=True, help="ID da empresa principal que será mantida ativa.")
+@click.option("--reason", type=str, required=True, help="Motivo obrigatório para desativação da duplicata.")
+@click.option("--dry-run/--apply", default=True, show_default=True, help="Simula (Plan) ou aplica (Apply).")
+@pass_ctx
+def curation_deactivate_duplicate_cmd(
+    ctx: CliContext,
+    duplicate_id: int,
+    keep_id: int,
+    reason: str,
+    dry_run: bool,
+) -> None:
+    """Desativa um registro de empresa duplicado mantendo a empresa master ativa [R2]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Deactivate Duplicate ID {duplicate_id} -> Keep Master ID {keep_id}")
+        dup = data["duplicate_company"]
+        mst = data["keep_master_company"]
+        skin.status("Duplicata (Desativar)", f"ID {dup['id']} - {dup['name']} ({dup.get('city')}/{dup.get('state')})")
+        skin.status("Master (Manter)", f"ID {mst['id']} - {mst['name']} ({mst.get('city')}/{mst.get('state')})")
+        skin.status("Antes -> Depois", f"{data['before']['duplicate_status']} -> {data['after']['duplicate_status']}")
+
+    execute_command(
+        ctx,
+        "curation.deactivate-duplicate",
+        "R2",
+        lambda: ctx.backend.curation_deactivate_duplicate(duplicate_id, keep_id, reason, dry_run=dry_run),
+        render,
+        dry_run=dry_run,
+    )
+
+
+# =============================================================================
+# 8B. CATEGORY GROUP (TAXONOMIA & VÍNCULO DE EMPRESAS)
+# =============================================================================
+@cli.group("category")
+def category_group() -> None:
+    """Taxonomia de categorias, auditoria de vínculos e atribuição de empresas [R0/R2]."""
+
+
+@category_group.command("list")
+@click.option("--empty-only", is_flag=True, default=False, help="Filtra apenas categorias com 0 empresas vinculadas.")
+@pass_ctx
+def category_list_cmd(ctx: CliContext, empty_only: bool) -> None:
+    """Lista todas as categorias, contagem real vs cacheada de empresas e SEO [R0]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Catálogo de Categorias (Total: {data['count']} | Drift de Cache: {data['counter_cache_drift_count']})")
+        rows = [
+            [
+                str(c["id"]),
+                str(c.get("parent_id") or "-"),
+                str(c["name"])[:30],
+                str(c.get("seo_url") or "-")[:26],
+                f"{c.get('actual_companies_count', 0)} (cache={c.get('cached_companies_count', 0)})",
+                str(c.get("status") or "-"),
+            ]
+            for c in data.get("categories", [])
+        ]
+        skin.table(["ID", "Parent", "Nome", "Slug / SEO URL", "Empresas Reais", "Status"], rows)
+
+    execute_command(
+        ctx,
+        "category.list",
+        "R0",
+        lambda: ctx.backend.category_list(empty_only=empty_only),
+        render,
+    )
+
+
+@category_group.command("uncategorized-companies")
+@click.option("--state", type=str, default=None, help="Filtra por UF (ex: SC, SP, MG).")
+@click.option("--limit", type=int, default=30, show_default=True)
+@pass_ctx
+def category_uncategorized_companies_cmd(ctx: CliContext, state: Optional[str], limit: int) -> None:
+    """Lista empresas ativas que não possuem nenhuma categoria vinculada [R0]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Empresas Ativas Sem Categoria (Total: {data.get('total_uncategorized_active', 0)})")
+        rows = [
+            [
+                str(c["id"]),
+                str(c["name"])[:35],
+                f"{c.get('city') or '-'}/{c.get('state') or '-'}",
+                "SIM" if c.get("verified") else "NÃO",
+            ]
+            for c in data.get("companies", [])
+        ]
+        skin.table(["ID", "Empresa", "Cidade/UF", "Verificada"], rows)
+
+    execute_command(
+        ctx,
+        "category.uncategorized-companies",
+        "R0",
+        lambda: ctx.backend.category_uncategorized_companies(state=state, limit=limit),
+        render,
+    )
+
+
+@category_group.command("assign")
+@click.option("--company", "company_id", type=int, required=True, help="ID da empresa.")
+@click.option("--category", "category_id", type=int, required=True, help="ID da categoria.")
+@click.option("--reason", type=str, required=True, help="Motivo obrigatório para auditoria.")
+@click.option("--set-primary/--no-primary", default=True, show_default=True, help="Define também como primary_category_id.")
+@click.option("--dry-run/--apply", default=True, show_default=True, help="Simula (Plan) ou aplica (Apply).")
+@pass_ctx
+def category_assign_cmd(
+    ctx: CliContext,
+    company_id: int,
+    category_id: int,
+    reason: str,
+    set_primary: bool,
+    dry_run: bool,
+) -> None:
+    """Vincula uma empresa a uma categoria e sincroniza o counter cache com Plan/Apply [R2]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Assign Category ({'DRY-RUN' if dry_run else 'APLICADO'})")
+        skin.status("Empresa", f"{data['company_name']} (ID {data['company_id']})")
+        skin.status("Categoria", f"{data['category_name']} (ID {data['category_id']})")
+        skin.status("Antes", json.dumps(data["before"], ensure_ascii=False))
+        skin.status("Depois", json.dumps(data["after"], ensure_ascii=False))
+
+    execute_command(
+        ctx,
+        "category.assign",
+        "R2",
+        lambda: ctx.backend.category_assign(
+            company_id,
+            category_id,
+            reason,
+            set_primary=set_primary,
+            dry_run=dry_run,
+        ),
+        render,
+        dry_run=dry_run,
+    )
+
+
+@category_group.command("sync-counters")
+@click.option("--reason", type=str, required=True, help="Motivo obrigatório para sincronizar os contadores.")
+@click.option("--dry-run/--apply", default=True, show_default=True, help="Simula (Plan) ou aplica (Apply).")
+@pass_ctx
+def category_sync_counters_cmd(ctx: CliContext, reason: str, dry_run: bool) -> None:
+    """Sincroniza companies_count cacheado de todas as categorias com categories_companies [R2]."""
+
+    def render(data: Dict[str, Any], skin: ReplSkin) -> None:
+        skin.section(f"Sync Category Counters ({'DRY-RUN' if dry_run else 'APLICADO'})")
+        skin.status("Categorias Defasadas", str(data.get("drifted_categories_count", 0)))
+        rows = [
+            [
+                str(c["id"]),
+                str(c["name"])[:32],
+                str(c["cached_companies_count"]),
+                str(c["actual_companies_count"]),
+            ]
+            for c in data.get("drifted_categories", [])
+        ]
+        if rows:
+            skin.table(["ID", "Categoria", "Cache Antes", "Real (Depois)"], rows)
+
+    execute_command(
+        ctx,
+        "category.sync-counters",
+        "R2",
+        lambda: ctx.backend.category_sync_counters(reason=reason, dry_run=dry_run),
+        render,
+        dry_run=dry_run,
+    )
+
+
 # =============================================================================
 # 9. AEO GROUP
 # =============================================================================

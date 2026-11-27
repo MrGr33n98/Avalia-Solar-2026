@@ -178,3 +178,38 @@ def test_cli_json_validation_error_returns_exit_code_2() -> None:
     assert payload["risk_tier"] == "R3"
     assert payload["data"]["error"] == "validation_error"
 
+
+def test_category_list_detects_counter_cache_drift() -> None:
+    mock_cats = [
+        {"id": 70, "name": "Instaladores Solares", "seo_url": "instaladores-solares", "parent_id": None, "kind": "service", "status": "active", "featured": True, "cached_companies_count": 10, "actual_companies_count": 15, "primary_companies_count": 12, "has_seo_title": True},
+        {"id": 71, "name": "Categoria Vazia", "seo_url": "vazia", "parent_id": 70, "kind": "service", "status": "active", "featured": False, "cached_companies_count": 0, "actual_companies_count": 0, "primary_companies_count": 0, "has_seo_title": False},
+    ]
+    backend = AvaliaBackend(env="local", runner=lambda _e, _s: json.dumps(mock_cats))
+    res = backend.category_list(empty_only=False)
+    assert res["count"] == 2
+    assert res["counter_cache_drift_count"] == 1
+
+    res_empty = backend.category_list(empty_only=True)
+    assert res_empty["count"] == 1
+    assert res_empty["categories"][0]["id"] == 71
+
+
+def test_category_assign_dry_run_preview() -> None:
+    mock_info = {
+        "company": {"id": 372, "name": "WEG", "city": "Jaraguá do Sul", "state": "SC", "primary_category_id": None},
+        "category": {"id": 70, "name": "Instaladores Solares", "seo_url": "instaladores-solares", "status": "active"},
+        "already_linked": False,
+    }
+    backend = AvaliaBackend(env="local", runner=lambda _e, _s: json.dumps(mock_info))
+    res = backend.category_assign(372, 70, reason="Categorização oficial de integrador", set_primary=True, dry_run=True)
+    assert res["applied"] is False
+    assert res["before"]["already_linked"] is False
+    assert res["after"]["primary_category_id"] == 70
+
+
+def test_curation_deactivate_duplicate_rejects_same_id() -> None:
+    backend = AvaliaBackend(env="local", runner=lambda _e, _s: "{}")
+    with pytest.raises(AvaliaValidationError):
+        backend.curation_deactivate_duplicate(485, 485, reason="Duplicata Mococa", dry_run=True)
+
+
