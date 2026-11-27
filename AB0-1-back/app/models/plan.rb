@@ -27,6 +27,7 @@ class Plan < ApplicationRecord
   before_validation :normalize_feature_fields
   validate :validate_feature_dependencies
   validate :validate_feature_limits
+  validate :validate_stripe_price_ids, if: :stripe_price_ids_changed?
 
   def normalize_feature_fields
     return if plan_feature_fields.nil? && plan_tier_template.blank?
@@ -163,6 +164,31 @@ class Plan < ApplicationRecord
         errors.add(:features_json, 'brand_hero_slides_limit deve estar entre 0 e 3')
       end
     end
+  end
+
+  # Spec 027 (T010): o mesmo Price em dois períodos ou dois planos deixa o checkout cobrando o valor errado
+  # e a resolução de assinatura (`Billing::SubscriptionSyncService`) ambígua.
+  def stripe_price_ids_changed?
+    will_save_change_to_stripe_price_id_monthly? || will_save_change_to_stripe_price_id_yearly?
+  end
+
+  def validate_stripe_price_ids
+    six_months = stripe_price_id_monthly.presence
+    twelve_months = stripe_price_id_yearly.presence
+    if six_months && six_months == twelve_months
+      errors.add(:stripe_price_id_yearly, 'deve ser diferente do Price de 6 meses')
+    end
+
+    { stripe_price_id_monthly: six_months, stripe_price_id_yearly: twelve_months }.each do |field, price_id|
+      next if price_id.nil?
+
+      errors.add(field, 'já está em uso por outro plano') if stripe_price_id_taken_by_other_plan?(price_id)
+    end
+  end
+
+  def stripe_price_id_taken_by_other_plan?(price_id)
+    others = Plan.where.not(id: id)
+    others.where(stripe_price_id_monthly: price_id).or(others.where(stripe_price_id_yearly: price_id)).exists?
   end
 
   def validate_feature_dependencies
