@@ -112,6 +112,39 @@ function fixtureFor(pathname: string, method: string) {
   }
   m = p.match(/^\/companies\/(\d+)$/);
   if (m) return company(Number(m[1]) === COMPANY_B.id ? COMPANY_B : COMPANY_A);
+  // Respostas vazias, mas no contrato tipado em lib/api*.ts: vários workspaces quebram
+  // o dashboard inteiro se a chave esperada vier ausente (fragilidade já existente).
+  if (p.includes('company_webhooks')) return { webhooks: [] };
+  if (p === '/company_dashboard/banners') {
+    return {
+      quota: { active_used: 0, active_limit: 1, active_remaining: 1, can_activate: true, can_create_draft: true },
+      summary: { impressions: 0, clicks: 0, ctr: 0, leads: 0 },
+      placements: [],
+      banners: [],
+      time_series: [],
+    };
+  }
+  if (p === '/company_dashboard/banners/export_alerts') return { alerts: [] };
+  if (p === '/company_admin/review_forms') {
+    return { review_forms: [], summary: { recent_forms_count: 0, recent_reviews_count: 0, approved_reviews_count: 0 } };
+  }
+  if (p === '/company_dashboard/analytics/prospects') {
+    return {
+      status: 'empty',
+      range: { from: '2026-10-28', to: '2026-11-26' },
+      summary: {
+        clicks: 0, verified_landings: 0, form_submissions: 0, confirmed_conversions: 0,
+        landing_rate: null, conversion_rate: null, form_observation_rate: null,
+        trends: { clicks_change_pct: null, landings_change_pct: null, conversions_change_pct: null, form_submissions_change_pct: null },
+      },
+      timeseries: [],
+      source_breakdown: [],
+      records: [],
+      pagination: { current_page: 1, per_page: 25, total_count: 0, total_pages: 0 },
+      tag_info: { configured: false, status: 'not_configured' },
+      integrations: { ga4: { status: 'not_configured' }, custom_ids: { allowed_keys: [], enabled: false } },
+    };
+  }
   if (p.includes('/leads')) return [];
   if (p.includes('notifications')) return { notifications: [] };
   if (p.includes('top_campaigns')) return { campaigns: [] };
@@ -133,6 +166,10 @@ async function setupWorkspace(context: BrowserContext, page: Page, baseURL: stri
   const selectActiveCalls: number[] = [];
   const companyIdsRequested = new Set<number>();
   page.on('pageerror', (e) => errors.push(e.message));
+  // Mismatch de hidratação (React 18 minificado: #418/#423/#425) também conta como erro.
+  page.on('console', (m) => {
+    if (m.type() === 'error' && /hydrat|did not match|#418|#423|#425/i.test(m.text())) errors.push(m.text());
+  });
 
   await page.route('**/*', async (route: Route) => {
     const req = route.request();
@@ -171,13 +208,19 @@ async function setupWorkspace(context: BrowserContext, page: Page, baseURL: stri
 
 /** Shell do workspace pronto: seletor de empresa mostra o tenant ativo. */
 async function waitForShell(page: Page, companyName: string) {
-  await expect(page.getByRole('button', { name: 'Alternar Empresa' }).first()).toBeAttached({ timeout: 45_000 });
-  await expect(page.getByText(companyName).first()).toBeVisible({ timeout: 45_000 });
+  // No mobile o seletor de empresa fica no drawer: o painel ativo também marca o shell pronto.
+  await expect(
+    page.locator('[aria-label="Alternar Empresa"], [role="tabpanel"]').first()
+  ).toBeAttached({ timeout: 45_000 });
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    await expect(page.getByText(companyName).first()).toBeVisible({ timeout: 45_000 });
+  }
 }
 
 async function expectNoCrash(page: Page, errors: string[]) {
   await expect(page.getByText('Erro Crítico')).toHaveCount(0);
-  expect(errors.filter((e) => /Minified React error #185|Maximum update depth/.test(e))).toEqual([]);
+  await expect(page.getByText('Erro no Dashboard')).toHaveCount(0);
+  expect(errors.filter((e) => /Minified React error #185|Maximum update depth|hydrat|did not match|#418|#423|#425/i.test(e))).toEqual([]);
 }
 
 test.describe('Workspace empresarial — fixtures A/B', () => {
@@ -206,7 +249,9 @@ test.describe('Workspace empresarial — fixtures A/B', () => {
       await page.goto(`/dashboard?company_id=${COMPANY_A.id}&tab=${tab}`);
       await waitForShell(page, COMPANY_A.name).catch(() => failures.push(`${tab} (shell)`));
       await page.waitForTimeout(800);
-      const crashed = (await page.getByText('Erro Crítico').count()) > 0;
+      const crashed =
+        (await page.getByText('Erro Crítico').count()) > 0 ||
+        (await page.getByText('Erro no Dashboard').count()) > 0;
       const loop = errors.some((e) => /#185|Maximum update depth/.test(e));
       if (crashed || loop) failures.push(tab);
       errors.length = 0;
@@ -259,6 +304,50 @@ test.describe('Workspace empresarial — fixtures A/B', () => {
     await waitForShell(page, COMPANY_B.name);
     await page.waitForTimeout(3500);
     await expect(page.locator('main')).not.toContainText(COMPANY_A.name);
+    await expectNoCrash(page, errors);
+  });
+
+  test('só o painel da aba ativa fica no DOM (Spec 022 Fase C)', async ({ context, page, baseURL }) => {
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    await page.goto(`/dashboard?company_id=${COMPANY_A.id}`);
+    await waitForShell(page, COMPANY_A.name);
+    await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+    await expect(page.locator('[data-tour="overview"]')).toHaveCount(1);
+    await expectNoCrash(page, errors);
+  });
+
+  test('deep link com alias abre o painel canônico correto', async ({ context, page, baseURL }) => {
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    for (const [alias, canonical] of [
+      ['info', 'product-general'],
+      ['prospects', 'tracking-attribution'],
+      ['buyer_intent', 'buyer-intent'],
+    ]) {
+      await page.goto(`/dashboard?company_id=${COMPANY_A.id}&tab=${alias}`);
+      await waitForShell(page, COMPANY_A.name);
+      await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', canonical, { timeout: 15_000 });
+      await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
+    }
+    await expectNoCrash(page, errors);
+  });
+
+  test('clique na sidebar troca o painel e voltar/avançar restauram o conteúdo', async ({ context, page, baseURL }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 768, 'sidebar fixa só a partir de md');
+    const { errors } = await setupWorkspace(context, page, baseURL!);
+    await page.goto(`/dashboard?company_id=${COMPANY_A.id}`);
+    await waitForShell(page, COMPANY_A.name);
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+
+    await page.locator('aside').getByRole('button', { name: 'Integrações', exact: true }).first().click();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'integrations');
+    expect(new URL(page.url()).searchParams.get('tab')).toBe('integrations');
+
+    await page.goBack();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'overview');
+    await page.goForward();
+    await expect(page.locator('[role="tabpanel"]')).toHaveAttribute('data-tab', 'integrations');
+    await expect(page.locator('[role="tabpanel"]')).toHaveCount(1);
     await expectNoCrash(page, errors);
   });
 });

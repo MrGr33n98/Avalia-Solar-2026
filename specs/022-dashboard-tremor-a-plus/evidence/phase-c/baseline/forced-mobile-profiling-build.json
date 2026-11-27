@@ -1,0 +1,33 @@
+{
+  "label": "fl-1b",
+  "mobile": true,
+  "totalMs": 573,
+  "calls": 18,
+  "rows": [
+    {
+      "key": "innerWidth | app: app/dashboard/components/EnterpriseSidebar.tsx:305 | lib: node_modules/next/dist/compiled/react-dom/cjs/react-dom.profiling.min.js:223",
+      "calls": 1,
+      "ms": 324
+    },
+    {
+      "key": "getComputedStyle | app: (sem frame do app) | lib: src/presence.tsx:167",
+      "calls": 10,
+      "ms": 191
+    },
+    {
+      "key": "innerWidth | app: hooks/useComparison.tsx:33 | lib: node_modules/next/dist/compiled/react-dom/cjs/react-dom.profiling.min.js:114",
+      "calls": 5,
+      "ms": 51
+    },
+    {
+      "key": "innerWidth | app: components/WebVitalsReporter.tsx:35 | lib: node_modules/next/dist/compiled/web-vitals/web-vitals.js?409e:1",
+      "calls": 1,
+      "ms": 4
+    },
+    {
+      "key": "getComputedStyle | app: (sem frame do app) | lib: src/index.tsx:514",
+      "calls": 1,
+      "ms": 4
+    }
+  ]
+}

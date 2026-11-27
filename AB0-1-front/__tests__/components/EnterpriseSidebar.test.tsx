@@ -25,8 +25,18 @@ jest.mock('@/components/brand/BrandLogo', () => ({
 
 describe('EnterpriseSidebar (Arquitetura Lateral My.G2)', () => {
   beforeEach(() => {
-    // Default desktop viewport width
+    // Default desktop viewport width (rail largo ≥ 1180px, lido via matchMedia)
     window.innerWidth = 1280;
+    (window.matchMedia as jest.Mock).mockImplementation((query: string) => ({
+      matches: query === '(min-width: 1180px)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
   });
 
   it('renderiza a sidebar fixa com logo e o item de Visão Geral como botão direto', () => {

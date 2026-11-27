@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { ChevronDown, LockKeyhole, LogOut } from 'lucide-react';
 import { AnimatedCompareIcon } from '@/components/icons/AnimatedCompareIcon';
 import { motion } from 'framer-motion';
@@ -35,6 +35,23 @@ interface EnterpriseSidebarProps {
 }
 
 const COMPACT_RAIL_BREAKPOINT_PX = 1180;
+const WIDE_RAIL_QUERY = `(min-width: ${COMPACT_RAIL_BREAKPOINT_PX}px)`;
+
+// Rail compacto abaixo de 1180px (breakpoint `dashboard` do Tailwind). Lido via
+// matchMedia, sem `window.innerWidth`: a leitura de innerWidth logo após o commit
+// forçava layout síncrono da página (até ~370 ms no mobile, Spec 022 Fase C).
+// A largura da <aside> e o padding do conteúdo (--enterprise-sidebar-width) são
+// CSS puro em globals.css; este estado só escolhe o layout interno do rail.
+function subscribeWideRail(onChange: () => void) {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+  const media = window.matchMedia(WIDE_RAIL_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+const getCompactViewport = () =>
+  typeof window === 'undefined' || !window.matchMedia ? true : !window.matchMedia(WIDE_RAIL_QUERY).matches;
+// Servidor e hidratação começam compactos, como antes.
+const getServerCompactViewport = () => true;
 
 function filterVisibleItems(items: NavigationItem[], visibleTabIds?: string[]): NavigationItem[] {
   return items
@@ -292,33 +309,16 @@ export default function EnterpriseSidebar({
 }: EnterpriseSidebarProps) {
   const { activeCompany } = useCompanyContext();
   const [companySelectorOpen, setCompanySelectorOpen] = useState(false);
-  const [isCompactViewport, setIsCompactViewport] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const isCompactViewport = useSyncExternalStore(
+    subscribeWideRail,
+    getCompactViewport,
+    getServerCompactViewport
+  );
   const [openGroups, setOpenGroups] = useState<string[]>([
     'overview-group',
     'reputation-group',
     'product-edit-group',
   ]);
-
-  useEffect(() => {
-    const updateCompact = () => {
-      const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsCompactViewport(width < COMPACT_RAIL_BREAKPOINT_PX);
-    };
-    updateCompact();
-    window.addEventListener('resize', updateCompact);
-    return () => window.removeEventListener('resize', updateCompact);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const width = isMobile ? '0px' : isCompactViewport ? '112px' : '240px';
-      document.documentElement.style.setProperty('--enterprise-sidebar-width', width);
-    } catch {
-      // noop
-    }
-  }, [isCompactViewport, isMobile]);
 
   const navItems = useMemo(
     () =>
@@ -366,7 +366,7 @@ export default function EnterpriseSidebar({
             <div
               className={cn(
                 'overflow-hidden rounded-md bg-white px-1 transition-[width] duration-200',
-                !isDrawer && (isSidebarCollapsed || isCompactViewport || isMobile) ? 'w-10' : 'w-[156px]'
+                !isDrawer && (isSidebarCollapsed || isCompactViewport) ? 'w-10' : 'w-[156px]'
               )}
             >
               <BrandLogo className="h-9 max-w-none" sizes="156px" priority />

@@ -1,0 +1,39 @@
+{
+  "label": "mobile-B-6",
+  "mobile": true,
+  "tab": "overview",
+  "runs": 1,
+  "median": {
+    "shellMs": 6664,
+    "longTasks": 25,
+    "longTaskSumMs": 6231,
+    "maxLongTaskMs": 993,
+    "tbtMs": 4981,
+    "scriptMs": 4274,
+    "layoutMs": 362,
+    "styleMs": 770,
+    "heapMB": 12,
+    "domNodes": 1046,
+    "apiRequests": 15
+  },
+  "crashes": 0,
+  "runsDetail": [
+    {
+      "run": 1,
+      "shellMs": 6664,
+      "crashed": false,
+      "errors": [],
+      "longTasks": 25,
+      "longTaskSumMs": 6231,
+      "maxLongTaskMs": 993,
+      "tbtMs": 4981,
+      "scriptMs": 4274,
+      "layoutMs": 362,
+      "styleMs": 770,
+      "heapMB": 12,
+      "domNodes": 1046,
+      "apiRequests": 15,
+      "profile": "mobile-B-6-run1.cpuprofile"
+    }
+  ]
+}

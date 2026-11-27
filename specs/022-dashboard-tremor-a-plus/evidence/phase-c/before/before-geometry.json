@@ -1,0 +1,212 @@
+[
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 390,
+    "asideVisible": false,
+    "asideWidth": 0,
+    "contentPaddingLeft": "0px",
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 767,
+    "asideVisible": false,
+    "asideWidth": 0,
+    "contentPaddingLeft": "0px",
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 768,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 1024,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 1179,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 1180,
+    "asideVisible": true,
+    "asideWidth": 240,
+    "contentPaddingLeft": "240px",
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard?company_id=9001",
+    "width": 1280,
+    "asideVisible": true,
+    "asideWidth": 240,
+    "contentPaddingLeft": "240px",
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard?company_id=9001"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 390,
+    "asideVisible": false,
+    "asideWidth": 0,
+    "contentPaddingLeft": "0px",
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 767,
+    "asideVisible": false,
+    "asideWidth": 0,
+    "contentPaddingLeft": "0px",
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 768,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 1024,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 1179,
+    "asideVisible": true,
+    "asideWidth": 112,
+    "contentPaddingLeft": "112px",
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 1180,
+    "asideVisible": true,
+    "asideWidth": 240,
+    "contentPaddingLeft": "240px",
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/icp",
+    "width": 1280,
+    "asideVisible": true,
+    "asideWidth": 240,
+    "contentPaddingLeft": "240px",
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard/icp"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 390,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 767,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "0px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 768,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 1024,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 1179,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "112px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 1180,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  },
+  {
+    "route": "/dashboard/inbox",
+    "width": 1280,
+    "asideVisible": false,
+    "asideWidth": null,
+    "contentPaddingLeft": null,
+    "cssVar": "240px",
+    "crashed": false,
+    "url": "/dashboard/inbox"
+  }
+]

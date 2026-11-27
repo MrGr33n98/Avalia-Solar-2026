@@ -1,0 +1,39 @@
+{
+  "label": "desktop-A-3",
+  "mobile": false,
+  "tab": "overview",
+  "runs": 1,
+  "median": {
+    "shellMs": 3412,
+    "longTasks": 12,
+    "longTaskSumMs": 1832,
+    "maxLongTaskMs": 329,
+    "tbtMs": 1232,
+    "scriptMs": 1277,
+    "layoutMs": 310,
+    "styleMs": 410,
+    "heapMB": 12,
+    "domNodes": 1077,
+    "apiRequests": 16
+  },
+  "crashes": 0,
+  "runsDetail": [
+    {
+      "run": 1,
+      "shellMs": 3412,
+      "crashed": false,
+      "errors": [],
+      "longTasks": 12,
+      "longTaskSumMs": 1832,
+      "maxLongTaskMs": 329,
+      "tbtMs": 1232,
+      "scriptMs": 1277,
+      "layoutMs": 310,
+      "styleMs": 410,
+      "heapMB": 12,
+      "domNodes": 1077,
+      "apiRequests": 16,
+      "profile": "desktop-A-3-run1.cpuprofile"
+    }
+  ]
+}

@@ -1,0 +1,390 @@
+{
+  "label": "desktop",
+  "mobile": false,
+  "commits": 25,
+  "commitMsTotal": 1195,
+  "topCommitsMs": [
+    547,
+    163,
+    122,
+    108,
+    59,
+    32,
+    31,
+    25,
+    21,
+    16
+  ],
+  "bySelf": [
+    {
+      "name": "et",
+      "renders": 3,
+      "selfMs": 146,
+      "source": "app/dashboard/components/OverviewTab.tsx:328 (OverviewTab)"
+    },
+    {
+      "name": "Button",
+      "renders": 99,
+      "selfMs": 126,
+      "source": "components/ui/button.tsx:44"
+    },
+    {
+      "name": "Presence",
+      "renders": 460,
+      "selfMs": 74,
+      "source": "src/presence.tsx:11"
+    },
+    {
+      "name": "j",
+      "renders": 58,
+      "selfMs": 63,
+      "source": "src/client/components/layout-router.tsx:323 (parallelRouterKey)"
+    },
+    {
+      "name": "ei",
+      "renders": 1,
+      "selfMs": 48,
+      "source": "components/QuoteWizardModal.tsx:61 (QuoteWizardModal)"
+    },
+    {
+      "name": "C",
+      "renders": 9,
+      "selfMs": 39,
+      "source": "src/client/components/app-router.tsx:145 (HistoryUpdater)"
+    },
+    {
+      "name": "g",
+      "renders": 50,
+      "selfMs": 32,
+      "source": "src/client/script.tsx:218 (id)"
+    },
+    {
+      "name": "k",
+      "renders": 20,
+      "selfMs": 31,
+      "source": "components/SignupGateModalHost.tsx:121 (SignupGateModalHost)"
+    },
+    {
+      "name": "L",
+      "renders": 10,
+      "selfMs": 25,
+      "source": "components/layout/ConditionalFooter.tsx:11 (ConditionalFooter)"
+    },
+    {
+      "name": "v",
+      "renders": 20,
+      "selfMs": 24,
+      "source": "app/dashboard/components/DashboardToolbar.tsx:29 (DashboardToolbar)"
+    },
+    {
+      "name": "DialogContent",
+      "renders": 23,
+      "selfMs": 23,
+      "source": "components/ui/dialog.tsx:67"
+    },
+    {
+      "name": "c",
+      "renders": 15,
+      "selfMs": 22,
+      "source": "src/client/components/redirect-boundary.tsx:75"
+    },
+    {
+      "name": "o",
+      "renders": 45,
+      "selfMs": 22,
+      "source": "components/NavbarBannerSlot.tsx:7 (DesktopNavbarBanner)"
+    },
+    {
+      "name": "eP",
+      "renders": 5,
+      "selfMs": 22,
+      "source": "app/dashboard/components/EnterpriseDashboard.tsx:282 (EnterpriseDashboard)"
+    },
+    {
+      "name": "Primitive.div",
+      "renders": 439,
+      "selfMs": 22,
+      "source": "node_modules/@radix-ui/react-primitive/dist/index.mjs:27"
+    },
+    {
+      "name": "i",
+      "renders": 64,
+      "selfMs": 21,
+      "source": "components/theme-provider.tsx:7 (ThemeProvider)"
+    },
+    {
+      "name": "TabsContent",
+      "renders": 80,
+      "selfMs": 21,
+      "source": "components/ui/tabs.tsx:43"
+    },
+    {
+      "name": "Popover",
+      "renders": 54,
+      "selfMs": 21,
+      "source": "src/popover.tsx:56"
+    },
+    {
+      "name": "l",
+      "renders": 30,
+      "selfMs": 20,
+      "source": "src/client/components/app-router-announcer.tsx:30 (AppRouterAnnouncer)"
+    },
+    {
+      "name": "motion.aside",
+      "renders": 9,
+      "selfMs": 20,
+      "source": "src/motion/index.tsx:91 (MotionDOMComponent)"
+    },
+    {
+      "name": "f",
+      "renders": 8,
+      "selfMs": 16,
+      "source": "src/client/components/error-boundary.tsx:125"
+    },
+    {
+      "name": "D",
+      "renders": 2,
+      "selfMs": 16,
+      "source": "src/client/components/app-router.tsx:291 (buildId)"
+    },
+    {
+      "name": "Primitive.button.SlotClone",
+      "renders": 82,
+      "selfMs": 13,
+      "source": "node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot/dist/index.mjs:32"
+    },
+    {
+      "name": "_",
+      "renders": 18,
+      "selfMs": 13,
+      "source": "app/dashboard/components/EnterpriseSidebar.tsx:53 (SidebarTree)"
+    },
+    {
+      "name": "Dialog",
+      "renders": 23,
+      "selfMs": 12,
+      "source": "src/dialog.tsx:50"
+    },
+    {
+      "name": "PopoverPortal",
+      "renders": 54,
+      "selfMs": 12,
+      "source": "src/popover.tsx:192"
+    },
+    {
+      "name": "Primitive.button",
+      "renders": 82,
+      "selfMs": 11
+    },
+    {
+      "name": "Target",
+      "renders": 9,
+      "selfMs": 11,
+      "source": "src/createLucideIcon.ts:13"
+    },
+    {
+      "name": "u",
+      "renders": 38,
+      "selfMs": 10
+    },
+    {
+      "name": "m",
+      "renders": 5,
+      "selfMs": 10,
+      "source": "app/dashboard/components/CommandMenu.tsx:24 (CommandMenu)"
+    },
+    {
+      "name": "PopperAnchor",
+      "renders": 82,
+      "selfMs": 9,
+      "source": "src/popper.tsx:74"
+    },
+    {
+      "name": "PopoverTrigger",
+      "renders": 54,
+      "selfMs": 9,
+      "source": "src/popover.tsx:136"
+    },
+    {
+      "name": "LoaderCircle",
+      "renders": 5,
+      "selfMs": 8
+    },
+    {
+      "name": "Primitive.div.SlotClone",
+      "renders": 82,
+      "selfMs": 8
+    },
+    {
+      "name": "y",
+      "renders": 5,
+      "selfMs": 7
+    },
+    {
+      "name": "ChevronRight",
+      "renders": 60,
+      "selfMs": 6
+    },
+    {
+      "name": "F",
+      "renders": 3,
+      "selfMs": 5
+    },
+    {
+      "name": "Primitive.div.Slot",
+      "renders": 82,
+      "selfMs": 5
+    },
+    {
+      "name": "AnimatedCompareIcon",
+      "renders": 9,
+      "selfMs": 5
+    },
+    {
+      "name": "s",
+      "renders": 85,
+      "selfMs": 4
+    }
+  ],
+  "byRenders": [
+    {
+      "name": "Presence",
+      "renders": 460,
+      "selfMs": 74,
+      "source": "src/presence.tsx:11"
+    },
+    {
+      "name": "Primitive.div",
+      "renders": 439,
+      "selfMs": 22,
+      "source": "node_modules/@radix-ui/react-primitive/dist/index.mjs:27"
+    },
+    {
+      "name": "Button",
+      "renders": 99,
+      "selfMs": 126,
+      "source": "components/ui/button.tsx:44"
+    },
+    {
+      "name": "s",
+      "renders": 85,
+      "selfMs": 4
+    },
+    {
+      "name": "Primitive.button.SlotClone",
+      "renders": 82,
+      "selfMs": 13,
+      "source": "node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot/dist/index.mjs:32"
+    },
+    {
+      "name": "Primitive.button",
+      "renders": 82,
+      "selfMs": 11
+    },
+    {
+      "name": "PopperAnchor",
+      "renders": 82,
+      "selfMs": 9,
+      "source": "src/popper.tsx:74"
+    },
+    {
+      "name": "Primitive.div.SlotClone",
+      "renders": 82,
+      "selfMs": 8
+    },
+    {
+      "name": "Primitive.div.Slot",
+      "renders": 82,
+      "selfMs": 5
+    },
+    {
+      "name": "Popper",
+      "renders": 82,
+      "selfMs": 3
+    },
+    {
+      "name": "Primitive.button.Slot",
+      "renders": 82,
+      "selfMs": 3
+    },
+    {
+      "name": "PopperProvider",
+      "renders": 82,
+      "selfMs": 2
+    },
+    {
+      "name": "TabsContent",
+      "renders": 80,
+      "selfMs": 21,
+      "source": "components/ui/tabs.tsx:43"
+    },
+    {
+      "name": "i",
+      "renders": 64,
+      "selfMs": 21,
+      "source": "components/theme-provider.tsx:7 (ThemeProvider)"
+    },
+    {
+      "name": "ChevronRight",
+      "renders": 60,
+      "selfMs": 6
+    },
+    {
+      "name": "j",
+      "renders": 58,
+      "selfMs": 63,
+      "source": "src/client/components/layout-router.tsx:323 (parallelRouterKey)"
+    },
+    {
+      "name": "Popover",
+      "renders": 54,
+      "selfMs": 21,
+      "source": "src/popover.tsx:56"
+    },
+    {
+      "name": "PopoverPortal",
+      "renders": 54,
+      "selfMs": 12,
+      "source": "src/popover.tsx:192"
+    },
+    {
+      "name": "PopoverTrigger",
+      "renders": 54,
+      "selfMs": 9,
+      "source": "src/popover.tsx:136"
+    },
+    {
+      "name": "PopoverProvider",
+      "renders": 54,
+      "selfMs": 3
+    },
+    {
+      "name": "PopoverPortalProvider",
+      "renders": 54,
+      "selfMs": 3
+    },
+    {
+      "name": "g",
+      "renders": 50,
+      "selfMs": 32,
+      "source": "src/client/script.tsx:218 (id)"
+    },
+    {
+      "name": "loading",
+      "renders": 47,
+      "selfMs": 4
+    },
+    {
+      "name": "o",
+      "renders": 45,
+      "selfMs": 22,
+      "source": "components/NavbarBannerSlot.tsx:7 (DesktopNavbarBanner)"
+    },
+    {
+      "name": "u",
+      "renders": 38,
+      "selfMs": 10
+    }
+  ]
+}

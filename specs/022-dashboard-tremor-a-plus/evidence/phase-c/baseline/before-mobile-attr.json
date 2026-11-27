@@ -1,0 +1,5038 @@
+{
+  "profiles": 5,
+  "totalBusyMs": 16938,
+  "modules": [
+    {
+      "key": "(program)",
+      "ms": 5964
+    },
+    {
+      "key": "npm:next",
+      "ms": 3120
+    },
+    {
+      "key": "(idle)",
+      "ms": 1594
+    },
+    {
+      "key": "webpack/bootstrap",
+      "ms": 1545
+    },
+    {
+      "key": "(native/vm)",
+      "ms": 724
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx",
+      "ms": 460
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx",
+      "ms": 443
+    },
+    {
+      "key": "npm:tailwind-merge",
+      "ms": 424
+    },
+    {
+      "key": "src/presence.tsx",
+      "ms": 376
+    },
+    {
+      "key": "(sem source map)",
+      "ms": 296
+    },
+    {
+      "key": "npm:@tanstack/query-core",
+      "ms": 250
+    },
+    {
+      "key": "(garbage collector)",
+      "ms": 227
+    },
+    {
+      "key": "lib/api.ts",
+      "ms": 226
+    },
+    {
+      "key": "npm:recharts",
+      "ms": 190
+    },
+    {
+      "key": "npm:motion-dom",
+      "ms": 174
+    },
+    {
+      "key": "webpack/runtime/load script",
+      "ms": 93
+    },
+    {
+      "key": "webpack/runtime/jsonp chunk loading",
+      "ms": 84
+    },
+    {
+      "key": "npm:posthog-js",
+      "ms": 84
+    },
+    {
+      "key": "npm:zod",
+      "ms": 75
+    },
+    {
+      "key": "npm:@apollo/client",
+      "ms": 72
+    },
+    {
+      "key": "npm:dexie",
+      "ms": 70
+    },
+    {
+      "key": "hooks/useComparison.tsx",
+      "ms": 62
+    },
+    {
+      "key": "npm:@radix-ui/react-primitive",
+      "ms": 52
+    },
+    {
+      "key": "components/WebVitalsReporter.tsx",
+      "ms": 51
+    },
+    {
+      "key": "webpack/runtime/define property getters",
+      "ms": 48
+    },
+    {
+      "key": "npm:lodash",
+      "ms": 46
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx",
+      "ms": 40
+    },
+    {
+      "key": "src/client/components/app-router.tsx",
+      "ms": 37
+    },
+    {
+      "key": "lib/api-error.ts",
+      "ms": 34
+    },
+    {
+      "key": "lib/analytics/utm.ts",
+      "ms": 32
+    },
+    {
+      "key": "src/motion/index.tsx",
+      "ms": 30
+    },
+    {
+      "key": "app/dashboard/components/DashboardNavigationFlyout.tsx",
+      "ms": 28
+    },
+    {
+      "key": "context/CompanyContext.tsx",
+      "ms": 27
+    },
+    {
+      "key": "src/tabs.tsx",
+      "ms": 25
+    },
+    {
+      "key": "lib/api-config.ts",
+      "ms": 24
+    },
+    {
+      "key": "npm:@rails/actioncable",
+      "ms": 23
+    },
+    {
+      "key": "npm:@sentry/core",
+      "ms": 22
+    },
+    {
+      "key": "src/Icon.ts",
+      "ms": 21
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts",
+      "ms": 21
+    },
+    {
+      "key": "components/navigation/MobileBottomNav.tsx",
+      "ms": 20
+    },
+    {
+      "key": "npm:@radix-ui/react-context",
+      "ms": 19
+    },
+    {
+      "key": "contexts/AuthContext.tsx",
+      "ms": 19
+    },
+    {
+      "key": "app/dashboard/page.tsx",
+      "ms": 19
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx",
+      "ms": 18
+    },
+    {
+      "key": "src/context/PresenceContext.ts",
+      "ms": 18
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts",
+      "ms": 18
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx",
+      "ms": 16
+    },
+    {
+      "key": "components/Providers.tsx",
+      "ms": 16
+    },
+    {
+      "key": "src/index.tsx",
+      "ms": 16
+    },
+    {
+      "key": "lib/utils.ts",
+      "ms": 16
+    },
+    {
+      "key": "components/ui/button.tsx",
+      "ms": 16
+    },
+    {
+      "key": "components/ui/skeleton.tsx",
+      "ms": 16
+    },
+    {
+      "key": "src/render/VisualElement.ts",
+      "ms": 15
+    },
+    {
+      "key": "src/render/utils/animation-state.ts",
+      "ms": 15
+    },
+    {
+      "key": "src/client/components/router-reducer/fetch-server-response.ts",
+      "ms": 15
+    },
+    {
+      "key": "webpack/runtime/ensure chunk",
+      "ms": 14
+    },
+    {
+      "key": "npm:class-variance-authority",
+      "ms": 14
+    },
+    {
+      "key": "src/popover.tsx",
+      "ms": 14
+    },
+    {
+      "key": "lib/analytics/lazy.ts",
+      "ms": 14
+    },
+    {
+      "key": "shared/src/utils.ts",
+      "ms": 14
+    },
+    {
+      "key": "components/company/CompanySelectorModal.tsx",
+      "ms": 14
+    },
+    {
+      "key": "url:/dashboard",
+      "ms": 13
+    },
+    {
+      "key": "src/client/components/router-reducer/create-initial-router-state.ts",
+      "ms": 13
+    },
+    {
+      "key": "contexts/LocationContext.tsx",
+      "ms": 13
+    },
+    {
+      "key": "app/dashboard/components/CommandMenu.tsx",
+      "ms": 13
+    },
+    {
+      "key": "npm:@swc/helpers",
+      "ms": 12
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts",
+      "ms": 12
+    },
+    {
+      "key": "src/useQuery.ts",
+      "ms": 12
+    },
+    {
+      "key": "src/useBaseQuery.ts",
+      "ms": 12
+    },
+    {
+      "key": "src/render/html/use-props.ts",
+      "ms": 12
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts",
+      "ms": 12
+    },
+    {
+      "key": "npm:zustand",
+      "ms": 11
+    },
+    {
+      "key": "src/dialog.tsx",
+      "ms": 11
+    },
+    {
+      "key": "src/client/image-component.tsx",
+      "ms": 11
+    },
+    {
+      "key": "src/client/app-index.tsx",
+      "ms": 10
+    },
+    {
+      "key": "webpack/runtime/hasOwnProperty shorthand",
+      "ms": 10
+    },
+    {
+      "key": "src/dropdown-menu.tsx",
+      "ms": 10
+    },
+    {
+      "key": "src/errorBoundaryUtils.ts",
+      "ms": 10
+    },
+    {
+      "key": "src/motion/utils/use-visual-element.ts",
+      "ms": 10
+    },
+    {
+      "key": "components/icons/AnimatedCompareIcon.tsx",
+      "ms": 10
+    },
+    {
+      "key": "npm:decimal.js-light",
+      "ms": 10
+    },
+    {
+      "key": "src/internal/Subscriber.ts",
+      "ms": 9
+    },
+    {
+      "key": "src/client/use-intersection.tsx",
+      "ms": 9
+    },
+    {
+      "key": "components/ui/card.tsx",
+      "ms": 9
+    },
+    {
+      "key": "config/navigation.ts",
+      "ms": 9
+    },
+    {
+      "key": "npm:clsx",
+      "ms": 9
+    },
+    {
+      "key": "npm:react-smooth",
+      "ms": 9
+    },
+    {
+      "key": "webpack/runtime/chunk loaded",
+      "ms": 8
+    },
+    {
+      "key": "src/createLucideIcon.ts",
+      "ms": 8
+    },
+    {
+      "key": "src/client/web-vitals.ts",
+      "ms": 8
+    },
+    {
+      "key": "components/NavbarBannerSlot.tsx",
+      "ms": 8
+    },
+    {
+      "key": "src/client/app-call-server.ts",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/layout-router.tsx",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/router-reducer/fill-lazy-items-till-leaf-with-head.ts",
+      "ms": 7
+    },
+    {
+      "key": "npm:next-themes",
+      "ms": 7
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx",
+      "ms": 7
+    },
+    {
+      "key": "npm:@radix-ui/react-use-controllable-state",
+      "ms": 7
+    },
+    {
+      "key": "src/motion/utils/use-visual-state.ts",
+      "ms": 7
+    },
+    {
+      "key": "npm:prop-types",
+      "ms": 7
+    },
+    {
+      "key": "app/dashboard/components/analytics/AttributionOverview.tsx",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx",
+      "ms": 6
+    },
+    {
+      "key": "lib/apollo-client.ts",
+      "ms": 6
+    },
+    {
+      "key": "src/internal/util/throwUnobservableError.ts",
+      "ms": 6
+    },
+    {
+      "key": "src/client/link.tsx",
+      "ms": 6
+    },
+    {
+      "key": "src/menu.tsx",
+      "ms": 6
+    },
+    {
+      "key": "components/ui/command.tsx",
+      "ms": 6
+    },
+    {
+      "key": "components/ui/dialog.tsx",
+      "ms": 6
+    },
+    {
+      "key": "lib/cable.ts",
+      "ms": 6
+    },
+    {
+      "key": "app/dashboard/components/DashboardToolbar.tsx",
+      "ms": 6
+    },
+    {
+      "key": "npm:@radix-ui/primitive",
+      "ms": 6
+    },
+    {
+      "key": "src/render/html/utils/render.ts",
+      "ms": 6
+    },
+    {
+      "key": "webpack/runtime/compat get default export",
+      "ms": 6
+    },
+    {
+      "key": "",
+      "ms": 5
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/prefetch-reducer.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/router/utils/is-bot.ts",
+      "ms": 5
+    },
+    {
+      "key": "npm:@wry/caches",
+      "ms": 5
+    },
+    {
+      "key": "lib/analytics/consent.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/projection/node/create-projection-node.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/client/script.tsx",
+      "ms": 5
+    },
+    {
+      "key": "src/client/app-webpack.ts",
+      "ms": 5
+    },
+    {
+      "key": "webpack/runtime/get javascript chunk filename",
+      "ms": 5
+    },
+    {
+      "key": "components/Navbar.tsx",
+      "ms": 5
+    },
+    {
+      "key": "components/company/CompanySwitcher.tsx",
+      "ms": 5
+    },
+    {
+      "key": "src/motion/features/animation/index.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/animation/interfaces/visual-element-target.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/router/action-queue.ts",
+      "ms": 5
+    },
+    {
+      "key": "src/client/components/redirect-boundary.tsx",
+      "ms": 5
+    },
+    {
+      "key": "src/client/remove-base-path.ts",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/promise-queue.ts",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/not-found-boundary.tsx",
+      "ms": 4
+    },
+    {
+      "key": "webpack/runtime/css loading",
+      "ms": 4
+    },
+    {
+      "key": "npm:@wry/context",
+      "ms": 4
+    },
+    {
+      "key": "src/icons/chevron-right.ts",
+      "ms": 4
+    },
+    {
+      "key": "src/avatar.tsx",
+      "ms": 4
+    },
+    {
+      "key": "components/BannerByLocation.tsx",
+      "ms": 4
+    },
+    {
+      "key": "lib/QueryProvider.tsx",
+      "ms": 4
+    },
+    {
+      "key": "components/ui/tooltip.tsx",
+      "ms": 4
+    },
+    {
+      "key": "components/ui/avatar.tsx",
+      "ms": 4
+    },
+    {
+      "key": "components/ui/tabs.tsx",
+      "ms": 4
+    },
+    {
+      "key": "src/animation/interfaces/visual-element.ts",
+      "ms": 4
+    },
+    {
+      "key": "src/animation/interfaces/motion-value.ts",
+      "ms": 4
+    },
+    {
+      "key": "hooks/useUtm.ts",
+      "ms": 4
+    },
+    {
+      "key": "src/client/normalize-trailing-slash.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/client-page.tsx",
+      "ms": 3
+    },
+    {
+      "key": "src/client/flight-data-helpers.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/client/app-next.ts",
+      "ms": 3
+    },
+    {
+      "key": "npm:graphql",
+      "ms": 3
+    },
+    {
+      "key": "npm:optimism",
+      "ms": 3
+    },
+    {
+      "key": "lib/offline/config.ts",
+      "ms": 3
+    },
+    {
+      "key": "lib/offline/mutationQueue.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/refetch-inactive-parallel-segments.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/compute-changed-path.ts",
+      "ms": 3
+    },
+    {
+      "key": "components/ui/sheet.tsx",
+      "ms": 3
+    },
+    {
+      "key": "lib/api/billing.ts",
+      "ms": 3
+    },
+    {
+      "key": "npm:@radix-ui/react-compose-refs",
+      "ms": 3
+    },
+    {
+      "key": "components/SignupGateModalHost.tsx",
+      "ms": 3
+    },
+    {
+      "key": "src/render/dom/DOMVisualElement.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/projection/node/HTMLProjectionNode.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/popper.tsx",
+      "ms": 3
+    },
+    {
+      "key": "src/tooltip.tsx",
+      "ms": 3
+    },
+    {
+      "key": "src/icons/trending-down.ts",
+      "ms": 3
+    },
+    {
+      "key": "lib/analytics/cookies.ts",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/navigation.ts",
+      "ms": 2
+    },
+    {
+      "key": "src/internal/Subject.ts",
+      "ms": 2
+    },
+    {
+      "key": "npm:tslib",
+      "ms": 2
+    },
+    {
+      "key": "lib/site.ts",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/image-config-context.shared-runtime.ts",
+      "ms": 2
+    },
+    {
+      "key": "npm:aria-hidden",
+      "ms": 2
+    },
+    {
+      "key": "npm:use-sync-external-store",
+      "ms": 2
+    },
+    {
+      "key": "lib/constants/fallback-categories.ts",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/app-dynamic.tsx",
+      "ms": 2
+    },
+    {
+      "key": "src/utils/use-constant.ts",
+      "ms": 2
+    },
+    {
+      "key": "lib/analytics/page-template.ts",
+      "ms": 2
+    },
+    {
+      "key": "hooks/useVirtualKeyboard.ts",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/error-boundary.tsx",
+      "ms": 2
+    },
+    {
+      "key": "components/performance/RouteVitalsReporter.tsx",
+      "ms": 2
+    },
+    {
+      "key": "webpack/runtime/trusted types policy",
+      "ms": 2
+    },
+    {
+      "key": "src/client/on-recoverable-error.ts",
+      "ms": 2
+    },
+    {
+      "key": "npm:@radix-ui/react-id",
+      "ms": 2
+    },
+    {
+      "key": "components/CookieConsent.tsx",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/components/PlansPricingModal.tsx",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/navigation.react-server.ts",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/sonner.tsx",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/components/ThemeToggle.tsx",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/hooks-client-context.shared-runtime.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/app-router-headers.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/create-router-cache-key.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/use-reducer-with-devtools.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/remove-trailing-slash.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer-types.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/internal/util/createErrorClass.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/internal/Observable.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/trending-up.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/resolve-href.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/collection-legacy.tsx",
+      "ms": 1
+    },
+    {
+      "key": "npm:@radix-ui/react-avatar",
+      "ms": 1
+    },
+    {
+      "key": "components/brand/BrandLogo.tsx",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/user.ts",
+      "ms": 1
+    },
+    {
+      "key": "hooks/useGeographyCatalog.ts",
+      "ms": 1
+    },
+    {
+      "key": "lib/api-client.ts",
+      "ms": 1
+    },
+    {
+      "key": "lib/company-options.ts",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/popover.tsx",
+      "ms": 1
+    },
+    {
+      "key": "components/ComparisonDebugger.tsx",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-utils",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/consolidated.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/find-head-in-cache.ts",
+      "ms": 1
+    },
+    {
+      "key": "components/ApolloProviderWrapper.tsx",
+      "ms": 1
+    },
+    {
+      "key": "webpack/runtime/make namespace object",
+      "ms": 1
+    },
+    {
+      "key": "lib/pricing/billing.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/checkbox.tsx",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/lib/dashboard-tabs.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/render/components/create-proxy.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/render/html/utils/build-styles.ts",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/dropdown-menu.tsx",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/parse-path.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer.ts",
+      "ms": 1
+    },
+    {
+      "key": "webpack/runtime/trusted types script url",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/users.ts",
+      "ms": 1
+    },
+    {
+      "key": "store/notificationStore.ts",
+      "ms": 1
+    },
+    {
+      "key": "src/QueryClientProvider.tsx",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/zap.ts",
+      "ms": 1
+    }
+  ],
+  "functions": [
+    {
+      "key": "(program) :: (program)",
+      "ms": 5964
+    },
+    {
+      "key": "(idle) :: (idle)",
+      "ms": 1594
+    },
+    {
+      "key": "webpack/bootstrap :: __webpack_require__",
+      "ms": 1545
+    },
+    {
+      "key": "npm:next :: Tf",
+      "ms": 432
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: e",
+      "ms": 411
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: formatNumber",
+      "ms": 358
+    },
+    {
+      "key": "src/presence.tsx :: getAnimationName",
+      "ms": 312
+    },
+    {
+      "key": "(garbage collector) :: (garbage collector)",
+      "ms": 227
+    },
+    {
+      "key": "(native/vm) :: appendChild",
+      "ms": 180
+    },
+    {
+      "key": "lib/api.ts :: request",
+      "ms": 173
+    },
+    {
+      "key": "(native/vm) :: fetch",
+      "ms": 167
+    },
+    {
+      "key": "npm:next :: oj",
+      "ms": 145
+    },
+    {
+      "key": "(sem source map) :: 46214",
+      "ms": 133
+    },
+    {
+      "key": "npm:next :: Fi",
+      "ms": 108
+    },
+    {
+      "key": "npm:next :: p",
+      "ms": 107
+    },
+    {
+      "key": "npm:next :: iZ",
+      "ms": 91
+    },
+    {
+      "key": "npm:next :: Mj",
+      "ms": 87
+    },
+    {
+      "key": "webpack/runtime/load script :: h.l",
+      "ms": 81
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: formatRange",
+      "ms": 67
+    },
+    {
+      "key": "npm:tailwind-merge :: (anon)",
+      "ms": 65
+    },
+    {
+      "key": "npm:next :: (anon)",
+      "ms": 62
+    },
+    {
+      "key": "npm:next :: Xk",
+      "ms": 59
+    },
+    {
+      "key": "hooks/useComparison.tsx :: useComparison",
+      "ms": 59
+    },
+    {
+      "key": "npm:tailwind-merge :: h",
+      "ms": 54
+    },
+    {
+      "key": "npm:tailwind-merge :: className",
+      "ms": 51
+    },
+    {
+      "key": "npm:tailwind-merge :: n",
+      "ms": 51
+    },
+    {
+      "key": "components/WebVitalsReporter.tsx :: (anon)",
+      "ms": 51
+    },
+    {
+      "key": "webpack/runtime/define property getters :: h.d",
+      "ms": 48
+    },
+    {
+      "key": "npm:next :: useMemo",
+      "ms": 48
+    },
+    {
+      "key": "npm:dexie :: r",
+      "ms": 47
+    },
+    {
+      "key": "npm:next :: Ki",
+      "ms": 46
+    },
+    {
+      "key": "npm:next :: ac",
+      "ms": 46
+    },
+    {
+      "key": "(sem source map) :: (anon)",
+      "ms": 45
+    },
+    {
+      "key": "webpack/runtime/jsonp chunk loading :: u",
+      "ms": 44
+    },
+    {
+      "key": "npm:next :: Z",
+      "ms": 44
+    },
+    {
+      "key": "npm:next :: Zk",
+      "ms": 43
+    },
+    {
+      "key": "npm:next :: $b",
+      "ms": 43
+    },
+    {
+      "key": "npm:zod :: constructor",
+      "ms": 38
+    },
+    {
+      "key": "npm:tailwind-merge :: value",
+      "ms": 37
+    },
+    {
+      "key": "src/presence.tsx :: i",
+      "ms": 36
+    },
+    {
+      "key": "npm:next :: na",
+      "ms": 34
+    },
+    {
+      "key": "lib/api-error.ts :: 45727",
+      "ms": 34
+    },
+    {
+      "key": "npm:@radix-ui/react-primitive :: (anon)",
+      "ms": 34
+    },
+    {
+      "key": "npm:next :: M",
+      "ms": 33
+    },
+    {
+      "key": "npm:next :: xe",
+      "ms": 32
+    },
+    {
+      "key": "npm:next :: T",
+      "ms": 32
+    },
+    {
+      "key": "(native/vm) :: (anon)",
+      "ms": 31
+    },
+    {
+      "key": "webpack/runtime/jsonp chunk loading :: h.f.j",
+      "ms": 31
+    },
+    {
+      "key": "(sem source map) :: 97530",
+      "ms": 29
+    },
+    {
+      "key": "npm:next :: bl",
+      "ms": 29
+    },
+    {
+      "key": "npm:next :: t.unstable_now",
+      "ms": 28
+    },
+    {
+      "key": "npm:recharts :: _toPropertyKey",
+      "ms": 28
+    },
+    {
+      "key": "npm:next :: l",
+      "ms": 27
+    },
+    {
+      "key": "npm:posthog-js :: constructor",
+      "ms": 27
+    },
+    {
+      "key": "(native/vm) :: createElementNS",
+      "ms": 27
+    },
+    {
+      "key": "npm:tailwind-merge :: tailwindMerge",
+      "ms": 27
+    },
+    {
+      "key": "npm:next :: P",
+      "ms": 26
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: EnterpriseDashboard",
+      "ms": 25
+    },
+    {
+      "key": "npm:tailwind-merge :: l",
+      "ms": 25
+    },
+    {
+      "key": "npm:next :: c",
+      "ms": 24
+    },
+    {
+      "key": "(native/vm) :: _global.<computed>",
+      "ms": 24
+    },
+    {
+      "key": "npm:next :: bk",
+      "ms": 23
+    },
+    {
+      "key": "src/Icon.ts :: (anon)",
+      "ms": 21
+    },
+    {
+      "key": "npm:next :: ke",
+      "ms": 21
+    },
+    {
+      "key": "app/dashboard/components/DashboardNavigationFlyout.tsx :: DashboardNavigationFlyout",
+      "ms": 21
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: OverviewTab",
+      "ms": 21
+    },
+    {
+      "key": "(native/vm) :: createElement",
+      "ms": 20
+    },
+    {
+      "key": "npm:next :: y",
+      "ms": 20
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts :: (anon)",
+      "ms": 20
+    },
+    {
+      "key": "npm:motion-dom :: (anon)",
+      "ms": 20
+    },
+    {
+      "key": "npm:recharts :: (anon)",
+      "ms": 20
+    },
+    {
+      "key": "npm:next :: zd",
+      "ms": 19
+    },
+    {
+      "key": "npm:@tanstack/query-core :: createResult",
+      "ms": 19
+    },
+    {
+      "key": "npm:motion-dom :: constructor",
+      "ms": 19
+    },
+    {
+      "key": "npm:recharts :: 85355",
+      "ms": 19
+    },
+    {
+      "key": "(sem source map) :: 84417",
+      "ms": 18
+    },
+    {
+      "key": "npm:@tanstack/query-core :: (anon)",
+      "ms": 18
+    },
+    {
+      "key": "src/context/PresenceContext.ts :: 89204",
+      "ms": 18
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: buildId",
+      "ms": 18
+    },
+    {
+      "key": "npm:@tanstack/query-core :: updateResult",
+      "ms": 18
+    },
+    {
+      "key": "npm:@tanstack/query-core :: a",
+      "ms": 18
+    },
+    {
+      "key": "npm:next :: N",
+      "ms": 17
+    },
+    {
+      "key": "npm:next :: Ih",
+      "ms": 17
+    },
+    {
+      "key": "npm:@tanstack/query-core :: setOptions",
+      "ms": 17
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: (anon)",
+      "ms": 17
+    },
+    {
+      "key": "npm:tailwind-merge :: classDefinition",
+      "ms": 17
+    },
+    {
+      "key": "src/presence.tsx :: usePresence",
+      "ms": 17
+    },
+    {
+      "key": "npm:@radix-ui/react-context :: (anon)",
+      "ms": 16
+    },
+    {
+      "key": "npm:next :: Sj",
+      "ms": 16
+    },
+    {
+      "key": "lib/utils.ts :: cn",
+      "ms": 16
+    },
+    {
+      "key": "(native/vm) :: addEventListener",
+      "ms": 15
+    },
+    {
+      "key": "npm:next :: Ok",
+      "ms": 15
+    },
+    {
+      "key": "npm:posthog-js :: sh",
+      "ms": 15
+    },
+    {
+      "key": "npm:next :: sj",
+      "ms": 15
+    },
+    {
+      "key": "(native/vm) :: evaluate",
+      "ms": 15
+    },
+    {
+      "key": "src/tabs.tsx :: children",
+      "ms": 15
+    },
+    {
+      "key": "src/client/components/router-reducer/fetch-server-response.ts :: headers",
+      "ms": 15
+    },
+    {
+      "key": "npm:recharts :: _inherits",
+      "ms": 15
+    },
+    {
+      "key": "(native/vm) :: removeChild",
+      "ms": 14
+    },
+    {
+      "key": "npm:next :: Hk",
+      "ms": 14
+    },
+    {
+      "key": "npm:next :: b",
+      "ms": 14
+    },
+    {
+      "key": "lib/api.ts :: fetchApi",
+      "ms": 14
+    },
+    {
+      "key": "npm:next :: Ec",
+      "ms": 14
+    },
+    {
+      "key": "npm:recharts :: _defineProperties",
+      "ms": 14
+    },
+    {
+      "key": "url:/dashboard :: (anon)",
+      "ms": 13
+    },
+    {
+      "key": "npm:dexie :: (anon)",
+      "ms": 13
+    },
+    {
+      "key": "src/client/components/router-reducer/create-initial-router-state.ts :: createInitialRouterState",
+      "ms": 13
+    },
+    {
+      "key": "components/navigation/MobileBottomNav.tsx :: MobileBottomNav",
+      "ms": 13
+    },
+    {
+      "key": "npm:next :: t.useRef",
+      "ms": 13
+    },
+    {
+      "key": "lib/analytics/utm.ts :: readFromStorages",
+      "ms": 13
+    },
+    {
+      "key": "(native/vm) :: innerSerialize",
+      "ms": 13
+    },
+    {
+      "key": "components/ui/button.tsx :: (anon)",
+      "ms": 13
+    },
+    {
+      "key": "npm:next :: Xd",
+      "ms": 12
+    },
+    {
+      "key": "(native/vm) :: setTimeout",
+      "ms": 12
+    },
+    {
+      "key": "npm:next :: Kb",
+      "ms": 12
+    },
+    {
+      "key": "npm:next :: Lc",
+      "ms": 12
+    },
+    {
+      "key": "(sem source map) :: 53497",
+      "ms": 12
+    },
+    {
+      "key": "npm:next :: gj",
+      "ms": 12
+    },
+    {
+      "key": "npm:next :: ci",
+      "ms": 12
+    },
+    {
+      "key": "lib/analytics/lazy.ts :: (anon)",
+      "ms": 12
+    },
+    {
+      "key": "npm:@radix-ui/react-primitive :: mergeProps",
+      "ms": 12
+    },
+    {
+      "key": "npm:next :: ka",
+      "ms": 11
+    },
+    {
+      "key": "npm:next :: N._fromJSON",
+      "ms": 11
+    },
+    {
+      "key": "(native/vm) :: querySelector",
+      "ms": 11
+    },
+    {
+      "key": "src/useBaseQuery.ts :: useBaseQuery",
+      "ms": 11
+    },
+    {
+      "key": "components/Providers.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "npm:next :: $h",
+      "ms": 11
+    },
+    {
+      "key": "app/dashboard/page.tsx :: DashboardPageContent",
+      "ms": 11
+    },
+    {
+      "key": "npm:next :: ak",
+      "ms": 11
+    },
+    {
+      "key": "npm:next :: eg",
+      "ms": 11
+    },
+    {
+      "key": "npm:tailwind-merge :: get",
+      "ms": 11
+    },
+    {
+      "key": "src/motion/index.tsx :: useVisualElement",
+      "ms": 11
+    },
+    {
+      "key": "npm:next :: Xf",
+      "ms": 11
+    },
+    {
+      "key": "app/dashboard/components/CommandMenu.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "src/presence.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "npm:lodash :: t.exports",
+      "ms": 11
+    },
+    {
+      "key": "src/client/app-index.tsx :: nextServerDataCallback",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: we",
+      "ms": 10
+    },
+    {
+      "key": "webpack/runtime/hasOwnProperty shorthand :: h.o",
+      "ms": 10
+    },
+    {
+      "key": "src/useQuery.ts :: useQuery",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: Lj",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: s",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: Gh",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: Vk",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: Oj",
+      "ms": 10
+    },
+    {
+      "key": "npm:tailwind-merge :: d",
+      "ms": 10
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: (anon)",
+      "ms": 10
+    },
+    {
+      "key": "src/motion/utils/use-visual-element.ts :: (anon)",
+      "ms": 10
+    },
+    {
+      "key": "npm:next :: t.cloneElement",
+      "ms": 10
+    },
+    {
+      "key": "components/icons/AnimatedCompareIcon.tsx :: (anon)",
+      "ms": 10
+    },
+    {
+      "key": "components/company/CompanySelectorModal.tsx :: CompanySelectorModal",
+      "ms": 10
+    },
+    {
+      "key": "src/render/utils/animation-state.ts :: animateChanges",
+      "ms": 10
+    },
+    {
+      "key": "webpack/runtime/load script :: i",
+      "ms": 9
+    },
+    {
+      "key": "npm:@apollo/client :: constructor",
+      "ms": 9
+    },
+    {
+      "key": "components/ui/card.tsx :: 84190",
+      "ms": 9
+    },
+    {
+      "key": "(sem source map) :: 14438",
+      "ms": 9
+    },
+    {
+      "key": "npm:next :: V",
+      "ms": 9
+    },
+    {
+      "key": "npm:next :: lf",
+      "ms": 9
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: (anon)",
+      "ms": 9
+    },
+    {
+      "key": "npm:next :: useState",
+      "ms": 9
+    },
+    {
+      "key": "webpack/runtime/chunk loaded :: h.O",
+      "ms": 8
+    },
+    {
+      "key": "webpack/runtime/ensure chunk :: h.e",
+      "ms": 8
+    },
+    {
+      "key": "npm:zustand :: a",
+      "ms": 8
+    },
+    {
+      "key": "npm:dexie :: u",
+      "ms": 8
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts :: slugifyLocation",
+      "ms": 8
+    },
+    {
+      "key": "npm:class-variance-authority :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: 61790",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: Vg",
+      "ms": 8
+    },
+    {
+      "key": "npm:@tanstack/query-core :: fetch",
+      "ms": 8
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: aa",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: Sf",
+      "ms": 8
+    },
+    {
+      "key": "npm:tailwind-merge :: F",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: cj",
+      "ms": 8
+    },
+    {
+      "key": "(native/vm) :: _WebSocketMock",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: Kh",
+      "ms": 8
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: EnterpriseSidebar",
+      "ms": 8
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: P",
+      "ms": 8
+    },
+    {
+      "key": "src/motion/index.tsx :: MotionDOMComponent",
+      "ms": 8
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: SidebarTree",
+      "ms": 8
+    },
+    {
+      "key": "npm:clsx :: clsx",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: Eh",
+      "ms": 8
+    },
+    {
+      "key": "src/createLucideIcon.ts :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: Hc",
+      "ms": 8
+    },
+    {
+      "key": "npm:recharts :: 10404",
+      "ms": 8
+    },
+    {
+      "key": "npm:recharts :: _toPrimitive",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: tj",
+      "ms": 8
+    },
+    {
+      "key": "npm:next :: jk",
+      "ms": 8
+    },
+    {
+      "key": "src/client/app-call-server.ts :: 92304",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: he",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: Im",
+      "ms": 7
+    },
+    {
+      "key": "npm:motion-dom :: 80230",
+      "ms": 7
+    },
+    {
+      "key": "npm:posthog-js :: (anon)",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/router-reducer/fill-lazy-items-till-leaf-with-head.ts :: fillLazyItemsTillLeafWithHead",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: Cd",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: kh",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: t.useState",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: k",
+      "ms": 7
+    },
+    {
+      "key": "lib/api.ts :: N",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: ji",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: t.useCallback",
+      "ms": 7
+    },
+    {
+      "key": "lib/analytics/utm.ts :: updateAttribution",
+      "ms": 7
+    },
+    {
+      "key": "src/motion/utils/use-visual-state.ts :: (anon)",
+      "ms": 7
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: getImgProps",
+      "ms": 7
+    },
+    {
+      "key": "npm:next :: bo",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Lm",
+      "ms": 6
+    },
+    {
+      "key": "src/internal/util/throwUnobservableError.ts :: 203",
+      "ms": 6
+    },
+    {
+      "key": "npm:@swc/helpers :: 67119",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Rh",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Th",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: je",
+      "ms": 6
+    },
+    {
+      "key": "npm:@tanstack/query-core :: defaultQueryOptions",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: f",
+      "ms": 6
+    },
+    {
+      "key": "contexts/LocationContext.tsx :: getCookie",
+      "ms": 6
+    },
+    {
+      "key": "npm:@tanstack/query-core :: #g",
+      "ms": 6
+    },
+    {
+      "key": "lib/api-config.ts :: c",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Wk",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Lh",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: q",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: Lb",
+      "ms": 6
+    },
+    {
+      "key": "src/render/html/use-props.ts :: param",
+      "ms": 6
+    },
+    {
+      "key": "app/dashboard/components/DashboardNavigationFlyout.tsx :: (anon)",
+      "ms": 6
+    },
+    {
+      "key": "src/popover.tsx :: S",
+      "ms": 6
+    },
+    {
+      "key": "src/popover.tsx :: (anon)",
+      "ms": 6
+    },
+    {
+      "key": "app/dashboard/components/CommandMenu.tsx :: CommandMenu",
+      "ms": 6
+    },
+    {
+      "key": "src/tabs.tsx :: (anon)",
+      "ms": 6
+    },
+    {
+      "key": "src/render/html/utils/render.ts :: renderHTML",
+      "ms": 6
+    },
+    {
+      "key": "npm:motion-dom :: spring",
+      "ms": 6
+    },
+    {
+      "key": "webpack/runtime/compat get default export :: h.n",
+      "ms": 6
+    },
+    {
+      "key": "npm:recharts :: _typeof",
+      "ms": 6
+    },
+    {
+      "key": "npm:next :: gf",
+      "ms": 6
+    },
+    {
+      "key": "src/shared/lib/router/utils/is-bot.ts :: isBot",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: ql",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: mb",
+      "ms": 5
+    },
+    {
+      "key": "lib/apollo-client.ts :: createApolloClient",
+      "ms": 5
+    },
+    {
+      "key": "npm:@tanstack/query-core :: constructor",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: c",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: Ig",
+      "ms": 5
+    },
+    {
+      "key": "context/CompanyContext.tsx :: CompanyProvider",
+      "ms": 5
+    },
+    {
+      "key": "npm:@tanstack/query-core :: h",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: jj",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: lk",
+      "ms": 5
+    },
+    {
+      "key": "src/client/app-webpack.ts :: n.u",
+      "ms": 5
+    },
+    {
+      "key": "webpack/runtime/get javascript chunk filename :: h.u",
+      "ms": 5
+    },
+    {
+      "key": "npm:@tanstack/query-core :: #O",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: kg",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: convertModule",
+      "ms": 5
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx :: QuoteWizardModal",
+      "ms": 5
+    },
+    {
+      "key": "npm:tailwind-merge :: config",
+      "ms": 5
+    },
+    {
+      "key": "npm:tailwind-merge :: pathPart",
+      "ms": 5
+    },
+    {
+      "key": "src/dialog.tsx :: w",
+      "ms": 5
+    },
+    {
+      "key": "npm:tailwind-merge :: getConflictingClassGroupIds",
+      "ms": 5
+    },
+    {
+      "key": "npm:next :: w",
+      "ms": 5
+    },
+    {
+      "key": "components/company/CompanySelectorModal.tsx :: (anon)",
+      "ms": 5
+    },
+    {
+      "key": "components/company/CompanySwitcher.tsx :: CompanySwitcher",
+      "ms": 5
+    },
+    {
+      "key": "src/menu.tsx :: G",
+      "ms": 5
+    },
+    {
+      "key": "components/ui/skeleton.tsx :: Skeleton",
+      "ms": 5
+    },
+    {
+      "key": "src/animation/interfaces/visual-element-target.ts :: animateTarget",
+      "ms": 5
+    },
+    {
+      "key": "npm:motion-dom :: onKeyframesResolved",
+      "ms": 5
+    },
+    {
+      "key": "npm:motion-dom :: startWaapiAnimation",
+      "ms": 5
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: createLazyPrefetchEntry",
+      "ms": 5
+    },
+    {
+      "key": "npm:prop-types :: 84735",
+      "ms": 5
+    },
+    {
+      "key": "src/client/remove-base-path.ts :: 12010",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: preload",
+      "ms": 4
+    },
+    {
+      "key": "(native/vm) :: getElementsByTagName",
+      "ms": 4
+    },
+    {
+      "key": "webpack/runtime/jsonp chunk loading :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "webpack/runtime/css loading :: h.f.miniCss",
+      "ms": 4
+    },
+    {
+      "key": "npm:@apollo/client :: assumeImmutableResults",
+      "ms": 4
+    },
+    {
+      "key": "npm:@apollo/client :: init",
+      "ms": 4
+    },
+    {
+      "key": "npm:zod :: ea.create",
+      "ms": 4
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "src/client/use-intersection.tsx :: 19259",
+      "ms": 4
+    },
+    {
+      "key": "src/icons/chevron-right.ts :: 28119",
+      "ms": 4
+    },
+    {
+      "key": "src/dropdown-menu.tsx :: DropdownMenuSubContent",
+      "ms": 4
+    },
+    {
+      "key": "components/BannerByLocation.tsx :: 24408",
+      "ms": 4
+    },
+    {
+      "key": "npm:posthog-js :: i",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: $k",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: t.useMemo",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: jl",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: vd",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: Hd",
+      "ms": 4
+    },
+    {
+      "key": "lib/QueryProvider.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: xg",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: kl",
+      "ms": 4
+    },
+    {
+      "key": "src/client/web-vitals.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "contexts/LocationContext.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "npm:@tanstack/query-core :: #w",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: t.useEffect",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: Jg",
+      "ms": 4
+    },
+    {
+      "key": "src/index.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "config/navigation.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "npm:tailwind-merge :: i",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: W",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: ge",
+      "ms": 4
+    },
+    {
+      "key": "npm:@radix-ui/react-context :: c",
+      "ms": 4
+    },
+    {
+      "key": "lib/cable.ts :: resolveCableUrl",
+      "ms": 4
+    },
+    {
+      "key": "src/client/image-component.tsx :: RouterContext",
+      "ms": 4
+    },
+    {
+      "key": "app/dashboard/components/DashboardToolbar.tsx :: DashboardToolbar",
+      "ms": 4
+    },
+    {
+      "key": "src/avatar.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "components/ui/tabs.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "npm:motion-dom :: y",
+      "ms": 4
+    },
+    {
+      "key": "npm:motion-dom :: triggerCallback",
+      "ms": 4
+    },
+    {
+      "key": "npm:motion-dom :: initAnimation",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/prefetch-reducer.ts :: prefetchReducer",
+      "ms": 4
+    },
+    {
+      "key": "npm:recharts :: 8147",
+      "ms": 4
+    },
+    {
+      "key": "npm:react-smooth :: Animate",
+      "ms": 4
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "npm:@tanstack/query-core :: y",
+      "ms": 4
+    },
+    {
+      "key": "npm:@tanstack/query-core :: hasListeners",
+      "ms": 4
+    },
+    {
+      "key": "src/client/web-vitals.ts :: 43934",
+      "ms": 4
+    },
+    {
+      "key": "hooks/useUtm.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "context/CompanyContext.tsx :: x",
+      "ms": 4
+    },
+    {
+      "key": "npm:next :: e",
+      "ms": 4
+    },
+    {
+      "key": "src/presence.tsx :: 82912",
+      "ms": 4
+    },
+    {
+      "key": "(native/vm) :: PerformanceObserver.observe.type",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Ub",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/client-page.tsx :: 61060",
+      "ms": 3
+    },
+    {
+      "key": "src/client/app-next.ts :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/client/app-index.tsx :: hydrate",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: t.unstable_scheduleCallback",
+      "ms": 3
+    },
+    {
+      "key": "webpack/runtime/ensure chunk :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Nm",
+      "ms": 3
+    },
+    {
+      "key": "(native/vm) :: queueMicrotask",
+      "ms": 3
+    },
+    {
+      "key": "src/internal/Subscriber.ts :: noop",
+      "ms": 3
+    },
+    {
+      "key": "npm:@wry/context :: constructor",
+      "ms": 3
+    },
+    {
+      "key": "npm:@apollo/client :: b",
+      "ms": 3
+    },
+    {
+      "key": "npm:zod :: Y.create",
+      "ms": 3
+    },
+    {
+      "key": "lib/offline/config.ts :: 15768",
+      "ms": 3
+    },
+    {
+      "key": "lib/analytics/consent.ts :: 96666",
+      "ms": 3
+    },
+    {
+      "key": "lib/offline/mutationQueue.ts :: 1435",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Dh",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: nf",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: rg",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Md",
+      "ms": 3
+    },
+    {
+      "key": "components/Providers.tsx :: Providers",
+      "ms": 3
+    },
+    {
+      "key": "npm:@tanstack/query-core :: hashKey",
+      "ms": 3
+    },
+    {
+      "key": "npm:@tanstack/query-core :: build",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Kk",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: qe",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: canonicalUrl",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Pj",
+      "ms": 3
+    },
+    {
+      "key": "hooks/useComparison.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Xj",
+      "ms": 3
+    },
+    {
+      "key": "npm:@sentry/core :: constructor",
+      "ms": 3
+    },
+    {
+      "key": "npm:next-themes :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "app/dashboard/page.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: lg",
+      "ms": 3
+    },
+    {
+      "key": "context/CompanyContext.tsx :: d",
+      "ms": 3
+    },
+    {
+      "key": "lib/api/billing.ts :: 62931",
+      "ms": 3
+    },
+    {
+      "key": "(sem source map) :: 16506",
+      "ms": 3
+    },
+    {
+      "key": "config/navigation.ts :: getFlatNavigationByContext",
+      "ms": 3
+    },
+    {
+      "key": "components/ui/dialog.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/dialog.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "npm:@radix-ui/react-compose-refs :: useComposedRefs",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: jg",
+      "ms": 3
+    },
+    {
+      "key": "(native/vm) :: WebSocket",
+      "ms": 3
+    },
+    {
+      "key": "src/client/link.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/client/link.tsx :: children",
+      "ms": 3
+    },
+    {
+      "key": "src/render/dom/DOMVisualElement.ts :: constructor",
+      "ms": 3
+    },
+    {
+      "key": "src/projection/node/HTMLProjectionNode.ts :: defaultParent",
+      "ms": 3
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: getWidths",
+      "ms": 3
+    },
+    {
+      "key": "shared/src/utils.ts :: i",
+      "ms": 3
+    },
+    {
+      "key": "src/popper.tsx :: tK",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Gc",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: Gk",
+      "ms": 3
+    },
+    {
+      "key": "src/animation/interfaces/visual-element.ts :: animateVisualElement",
+      "ms": 3
+    },
+    {
+      "key": "npm:motion-dom :: readKeyframes",
+      "ms": 3
+    },
+    {
+      "key": "npm:motion-dom :: next",
+      "ms": 3
+    },
+    {
+      "key": "src/client/image-component.tsx :: onLoad",
+      "ms": 3
+    },
+    {
+      "key": "npm:next :: ej",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: getOrCreatePrefetchCacheEntry",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "npm:recharts :: 22190",
+      "ms": 3
+    },
+    {
+      "key": "npm:recharts :: _defineProperty",
+      "ms": 3
+    },
+    {
+      "key": "src/icons/trending-down.ts :: 21156",
+      "ms": 3
+    },
+    {
+      "key": "npm:recharts :: es",
+      "ms": 3
+    },
+    {
+      "key": "npm:recharts :: 3574",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/layout-router.tsx :: preservedSegmentValue",
+      "ms": 3
+    },
+    {
+      "key": "app/dashboard/components/analytics/AttributionOverview.tsx :: AttributionOverview",
+      "ms": 3
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: MetricCard",
+      "ms": 3
+    },
+    {
+      "key": "npm:@apollo/client :: 89218",
+      "ms": 3
+    },
+    {
+      "key": "npm:@apollo/client :: memoize",
+      "ms": 3
+    },
+    {
+      "key": "npm:zod :: q.create",
+      "ms": 3
+    },
+    {
+      "key": "components/ui/avatar.tsx :: 62869",
+      "ms": 3
+    },
+    {
+      "key": "components/Navbar.tsx :: Navbar",
+      "ms": 3
+    },
+    {
+      "key": "npm:@tanstack/query-core :: start",
+      "ms": 3
+    },
+    {
+      "key": "lib/analytics/cookies.ts :: getCookie",
+      "ms": 3
+    },
+    {
+      "key": "npm:motion-dom :: tick",
+      "ms": 3
+    },
+    {
+      "key": "(native/vm) :: inject",
+      "ms": 2
+    },
+    {
+      "key": "npm:@swc/helpers :: _interop_require_wildcard",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: ACTION",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: L",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: nl",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: ah",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Mi",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: clearTimeout",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Td",
+      "ms": 2
+    },
+    {
+      "key": "src/internal/Subject.ts :: Subject",
+      "ms": 2
+    },
+    {
+      "key": "npm:@wry/caches :: constructor",
+      "ms": 2
+    },
+    {
+      "key": "npm:tslib :: __extends",
+      "ms": 2
+    },
+    {
+      "key": "npm:@apollo/client :: 71925",
+      "ms": 2
+    },
+    {
+      "key": "npm:optimism :: wrap",
+      "ms": 2
+    },
+    {
+      "key": "npm:@apollo/client :: data",
+      "ms": 2
+    },
+    {
+      "key": "(sem source map) :: 87045",
+      "ms": 2
+    },
+    {
+      "key": "npm:dexie :: from",
+      "ms": 2
+    },
+    {
+      "key": "npm:dexie :: t",
+      "ms": 2
+    },
+    {
+      "key": "lib/site.ts :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "npm:@radix-ui/react-primitive :: createSlot",
+      "ms": 2
+    },
+    {
+      "key": "npm:aria-hidden :: 87922",
+      "ms": 2
+    },
+    {
+      "key": "npm:use-sync-external-store :: 27954",
+      "ms": 2
+    },
+    {
+      "key": "(sem source map) :: 70001",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/command.tsx :: 26110",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: 51777",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/app-dynamic.tsx :: dynamic",
+      "ms": 2
+    },
+    {
+      "key": "npm:motion-dom :: 92854",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: F",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: t.useContext",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/router-reducer/compute-changed-path.ts :: extractPathFromFlightRouterState",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: window",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: getRootNode",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Bd",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: useSyncExternalStore",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/layout-router.tsx :: componentDidMount",
+      "ms": 2
+    },
+    {
+      "key": "webpack/runtime/trusted types policy :: h.tt",
+      "ms": 2
+    },
+    {
+      "key": "components/NavbarBannerSlot.tsx :: a",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: subscribe",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: onSubscribe",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: m",
+      "ms": 2
+    },
+    {
+      "key": "npm:@sentry/core :: getIsolationScope",
+      "ms": 2
+    },
+    {
+      "key": "npm:@sentry/core :: uuid4",
+      "ms": 2
+    },
+    {
+      "key": "npm:@sentry/core :: setUser",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: getAnnouncerNode",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Qg",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Fj",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Al",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: hl",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Wd",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: getOptimisticResult",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Sk",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: O",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts :: useCompanyDashboardData",
+      "ms": 2
+    },
+    {
+      "key": "npm:tailwind-merge :: modifiers",
+      "ms": 2
+    },
+    {
+      "key": "npm:@radix-ui/react-use-controllable-state :: useControllableState",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: t.useReducer",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: serialize",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: fg",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: dispatchEvent",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: _apiClosePage",
+      "ms": 2
+    },
+    {
+      "key": "components/CookieConsent.tsx :: CookieConsent",
+      "ms": 2
+    },
+    {
+      "key": "npm:@radix-ui/react-use-controllable-state :: useUncontrolledState",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: requestAnimationFrame",
+      "ms": 2
+    },
+    {
+      "key": "src/motion/index.tsx :: useRender",
+      "ms": 2
+    },
+    {
+      "key": "src/render/html/use-props.ts :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: generateImgAttrs",
+      "ms": 2
+    },
+    {
+      "key": "src/popover.tsx :: I",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: X",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Ic",
+      "ms": 2
+    },
+    {
+      "key": "src/tooltip.tsx :: R",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Ji",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/components/PlansPricingModal.tsx :: PlansPricingModal",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: rj",
+      "ms": 2
+    },
+    {
+      "key": "src/render/VisualElement.ts :: updateFeatures",
+      "ms": 2
+    },
+    {
+      "key": "src/motion/features/animation/index.ts :: constructor",
+      "ms": 2
+    },
+    {
+      "key": "npm:motion-dom :: play",
+      "ms": 2
+    },
+    {
+      "key": "src/client/flight-data-helpers.ts :: prepareFlightRouterStateForRequest",
+      "ms": 2
+    },
+    {
+      "key": "npm:decimal.js-light :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "npm:decimal.js-light :: Decimal",
+      "ms": 2
+    },
+    {
+      "key": "npm:recharts :: 62994",
+      "ms": 2
+    },
+    {
+      "key": "npm:lodash :: 75169",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: shallowEqualObjects",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: getDefaultState",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: ig",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: xc",
+      "ms": 2
+    },
+    {
+      "key": "npm:@radix-ui/react-context :: t",
+      "ms": 2
+    },
+    {
+      "key": "npm:motion-dom :: 38596",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Hi",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: nj",
+      "ms": 2
+    },
+    {
+      "key": "lib/analytics/utm.ts :: clearStorages",
+      "ms": 2
+    },
+    {
+      "key": "context/CompanyContext.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/sonner.tsx :: u",
+      "ms": 2
+    },
+    {
+      "key": "src/render/VisualElement.ts :: update",
+      "ms": 2
+    },
+    {
+      "key": "npm:@tanstack/query-core :: notify",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/not-found-boundary.tsx :: c",
+      "ms": 2
+    },
+    {
+      "key": "src/client/script.tsx :: y",
+      "ms": 2
+    },
+    {
+      "key": "npm:next :: Qk",
+      "ms": 2
+    },
+    {
+      "key": "context/CompanyContext.tsx :: h",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/skeleton.tsx :: 12339",
+      "ms": 2
+    },
+    {
+      "key": "(native/vm) :: setInterval",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Tb",
+      "ms": 1
+    },
+    {
+      "key": "src/client/normalize-trailing-slash.ts :: 61404",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/hooks-client-context.shared-runtime.ts :: 18993",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/app-router-headers.ts :: 12846",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: 6866",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/remove-trailing-slash.ts :: removeTrailingSlash",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer-types.ts :: PrefetchCacheEntryStatus",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Le",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Fk",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: z",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Rc",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: 18682",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 86553",
+      "ms": 1
+    },
+    {
+      "key": "npm:@wry/caches :: 45110",
+      "ms": 1
+    },
+    {
+      "key": "npm:graphql :: 98942",
+      "ms": 1
+    },
+    {
+      "key": "src/internal/util/createErrorClass.ts :: createErrorClass",
+      "ms": 1
+    },
+    {
+      "key": "src/internal/Observable.ts :: 95978",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: l",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: tc",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: eX",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: stump",
+      "ms": 1
+    },
+    {
+      "key": "npm:@apollo/client :: resetResultCache",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/trending-up.ts :: 30166",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: 45345",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 21733",
+      "ms": 1
+    },
+    {
+      "key": "npm:@sentry/core :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:zod :: eE",
+      "ms": 1
+    },
+    {
+      "key": "npm:dexie :: U",
+      "ms": 1
+    },
+    {
+      "key": "npm:dexie :: N",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/utm.ts :: 70177",
+      "ms": 1
+    },
+    {
+      "key": "src/client/resolve-href.ts :: 16081",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/image-config-context.shared-runtime.ts :: 90128",
+      "ms": 1
+    },
+    {
+      "key": "src/collection-legacy.tsx :: createCollection",
+      "ms": 1
+    },
+    {
+      "key": "src/menu.tsx :: createSlot",
+      "ms": 1
+    },
+    {
+      "key": "npm:@radix-ui/react-avatar :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": " :: 91956",
+      "ms": 1
+    },
+    {
+      "key": "hooks/useGeographyCatalog.ts :: 97855",
+      "ms": 1
+    },
+    {
+      "key": "lib/api-client.ts :: 7014",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/popover.tsx :: 6512",
+      "ms": 1
+    },
+    {
+      "key": "lib/constants/fallback-categories.ts :: s",
+      "ms": 1
+    },
+    {
+      "key": "components/ComparisonDebugger.tsx :: 81199",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: 26147",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: createRenderBatcher",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: 14151",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: n",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: 65050",
+      "ms": 1
+    },
+    {
+      "key": "npm:posthog-js :: tu",
+      "ms": 1
+    },
+    {
+      "key": "npm:posthog-js :: ty",
+      "ms": 1
+    },
+    {
+      "key": "npm:posthog-js :: sy",
+      "ms": 1
+    },
+    {
+      "key": "npm:posthog-js :: Ni",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/consolidated.ts :: 21090",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: $e",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/find-head-in-cache.ts :: findHeadInCache",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Dd",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Ld",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: bd",
+      "ms": 1
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: AuthProvider",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: #F",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: shouldFetchOnMount",
+      "ms": 1
+    },
+    {
+      "key": "components/ApolloProviderWrapper.tsx :: ApolloProviderWrapper",
+      "ms": 1
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: DeferredClientRuntime",
+      "ms": 1
+    },
+    {
+      "key": "src/client/script.tsx :: hasLoadScriptEffectCalled",
+      "ms": 1
+    },
+    {
+      "key": "components/performance/RouteVitalsReporter.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: n.u",
+      "ms": 1
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "src/useBaseQuery.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "lib/api-config.ts :: i",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Vd",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: setEventListener",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: i",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: pg",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: bi",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: ll",
+      "ms": 1
+    },
+    {
+      "key": "npm:zustand :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Gj",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: n.resolve",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: replaceData",
+      "ms": 1
+    },
+    {
+      "key": "components/Navbar.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Bj",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: wj",
+      "ms": 1
+    },
+    {
+      "key": "src/index.tsx :: getDocumentDirection",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: xh",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: dl",
+      "ms": 1
+    },
+    {
+      "key": "webpack/runtime/make namespace object :: h.r",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/sheet.tsx :: 81103",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/tooltip.tsx :: 60193",
+      "ms": 1
+    },
+    {
+      "key": "lib/pricing/billing.ts :: 52362",
+      "ms": 1
+    },
+    {
+      "key": "config/navigation.ts :: filterNavigationByContext",
+      "ms": 1
+    },
+    {
+      "key": "src/checkbox.tsx :: BUBBLE_INPUT_NAME",
+      "ms": 1
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:@radix-ui/react-id :: useId",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: t.useId",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/dialog.tsx :: h",
+      "ms": 1
+    },
+    {
+      "key": "src/dialog.tsx :: F",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: lb",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: h",
+      "ms": 1
+    },
+    {
+      "key": "components/SignupGateModalHost.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: ch",
+      "ms": 1
+    },
+    {
+      "key": "npm:@rails/actioncable :: ensureActiveConnection",
+      "ms": 1
+    },
+    {
+      "key": "npm:@rails/actioncable :: open",
+      "ms": 1
+    },
+    {
+      "key": "npm:@rails/actioncable :: add",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Ja",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: isTypedArray",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: q",
+      "ms": 1
+    },
+    {
+      "key": "src/render/components/create-proxy.ts :: get",
+      "ms": 1
+    },
+    {
+      "key": "src/motion/index.tsx :: createMotionComponent",
+      "ms": 1
+    },
+    {
+      "key": "npm:tailwind-merge :: set",
+      "ms": 1
+    },
+    {
+      "key": "src/motion/index.tsx :: useCreateMotionContext",
+      "ms": 1
+    },
+    {
+      "key": "src/utils/use-constant.ts :: useConstant",
+      "ms": 1
+    },
+    {
+      "key": "src/projection/node/create-projection-node.ts :: mount",
+      "ms": 1
+    },
+    {
+      "key": "src/render/html/utils/build-styles.ts :: buildHTMLStyles",
+      "ms": 1
+    },
+    {
+      "key": "src/client/image-component.tsx :: ImagePreload",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: t.useInsertionEffect",
+      "ms": 1
+    },
+    {
+      "key": "src/tooltip.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: RegExp: \\s+",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/dropdown-menu.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:@radix-ui/primitive :: e",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: E",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: process",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: getSpringOptions",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: calcGeneratorDuration",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: applyGeneratorOptions",
+      "ms": 1
+    },
+    {
+      "key": "src/client/use-intersection.tsx :: t.observer",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/parse-path.ts :: parsePath",
+      "ms": 1
+    },
+    {
+      "key": "src/client/image-component.tsx :: handleLoading",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: animation.onfinish",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: prefetch",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: t.startTransition",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/action-queue.ts :: runAction",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer.ts :: f",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/promise-queue.ts :: enqueue",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 79551",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 57595",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 39365",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: memoize",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 56569",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 59332",
+      "ms": 1
+    },
+    {
+      "key": "npm:react-smooth :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:decimal.js-light :: config",
+      "ms": 1
+    },
+    {
+      "key": "npm:recharts :: 84962",
+      "ms": 1
+    },
+    {
+      "key": "npm:recharts :: 97684",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Yk",
+      "ms": 1
+    },
+    {
+      "key": "webpack/runtime/trusted types script url :: h.tu",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/create-router-cache-key.ts :: createRouterCacheKey",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: ri",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: isPlainObject",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: queryFn",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: i",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: get",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: og",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: RegExp: ^\\[(?:([a-z-]+):)?(.+)\\]$",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: parseEvaluationResultValue",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: addBinding",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: 91572",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Cm",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 2559",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 26008",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: t.use",
+      "ms": 1
+    },
+    {
+      "key": "lib/company-options.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: 1806",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 21714",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/navigation.react-server.ts :: l",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/cookies.ts :: deleteCookie",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: matchMedia",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: J",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Mh",
+      "ms": 1
+    },
+    {
+      "key": "(sem source map) :: 75469",
+      "ms": 1
+    },
+    {
+      "key": "npm:clsx :: r",
+      "ms": 1
+    },
+    {
+      "key": "(native/vm) :: globalThis.__pwWebSocketDispatch",
+      "ms": 1
+    },
+    {
+      "key": "src/render/VisualElement.ts :: constructor",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/ThemeToggle.tsx :: ThemeToggle",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: resolveNoneKeyframes",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: cancel",
+      "ms": 1
+    },
+    {
+      "key": "npm:lodash :: 20453",
+      "ms": 1
+    },
+    {
+      "key": "npm:prop-types :: 40718",
+      "ms": 1
+    },
+    {
+      "key": "npm:react-smooth :: _defineProperties",
+      "ms": 1
+    },
+    {
+      "key": "npm:@tanstack/query-core :: 57853",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: ki",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: ad",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/zap.ts :: 20271",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/page-template.ts :: getPageTemplateInfo",
+      "ms": 1
+    },
+    {
+      "key": "npm:motion-dom :: tP",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "npm:next :: Rg",
+      "ms": 1
+    },
+    {
+      "key": "hooks/useVirtualKeyboard.ts :: useVirtualKeyboard",
+      "ms": 1
+    },
+    {
+      "key": "src/client/normalize-trailing-slash.ts :: u",
+      "ms": 1
+    }
+  ],
+  "owners": [
+    {
+      "key": "(sem dono no app)",
+      "ms": 3633
+    },
+    {
+      "key": "lib/utils.ts :: cn",
+      "ms": 478
+    },
+    {
+      "key": "src/icons/trending-down.ts :: 21156",
+      "ms": 413
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: e",
+      "ms": 411
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: formatNumber",
+      "ms": 358
+    },
+    {
+      "key": "lib/api.ts :: request",
+      "ms": 344
+    },
+    {
+      "key": "src/presence.tsx :: getAnimationName",
+      "ms": 312
+    },
+    {
+      "key": "lib/comparison/config.ts :: 94332",
+      "ms": 255
+    },
+    {
+      "key": "src/useBaseQuery.ts :: (anon)",
+      "ms": 210
+    },
+    {
+      "key": "lib/api-error.ts :: 45727",
+      "ms": 150
+    },
+    {
+      "key": "src/animation/interfaces/motion-value.ts :: 45647",
+      "ms": 128
+    },
+    {
+      "key": "lib/api-config.ts :: 94482",
+      "ms": 107
+    },
+    {
+      "key": "lib/offline/config.ts :: 15768",
+      "ms": 99
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: formatRange",
+      "ms": 67
+    },
+    {
+      "key": "lib/cable.ts :: subscribeCompanyDashboard",
+      "ms": 61
+    },
+    {
+      "key": "src/client/components/static-generation-async-storage-instance.ts :: createAsyncLocalStorage",
+      "ms": 60
+    },
+    {
+      "key": "src/icons/chevron-right.ts :: 28119",
+      "ms": 60
+    },
+    {
+      "key": "hooks/useComparison.tsx :: useComparison",
+      "ms": 60
+    },
+    {
+      "key": "src/client/web-vitals.ts :: (anon)",
+      "ms": 60
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: er.loadableGenerated.webpack",
+      "ms": 55
+    },
+    {
+      "key": "src/useBaseQuery.ts :: useBaseQuery",
+      "ms": 53
+    },
+    {
+      "key": "components/WebVitalsReporter.tsx :: (anon)",
+      "ms": 51
+    },
+    {
+      "key": "lib/apollo-client.ts :: getApolloClient",
+      "ms": 47
+    },
+    {
+      "key": "components/ui/input.tsx :: 34591",
+      "ms": 46
+    },
+    {
+      "key": "lib/apollo-client.ts :: createApolloClient",
+      "ms": 44
+    },
+    {
+      "key": "src/presence.tsx :: i",
+      "ms": 41
+    },
+    {
+      "key": "src/useBaseQuery.ts :: 71632",
+      "ms": 40
+    },
+    {
+      "key": "app/dashboard/page.tsx :: Z.loadableGenerated.webpack",
+      "ms": 40
+    },
+    {
+      "key": "components/BannerContainer.tsx :: 76918",
+      "ms": 38
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: (anon)",
+      "ms": 38
+    },
+    {
+      "key": "src/presence.tsx :: usePresence",
+      "ms": 36
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: OverviewTab",
+      "ms": 36
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: buildId",
+      "ms": 35
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: EnterpriseDashboard",
+      "ms": 32
+    },
+    {
+      "key": "src/client/app-call-server.ts :: 92304",
+      "ms": 31
+    },
+    {
+      "key": "components/ComparisonDebugger.tsx :: 81199",
+      "ms": 31
+    },
+    {
+      "key": "components/theme-provider.tsx :: 23518",
+      "ms": 29
+    },
+    {
+      "key": "hooks/useCategoriesTree.ts :: 28318",
+      "ms": 27
+    },
+    {
+      "key": "components/ui/button.tsx :: (anon)",
+      "ms": 26
+    },
+    {
+      "key": "src/client/components/router-reducer/fetch-server-response.ts :: headers",
+      "ms": 25
+    },
+    {
+      "key": "src/Icon.ts :: (anon)",
+      "ms": 24
+    },
+    {
+      "key": "components/ui/card.tsx :: 84190",
+      "ms": 23
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts :: (anon)",
+      "ms": 23
+    },
+    {
+      "key": "app/dashboard/components/DashboardNavigationFlyout.tsx :: DashboardNavigationFlyout",
+      "ms": 23
+    },
+    {
+      "key": "src/styles.css :: styleInject",
+      "ms": 22
+    },
+    {
+      "key": "context/CompanyContext.tsx :: 94508",
+      "ms": 21
+    },
+    {
+      "key": "src/context/PresenceContext.ts :: 89204",
+      "ms": 21
+    },
+    {
+      "key": "components/ui/dialog.tsx :: 19378",
+      "ms": 21
+    },
+    {
+      "key": "src/client/app-index.tsx :: (anon)",
+      "ms": 20
+    },
+    {
+      "key": "app/dashboard/components/DashboardToolbar.tsx :: 77064",
+      "ms": 19
+    },
+    {
+      "key": "components/company/CompanySwitcher.tsx :: 75252",
+      "ms": 19
+    },
+    {
+      "key": "components/ui/input.tsx :: 85276",
+      "ms": 17
+    },
+    {
+      "key": "src/dialog.tsx :: w",
+      "ms": 17
+    },
+    {
+      "key": "src/render/utils/resolve-variants.ts :: 48771",
+      "ms": 16
+    },
+    {
+      "key": "app/dashboard/page.tsx :: DashboardPageContent",
+      "ms": 16
+    },
+    {
+      "key": "src/presence.tsx :: (anon)",
+      "ms": 16
+    },
+    {
+      "key": "src/popover.tsx :: S",
+      "ms": 16
+    },
+    {
+      "key": "src/tabs.tsx :: children",
+      "ms": 16
+    },
+    {
+      "key": "components/NutshellAnalytics.tsx :: 57938",
+      "ms": 15
+    },
+    {
+      "key": "src/client/app-webpack.ts :: n.u",
+      "ms": 15
+    },
+    {
+      "key": "src/animation/interfaces/visual-element-target.ts :: animateTarget",
+      "ms": 15
+    },
+    {
+      "key": "src/client/components/app-router-headers.ts :: 12846",
+      "ms": 14
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/has-interception-route-in-current-tree.ts :: 95967",
+      "ms": 14
+    },
+    {
+      "key": "lib/analytics/dedupe.ts :: 30213",
+      "ms": 14
+    },
+    {
+      "key": "lib/api.ts :: fetchApi",
+      "ms": 14
+    },
+    {
+      "key": "src/client/image-component.tsx :: ImagePreload",
+      "ms": 14
+    },
+    {
+      "key": "src/icons/users.ts :: 48461",
+      "ms": 13
+    },
+    {
+      "key": "components/layout/AppContentFrame.tsx :: 28037",
+      "ms": 13
+    },
+    {
+      "key": "src/client/components/router-reducer/create-initial-router-state.ts :: createInitialRouterState",
+      "ms": 13
+    },
+    {
+      "key": "components/navigation/MobileBottomNav.tsx :: MobileBottomNav",
+      "ms": 13
+    },
+    {
+      "key": "lib/analytics/utm.ts :: readFromStorages",
+      "ms": 13
+    },
+    {
+      "key": "components/icons/AnimatedCompareIcon.tsx :: (anon)",
+      "ms": 13
+    },
+    {
+      "key": "app/dashboard/components/CommandMenu.tsx :: (anon)",
+      "ms": 13
+    },
+    {
+      "key": "lib/analytics/lazy.ts :: a",
+      "ms": 12
+    },
+    {
+      "key": "lib/analytics/lazy.ts :: (anon)",
+      "ms": 12
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: f.loadableGenerated.webpack",
+      "ms": 12
+    },
+    {
+      "key": "components/Providers.tsx :: L.loadableGenerated.webpack",
+      "ms": 12
+    },
+    {
+      "key": "src/motion/index.tsx :: useVisualElement",
+      "ms": 12
+    },
+    {
+      "key": "src/client/app-next.ts :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "components/brand/BrandLogo.tsx :: 16831",
+      "ms": 11
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: 61790",
+      "ms": 11
+    },
+    {
+      "key": "components/Providers.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "app/dashboard/components/DashboardNavigationFlyout.tsx :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "src/animation/interfaces/motion-value.ts :: (anon)",
+      "ms": 11
+    },
+    {
+      "key": "src/client/app-index.tsx :: nextServerDataCallback",
+      "ms": 10
+    },
+    {
+      "key": "src/client/components/use-reducer-with-devtools.ts :: i",
+      "ms": 10
+    },
+    {
+      "key": "src/useQuery.ts :: useQuery",
+      "ms": 10
+    },
+    {
+      "key": "src/dialog.tsx :: F",
+      "ms": 10
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: (anon)",
+      "ms": 10
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: P",
+      "ms": 10
+    },
+    {
+      "key": "src/motion/utils/use-visual-element.ts :: (anon)",
+      "ms": 10
+    },
+    {
+      "key": "components/company/CompanySelectorModal.tsx :: CompanySelectorModal",
+      "ms": 10
+    },
+    {
+      "key": "src/dropdown-menu.tsx :: eK",
+      "ms": 10
+    },
+    {
+      "key": "src/render/utils/animation-state.ts :: animateChanges",
+      "ms": 10
+    },
+    {
+      "key": "app/dashboard/components/DashboardHeader.tsx :: 82446",
+      "ms": 9
+    },
+    {
+      "key": "src/presence.tsx :: 82912",
+      "ms": 9
+    },
+    {
+      "key": "components/ui/dialog.tsx :: 57054",
+      "ms": 9
+    },
+    {
+      "key": "src/client/script.tsx :: y",
+      "ms": 9
+    },
+    {
+      "key": "components/ui/tooltip.tsx :: 60193",
+      "ms": 9
+    },
+    {
+      "key": "lib/api/billing.ts :: 62931",
+      "ms": 9
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: EnterpriseSidebar",
+      "ms": 9
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer-types.ts :: PrefetchCacheEntryStatus",
+      "ms": 8
+    },
+    {
+      "key": "src/internal/config.ts :: 66692",
+      "ms": 8
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts :: slugifyLocation",
+      "ms": 8
+    },
+    {
+      "key": "src/client/request-idle-callback.ts :: 25246",
+      "ms": 8
+    },
+    {
+      "key": "lib/api.ts :: N",
+      "ms": 8
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "config/navigation.ts :: 41730",
+      "ms": 8
+    },
+    {
+      "key": "src/motion/index.tsx :: MotionDOMComponent",
+      "ms": 8
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseSidebar.tsx :: SidebarTree",
+      "ms": 8
+    },
+    {
+      "key": "src/createLucideIcon.ts :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "src/tabs.tsx :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "components/ui/tabs.tsx :: (anon)",
+      "ms": 8
+    },
+    {
+      "key": "src/render/VisualElement.ts :: getValue",
+      "ms": 8
+    },
+    {
+      "key": "app/dashboard/components/DashboardLayout.tsx :: 96422",
+      "ms": 8
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts :: 90063",
+      "ms": 7
+    },
+    {
+      "key": "lib/geography/search.ts :: 8781",
+      "ms": 7
+    },
+    {
+      "key": "src/value/use-will-change/add-will-change.ts :: 62180",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/router-reducer/fill-lazy-items-till-leaf-with-head.ts :: fillLazyItemsTillLeafWithHead",
+      "ms": 7
+    },
+    {
+      "key": "lib/QueryProvider.tsx :: (anon)",
+      "ms": 7
+    },
+    {
+      "key": "lib/analytics/utm.ts :: updateAttribution",
+      "ms": 7
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: p.loadableGenerated.webpack",
+      "ms": 7
+    },
+    {
+      "key": "components/ui/skeleton.tsx :: 12339",
+      "ms": 7
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: useDashboardTabState",
+      "ms": 7
+    },
+    {
+      "key": "src/motion/utils/use-visual-state.ts :: (anon)",
+      "ms": 7
+    },
+    {
+      "key": "src/client/image-component.tsx :: RouterContext",
+      "ms": 7
+    },
+    {
+      "key": "src/popover.tsx :: (anon)",
+      "ms": 7
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: getImgProps",
+      "ms": 7
+    },
+    {
+      "key": "app/dashboard/components/CommandMenu.tsx :: CommandMenu",
+      "ms": 7
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/navigate-reducer.ts :: 24819",
+      "ms": 6
+    },
+    {
+      "key": "src/client/components/client-page.tsx :: 61060",
+      "ms": 6
+    },
+    {
+      "key": "src/internal/util/throwUnobservableError.ts :: 203",
+      "ms": 6
+    },
+    {
+      "key": "lib/analytics/index.ts :: 93822",
+      "ms": 6
+    },
+    {
+      "key": "components/ui/avatar.tsx :: 62869",
+      "ms": 6
+    },
+    {
+      "key": "components/Navbar.tsx :: 9557",
+      "ms": 6
+    },
+    {
+      "key": "lib/analytics/hooks/useIntentTracking.ts :: 67679",
+      "ms": 6
+    },
+    {
+      "key": "components/review-dashboard/reviewerNavigation.ts :: 82798",
+      "ms": 6
+    },
+    {
+      "key": "src/client/app-index.tsx :: ServerRoot",
+      "ms": 6
+    },
+    {
+      "key": "contexts/LocationContext.tsx :: getCookie",
+      "ms": 6
+    },
+    {
+      "key": "lib/api-config.ts :: c",
+      "ms": 6
+    },
+    {
+      "key": "components/Providers.tsx :: A.loadableGenerated.webpack",
+      "ms": 6
+    },
+    {
+      "key": "components/CookieConsent.tsx :: CookieConsent",
+      "ms": 6
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx :: QuoteWizardModal",
+      "ms": 6
+    },
+    {
+      "key": "components/ui/dialog.tsx :: h",
+      "ms": 6
+    },
+    {
+      "key": "src/client/link.tsx :: children",
+      "ms": 6
+    },
+    {
+      "key": "src/render/html/use-props.ts :: param",
+      "ms": 6
+    },
+    {
+      "key": "src/menu.tsx :: G",
+      "ms": 6
+    },
+    {
+      "key": "components/ui/skeleton.tsx :: Skeleton",
+      "ms": 6
+    },
+    {
+      "key": "src/render/html/utils/render.ts :: renderHTML",
+      "ms": 6
+    },
+    {
+      "key": "app/dashboard/components/analytics/AttributionOverview.tsx :: AttributionOverview",
+      "ms": 6
+    },
+    {
+      "key": "src/shared/lib/router/utils/is-bot.ts :: isBot",
+      "ms": 5
+    },
+    {
+      "key": "src/client/app-index.tsx :: hydrate",
+      "ms": 5
+    },
+    {
+      "key": "src/client/components/router-reducer/should-hard-navigate.ts :: 54535",
+      "ms": 5
+    },
+    {
+      "key": "app/dashboard/components/OfflineStatusBar.tsx :: 8489",
+      "ms": 5
+    },
+    {
+      "key": "src/internal/Subscriber.ts :: noop",
+      "ms": 5
+    },
+    {
+      "key": "lib/analytics/lazy.ts :: 64963",
+      "ms": 5
+    },
+    {
+      "key": "lib/offline/mutationQueue.ts :: 1435",
+      "ms": 5
+    },
+    {
+      "key": "src/client/use-intersection.tsx :: 19259",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: c",
+      "ms": 5
+    },
+    {
+      "key": "components/BannerByLocation.tsx :: 24408",
+      "ms": 5
+    },
+    {
+      "key": "components/ui/command.tsx :: 26110",
+      "ms": 5
+    },
+    {
+      "key": "components/ui/popover.tsx :: 6512",
+      "ms": 5
+    },
+    {
+      "key": "components/ui/button.tsx :: 26902",
+      "ms": 5
+    },
+    {
+      "key": "context/CompanyContext.tsx :: CompanyProvider",
+      "ms": 5
+    },
+    {
+      "key": "components/Providers.tsx :: z.loadableGenerated.webpack",
+      "ms": 5
+    },
+    {
+      "key": "src/index.tsx :: (anon)",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: convertModule",
+      "ms": 5
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx :: 19060",
+      "ms": 5
+    },
+    {
+      "key": "components/company/CompanySelectorModal.tsx :: (anon)",
+      "ms": 5
+    },
+    {
+      "key": "components/company/CompanySwitcher.tsx :: CompanySwitcher",
+      "ms": 5
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: createLazyPrefetchEntry",
+      "ms": 5
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: (anon)",
+      "ms": 5
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: MetricCard",
+      "ms": 5
+    },
+    {
+      "key": "src/shared/lib/router/utils/route-matcher.ts :: 9964",
+      "ms": 5
+    },
+    {
+      "key": "components/Navbar.tsx :: Navbar",
+      "ms": 5
+    },
+    {
+      "key": "context/CompanyContext.tsx :: x",
+      "ms": 5
+    },
+    {
+      "key": "src/client/app-index.tsx :: 54278",
+      "ms": 4
+    },
+    {
+      "key": "src/client/remove-base-path.ts :: 12010",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/router-reducer/create-router-cache-key.ts :: 44848",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/restore-reducer.ts :: 13722",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/navigation.ts :: 52646",
+      "ms": 4
+    },
+    {
+      "key": "src/internal/Subject.ts :: Subject",
+      "ms": 4
+    },
+    {
+      "key": "src/internal/observable/empty.ts :: 96750",
+      "ms": 4
+    },
+    {
+      "key": "lib/analytics/identity-stitch.ts :: 31187",
+      "ms": 4
+    },
+    {
+      "key": "lib/locations/local-page-slugs.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "src/client/resolve-href.ts :: 16081",
+      "ms": 4
+    },
+    {
+      "key": "src/client/get-domain-locale.ts :: 72972",
+      "ms": 4
+    },
+    {
+      "key": "src/dropdown-menu.tsx :: DropdownMenuSubContent",
+      "ms": 4
+    },
+    {
+      "key": "components/layout/ConditionalFooter.tsx :: 94851",
+      "ms": 4
+    },
+    {
+      "key": "src/client/script.tsx :: 10122",
+      "ms": 4
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: useAuth",
+      "ms": 4
+    },
+    {
+      "key": "components/NavbarBannerSlot.tsx :: a",
+      "ms": 4
+    },
+    {
+      "key": "hooks/useComparison.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "contexts/LocationContext.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/navigation.ts :: useSearchParams",
+      "ms": 4
+    },
+    {
+      "key": "app/dashboard/components/CompanyPlanBadge.tsx :: 90409",
+      "ms": 4
+    },
+    {
+      "key": "config/navigation.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "lib/cable.ts :: resolveCableUrl",
+      "ms": 4
+    },
+    {
+      "key": "src/projection/node/create-projection-node.ts :: mount",
+      "ms": 4
+    },
+    {
+      "key": "src/popover.tsx :: I",
+      "ms": 4
+    },
+    {
+      "key": "src/tooltip.tsx :: R",
+      "ms": 4
+    },
+    {
+      "key": "app/dashboard/components/DashboardToolbar.tsx :: DashboardToolbar",
+      "ms": 4
+    },
+    {
+      "key": "src/avatar.tsx :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "src/avatar.tsx :: useImageLoadingStatus",
+      "ms": 4
+    },
+    {
+      "key": "src/render/VisualElement.ts :: bindToMotionValue",
+      "ms": 4
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/prefetch-reducer.ts :: prefetchReducer",
+      "ms": 4
+    },
+    {
+      "key": "src/client/web-vitals.ts :: 43934",
+      "ms": 4
+    },
+    {
+      "key": "hooks/useUtm.ts :: (anon)",
+      "ms": 4
+    },
+    {
+      "key": "src/animation/interfaces/motion-value.ts :: onUpdate",
+      "ms": 4
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: 80292",
+      "ms": 4
+    },
+    {
+      "key": "src/client/normalize-trailing-slash.ts :: 61404",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/layout-router.tsx :: 76015",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/match-segments.ts :: 35475",
+      "ms": 3
+    },
+    {
+      "key": "lib/analytics/consent.ts :: 96666",
+      "ms": 3
+    },
+    {
+      "key": "hooks/useBannersQuery.ts :: 94800",
+      "ms": 3
+    },
+    {
+      "key": "src/icons/user-round.ts :: 48667",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: HistoryUpdater",
+      "ms": 3
+    },
+    {
+      "key": "components/Providers.tsx :: Providers",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/layout-router.tsx :: preservedSegmentValue",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: canonicalUrl",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: getAnnouncerNode",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: AppRouterAnnouncer",
+      "ms": 3
+    },
+    {
+      "key": "app/dashboard/page.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/errorBoundaryUtils.ts :: a",
+      "ms": 3
+    },
+    {
+      "key": "context/CompanyContext.tsx :: d",
+      "ms": 3
+    },
+    {
+      "key": "config/navigation.ts :: getFlatNavigationByContext",
+      "ms": 3
+    },
+    {
+      "key": "components/ui/dialog.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/dialog.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/client/link.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/render/dom/DOMVisualElement.ts :: constructor",
+      "ms": 3
+    },
+    {
+      "key": "src/projection/node/HTMLProjectionNode.ts :: defaultParent",
+      "ms": 3
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: getWidths",
+      "ms": 3
+    },
+    {
+      "key": "shared/src/utils.ts :: i",
+      "ms": 3
+    },
+    {
+      "key": "src/popper.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "src/popper.tsx :: tK",
+      "ms": 3
+    },
+    {
+      "key": "src/dropdown-menu.tsx :: eG",
+      "ms": 3
+    },
+    {
+      "key": "src/dropdown-menu.tsx :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "app/dashboard/components/PlansPricingModal.tsx :: PlansPricingModal",
+      "ms": 3
+    },
+    {
+      "key": "src/animation/interfaces/visual-element.ts :: animateVisualElement",
+      "ms": 3
+    },
+    {
+      "key": "src/client/image-component.tsx :: onLoad",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: prefetch",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: getOrCreatePrefetchCacheEntry",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/router-reducer/prefetch-cache-utils.ts :: (anon)",
+      "ms": 3
+    },
+    {
+      "key": "lib/analytics/cookies.ts :: getCookie",
+      "ms": 3
+    },
+    {
+      "key": "src/icons/zap.ts :: 20271",
+      "ms": 3
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: Head",
+      "ms": 3
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: h.loadableGenerated.webpack",
+      "ms": 3
+    },
+    {
+      "key": "src/shared/lib/page-path/ensure-leading-slash.ts :: ensureLeadingSlash",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: ACTION",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/render-from-template-context.tsx :: 20544",
+      "ms": 2
+    },
+    {
+      "key": "src/internal/operators/OperatorSubscriber.ts :: Subscriber",
+      "ms": 2
+    },
+    {
+      "key": "src/internal/Observable.ts :: 95978",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/preload-css.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "lib/site.ts :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/router/utils/format-url.ts :: 86279",
+      "ms": 2
+    },
+    {
+      "key": "utils/image.ts :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "src/popover.tsx :: PopoverContent",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/app-dynamic.tsx :: dynamic",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/preload-css.tsx :: 37746",
+      "ms": 2
+    },
+    {
+      "key": "src/useQuery.ts :: 25922",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/router-reducer/compute-changed-path.ts :: extractPathFromFlightRouterState",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/app-router.tsx :: window",
+      "ms": 2
+    },
+    {
+      "key": "contexts/AuthContext.tsx :: AuthProvider",
+      "ms": 2
+    },
+    {
+      "key": "contexts/LocationContext.tsx :: LocationProvider",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/lazy-dynamic/loadable.tsx :: LoadableComponent",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/layout-router.tsx :: componentDidMount",
+      "ms": 2
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts :: 7874",
+      "ms": 2
+    },
+    {
+      "key": "app/dashboard/hooks/useCompanyDashboardData.ts :: useCompanyDashboardData",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/checkbox.tsx :: 26815",
+      "ms": 2
+    },
+    {
+      "key": "src/checkbox.tsx :: BUBBLE_INPUT_NAME",
+      "ms": 2
+    },
+    {
+      "key": "src/motion/index.tsx :: useRender",
+      "ms": 2
+    },
+    {
+      "key": "src/render/html/use-props.ts :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: generateImgAttrs",
+      "ms": 2
+    },
+    {
+      "key": "src/tooltip.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/dropdown-menu.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "src/render/VisualElement.ts :: updateFeatures",
+      "ms": 2
+    },
+    {
+      "key": "src/motion/features/animation/index.ts :: constructor",
+      "ms": 2
+    },
+    {
+      "key": "src/client/use-intersection.tsx :: root",
+      "ms": 2
+    },
+    {
+      "key": "src/client/flight-data-helpers.ts :: prepareFlightRouterStateForRequest",
+      "ms": 2
+    },
+    {
+      "key": "lib/analytics/utm.ts :: clearStorages",
+      "ms": 2
+    },
+    {
+      "key": "context/CompanyContext.tsx :: (anon)",
+      "ms": 2
+    },
+    {
+      "key": "components/ui/sonner.tsx :: u",
+      "ms": 2
+    },
+    {
+      "key": "components/Providers.tsx :: I.loadableGenerated.webpack",
+      "ms": 2
+    },
+    {
+      "key": "src/render/VisualElement.ts :: update",
+      "ms": 2
+    },
+    {
+      "key": "src/client/components/not-found-boundary.tsx :: c",
+      "ms": 2
+    },
+    {
+      "key": "context/CompanyContext.tsx :: h",
+      "ms": 2
+    },
+    {
+      "key": "src/shared/lib/hooks-client-context.shared-runtime.ts :: 18993",
+      "ms": 1
+    },
+    {
+      "key": "src/client/app-bootstrap.ts :: 83079",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/unresolved-thenable.ts :: 47744",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/app-router-announcer.tsx :: 6866",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/remove-trailing-slash.ts :: removeTrailingSlash",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/add-path-prefix.ts :: 20926",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/request-async-storage.external.ts :: 22356",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/prefetch-reducer.ts :: 99601",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/bailout-to-client-rendering.ts :: 19107",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/refresh-cw.ts :: 83551",
+      "ms": 1
+    },
+    {
+      "key": "src/internal/util/createErrorClass.ts :: createErrorClass",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/trending-up.ts :: 30166",
+      "ms": 1
+    },
+    {
+      "key": "src/icons/dollar-sign.ts :: 51817",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/utm.ts :: 70177",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/image-config-context.shared-runtime.ts :: 90128",
+      "ms": 1
+    },
+    {
+      "key": "src/collection-legacy.tsx :: createCollection",
+      "ms": 1
+    },
+    {
+      "key": "src/menu.tsx :: createSlot",
+      "ms": 1
+    },
+    {
+      "key": "hooks/useGeographyCatalog.ts :: 97855",
+      "ms": 1
+    },
+    {
+      "key": "lib/api-client.ts :: 7014",
+      "ms": 1
+    },
+    {
+      "key": "lib/constants/fallback-categories.ts :: s",
+      "ms": 1
+    },
+    {
+      "key": "src/utils/use-isomorphic-effect.ts :: useEffect",
+      "ms": 1
+    },
+    {
+      "key": "src/animation/interfaces/visual-element.ts :: 61750",
+      "ms": 1
+    },
+    {
+      "key": "src/client/head-manager.ts :: 88003",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/consolidated.ts :: 21090",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/reducers/find-head-in-cache.ts :: findHeadInCache",
+      "ms": 1
+    },
+    {
+      "key": "components/ApolloProviderWrapper.tsx :: ApolloProviderWrapper",
+      "ms": 1
+    },
+    {
+      "key": "components/performance/DeferredClientRuntime.tsx :: DeferredClientRuntime",
+      "ms": 1
+    },
+    {
+      "key": "src/client/script.tsx :: hasLoadScriptEffectCalled",
+      "ms": 1
+    },
+    {
+      "key": "components/performance/RouteVitalsReporter.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "lib/api-config.ts :: i",
+      "ms": 1
+    },
+    {
+      "key": "src/QueryClientProvider.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "components/Navbar.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "hooks/use-toast.ts :: useToast",
+      "ms": 1
+    },
+    {
+      "key": "src/index.tsx :: getDocumentDirection",
+      "ms": 1
+    },
+    {
+      "key": "components/ui/sheet.tsx :: 81103",
+      "ms": 1
+    },
+    {
+      "key": "lib/cable.ts :: 80202",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/MobileDashboardQuickAccess.tsx :: 70886",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/ThemeToggle.tsx :: 34082",
+      "ms": 1
+    },
+    {
+      "key": "lib/pricing/billing.ts :: 52362",
+      "ms": 1
+    },
+    {
+      "key": "config/navigation.ts :: filterNavigationByContext",
+      "ms": 1
+    },
+    {
+      "key": "components/QuoteWizardModal.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "components/SignupGateModalHost.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "components/CookieConsent.tsx :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: q",
+      "ms": 1
+    },
+    {
+      "key": "src/render/components/create-proxy.ts :: get",
+      "ms": 1
+    },
+    {
+      "key": "src/motion/index.tsx :: createMotionComponent",
+      "ms": 1
+    },
+    {
+      "key": "src/motion/index.tsx :: useCreateMotionContext",
+      "ms": 1
+    },
+    {
+      "key": "src/utils/use-constant.ts :: useConstant",
+      "ms": 1
+    },
+    {
+      "key": "src/render/html/utils/build-styles.ts :: buildHTMLStyles",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/EnterpriseDashboard.tsx :: DashboardTabSkeleton",
+      "ms": 1
+    },
+    {
+      "key": "src/client/use-intersection.tsx :: t.observer",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/utils/parse-path.ts :: parsePath",
+      "ms": 1
+    },
+    {
+      "key": "src/client/image-component.tsx :: handleLoading",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/router/action-queue.ts :: runAction",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/router-reducer.ts :: f",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/promise-queue.ts :: enqueue",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/router-reducer/create-router-cache-key.ts :: createRouterCacheKey",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/OverviewTab.tsx :: queryFn",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "lib/company-options.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "src/client/components/navigation.react-server.ts :: l",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/cookies.ts :: deleteCookie",
+      "ms": 1
+    },
+    {
+      "key": "lib/api.ts :: J",
+      "ms": 1
+    },
+    {
+      "key": "src/render/VisualElement.ts :: constructor",
+      "ms": 1
+    },
+    {
+      "key": "app/dashboard/components/ThemeToggle.tsx :: ThemeToggle",
+      "ms": 1
+    },
+    {
+      "key": "src/client/image-component.tsx :: className",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: 38293",
+      "ms": 1
+    },
+    {
+      "key": "lib/analytics/page-template.ts :: getPageTemplateInfo",
+      "ms": 1
+    },
+    {
+      "key": "components/brand/BrandLogo.tsx :: BrandLogo",
+      "ms": 1
+    },
+    {
+      "key": "src/shared/lib/get-img-props.ts :: (anon)",
+      "ms": 1
+    },
+    {
+      "key": "hooks/useVirtualKeyboard.ts :: useVirtualKeyboard",
+      "ms": 1
+    },
+    {
+      "key": "src/client/normalize-trailing-slash.ts :: u",
+      "ms": 1
+    }
+  ]
+}

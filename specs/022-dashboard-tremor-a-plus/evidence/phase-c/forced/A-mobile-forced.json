@@ -1,0 +1,18 @@
+{
+  "label": "A-mobile",
+  "mobile": true,
+  "totalMs": 296,
+  "calls": 11,
+  "rows": [
+    {
+      "key": "getComputedStyle | app: (sem frame do app) | lib: (sem lib)",
+      "calls": 5,
+      "ms": 180
+    },
+    {
+      "key": "innerWidth | app: (sem frame do app) | lib: (sem lib)",
+      "calls": 6,
+      "ms": 117
+    }
+  ]
+}

@@ -102,6 +102,26 @@
   }
 }
 
+/* Largura reservada pela EnterpriseSidebar (dashboard empresarial). Antes era
+   gravada em <html> via JS após ler window.innerWidth, o que forçava layout e
+   animava o padding do conteúdo no mount (Spec 022 Fase C). Mesmos breakpoints
+   da <aside>: md (768px) e dashboard (1180px) do Tailwind. */
+:root {
+  --enterprise-sidebar-width: 0px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --enterprise-sidebar-width: 112px;
+  }
+}
+
+@media (min-width: 1180px) {
+  :root {
+    --enterprise-sidebar-width: 240px;
+  }
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 245, 247, 250; /* Um cinza muito claro, quase branco */
