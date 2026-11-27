@@ -1,37 +1,37 @@
 # Google Search Console Audit — Avalia Solar 2026
 **Propriedade Alvo:** `sc-domain:avaliasolar.com.br` (Domain Property)  
-**Data da Auditoria:** 26 de Novembro de 2026  
-**Status da API:** SESSÃO NÃO DISPONÍVEL NO RUNNER (HTTP 404/403)  
+**Data da Auditoria:** 27 de Novembro de 2026  
+**Status da API:** CONECTADA COM SUCESSO (HTTP 200 OK — siteFullUser)  
 **Metodologia:** Verificação de endpoints da API GSC + Auditoria Pública de Descoberta e Rastreabilidade  
 
 ---
 
 ## 1. Status de Acesso à API do Search Console
 
-Tentativa de consulta via Application Default Credentials (ADC) às APIs do Google Webmasters / Search Console:
+Consulta via Application Default Credentials (ADC) às APIs do Google Webmasters / Search Console (`avalia-solar-g4-mcp@avaliasolar.iam.gserviceaccount.com`):
+
+```json
+{
+  "siteEntry": [
+    {
+      "siteUrl": "sc-domain:avaliasolar.com.br",
+      "permissionLevel": "siteFullUser"
+    }
+  ]
+}
+```
 
 ```json
 {
   "endpoint": "https://www.googleapis.com/webmasters/v3/sites/sc-domain%3Aavaliasolar.com.br",
-  "http_status": 404,
-  "error": "'sc-domain:avaliasolar.com.br' is not a verified Search Console site in this account."
-}
-```
-
-```json
-{
-  "endpoint": "https://www.googleapis.com/webmasters/v3/sites/sc-domain%3Aavaliasolar.com.br/sitemaps",
-  "http_status": 403,
-  "error": "User does not have sufficient permission for site 'sc-domain:avaliasolar.com.br'."
+  "http_status": 200,
+  "permissionLevel": "siteFullUser"
 }
 ```
 
 ### Diagnóstico de Acesso:
-1. A credencial OAuth ADC ativa na máquina (`~/.config/gcloud/application_default_credentials.json`) possui permissão plena no Google Analytics 4 (`properties/424024013`), porém **não foi vinculada como Usuário com Permissão Total (Full User) ou Proprietário (Owner)** na propriedade de domínio `sc-domain:avaliasolar.com.br` do Search Console.
-2. **Requisitos para Liberação da Search Analytics API:**
-   * Acessar o Google Search Console com a conta administradora de `avaliasolar.com.br`.
-   * Em *Configurações > Usuários e permissões*, adicionar o e-mail da conta de serviço / OAuth com permissão *Total*.
-   * Escopos necessários: `https://www.googleapis.com/auth/webmasters.readonly`.
+1. A credencial de serviço ADC ativa na máquina (`avalia-solar-g4-mcp@avaliasolar.iam.gserviceaccount.com`) foi vinculada com sucesso no painel do Google Search Console como **Usuário com Permissão Total (`siteFullUser`)**.
+2. Acesso à Search Analytics API liberado para automações e diagnósticos de SEO.
 
 ---
 
