@@ -1,6 +1,9 @@
 name: SEO — Post-deploy Production Audit
 
 on:
+  schedule:
+    # Disparo semanal: toda segunda-feira às 06:00 UTC (03:00 BRT)
+    - cron: '0 6 * * 1'
   workflow_run:
     workflows:
       - "CD — Production Deploy (DigitalOcean)"
@@ -23,6 +26,7 @@ jobs:
     name: Audit public SEO contracts
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15

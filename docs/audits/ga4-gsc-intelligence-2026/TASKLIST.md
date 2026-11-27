@@ -6,15 +6,15 @@
 
 ## 1. Fase P0 — Quick Wins Críticos e Correções Estruturais
 
-| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite |
-|---|:---:|---|---|---|
-| **T-P0-01** | **P0** | Alterar moeda da propriedade GA4 para `BRL` | Console Admin GA4 | `get_property_details` retorna `currency_code: "BRL"`. |
-| **T-P0-02** | **P0** | Cadastrar exclusões de referência OAuth (`accounts.google.com`, `accounts.zoho.com`) | Console Admin GA4 (*Fluxos de Dados*) | Novas sessões de login preservam a origem original no GA4. |
-| **T-P0-03** | **P0** | Cadastrar Key Events no GA4 (`generate_lead`, `contact`, `whatsapp_click`, `quote_requested`) | Console Admin GA4 (*Eventos*) | Eventos de conversão aparecem na aba "Eventos-chave". |
-| **T-P0-04** | **P0** | Registrar as 20 dimensões personalizadas essenciais no GA4 | Console Admin GA4 (*Definições Personalizadas*) | `get_custom_dimensions_and_metrics` retorna as 20 dimensões. |
-| **T-P0-05** | **P0** | Bloquear disparo de GA4 sob hostname `localhost` no frontend | `AB0-1-front/lib/analytics/gtag.ts` | Teste Jest valida que `gtag` não é chamado quando `location.hostname === 'localhost'`. |
-| **T-P0-06** | **P0** | Corrigir timeout do sitemap de empresas (`companies/sitemap.xml`) via paginação assíncrona ou lote | `AB0-1-front/lib/seo/sitemap-builders.ts` | `https://www.avaliasolar.com.br/sitemaps/companies/sitemap.xml` responde HTTP 200 OK em < 2.000ms. |
-| **T-P0-07** | **P0** | Injetar `GA4_API_SECRET` no container de produção do backend Rails | `docker-compose.yml`, `.env` | `Ga4Service.track` envia evento para o Measurement Protocol sem abortar. |
+| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite | Status |
+|---|:---:|---|---|---|:---:|
+| **T-P0-01** | **P0** | Alterar moeda da propriedade GA4 para `BRL` | Console Admin GA4 | `get_property_details` retorna `currency_code: "BRL"`. | **Passo a Passo Pronto** (Ação UI) |
+| **T-P0-02** | **P0** | Cadastrar exclusões de referência OAuth (`accounts.google.com`, `accounts.zoho.com`) | Console Admin GA4 (*Fluxos de Dados*) | Novas sessões de login preservam a origem original no GA4. | **Passo a Passo Pronto** (Ação UI) |
+| **T-P0-03** | **P0** | Cadastrar Key Events no GA4 (`generate_lead`, `contact`, `whatsapp_click`, `quote_requested`, `lead_form_submitted`) | GA4 Admin API via MCP | Eventos de conversão ativos na propriedade `424024013`. | **CONCLUÍDO (MCP API)** |
+| **T-P0-04** | **P0** | Registrar as 20 dimensões personalizadas essenciais no GA4 | GA4 Admin API via MCP | `get_custom_dimensions_and_metrics` retorna as 20 dimensões criadas. | **CONCLUÍDO (MCP API)** |
+| **T-P0-05** | **P0** | Bloquear disparo de GA4 sob hostname `localhost` no frontend | `AB0-1-front/lib/analytics/gtag.ts` | Teste Jest valida que `gtag` não é chamado quando `location.hostname === 'localhost'`. | **CONCLUÍDO (Testes Verdes)** |
+| **T-P0-06** | **P0** | Corrigir timeout do sitemap de empresas (`companies/sitemap.xml`) via paginação assíncrona | `AB0-1-front/lib/seo/sitemap-builders.ts` | Feed paginado consome páginas sem timeout e passa nos testes de resiliência. | **CONCLUÍDO (PR #252)** |
+| **T-P0-07** | **P0** | Injetar `GA4_API_SECRET` e `GA4_MEASUREMENT_ID` nos containers backend e worker | `docker-compose.yml`, `.env.example` | Variáveis mapeadas para `backend` e `worker` Sidekiq. | **CONCLUÍDO** |
 
 ---
 
@@ -33,9 +33,8 @@
 
 ## 3. Fase P2 — Inteligência Contínua e Integrações Avançadas
 
-| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite |
-|---|:---:|---|---|---|
-| **T-P2-01** | **P2** | Exportação contínua de eventos do GA4 para o BigQuery | Console Google Cloud / GA4 Admin | Dataset `analytics_424024013` criado no BigQuery com streaming diário. |
-| **T-P2-02** | **P2** | Unificação de telemetria MCP Agentic Storefront (SPEC 026) com GA4 | `packages/mcp-ui`, `hermes-agent` | Consultas autônomas geram eventos no GA4 com dimensão `ai_agent_type`. |
-| **T-P2-03** | **P2** | Automação semanal de detecção de anomalias de indexação (Sitemaps CI) | `.github/workflows/seo-audit.yml` | Pipeline acusa falha caso qualquer sitemap retorne status diferente de 200 OK. |
-
+| ID | Prioridade | Tarefa | Arquivos / Painel | Critério de Aceite | Status |
+|---|:---:|---|---|---|:---:|
+| **T-P2-01** | **P2** | Exportação contínua de eventos do GA4 para o BigQuery | Console Google Cloud / GA4 Admin | Dataset `analytics_424024013` criado no BigQuery com streaming diário. | Pendente (Configuração Cloud) |
+| **T-P2-02** | **P2** | Unificação de telemetria MCP Agentic Storefront (SPEC 026) com GA4 | `packages/mcp-ui`, `hermes-agent` | Consultas autônomas geram eventos no GA4 com dimensão `ai_agent_type`. | **CONCLUÍDO (PR #252)** |
+| **T-P2-03** | **P2** | Automação semanal de detecção de anomalias de indexação (Sitemaps CI) | `.github/workflows/seo-post-deploy-audit.yml` | Pipeline com disparo agendado toda segunda-feira às 06:00 UTC. | **CONCLUÍDO** |
