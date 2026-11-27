@@ -7,6 +7,14 @@ export interface FeatureAccessEntry {
   upsell_copy?: string;
   expires_at?: string | null;
   limit?: Record<string, number> | null;
+  /** Spec 027: menor plano público que libera o recurso; `null` = só o comercial libera. */
+  unlock_plan?: FeatureUnlockPlan | null;
+}
+
+export interface FeatureUnlockPlan {
+  id: number;
+  name: string;
+  tier: string;
 }
 
 export interface CompanyFeatureAccessResponse {

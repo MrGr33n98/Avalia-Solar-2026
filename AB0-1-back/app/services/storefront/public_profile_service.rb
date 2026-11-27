@@ -4,18 +4,23 @@ module Storefront
   class PublicProfileService
     class NotFoundError < StandardError; end
 
+    PROJECTS_LIMIT = 6
+    PROJECT_IMAGES_LIMIT = 4
+
     attr_reader :slug
 
     def self.call(slug:)
       new(slug: slug).call
     end
 
-    def initialize(slug:)
+    # `company:` permite reaproveitar uma empresa já carregada e validada (ex.: ferramenta MCP).
+    def initialize(slug: nil, company: nil)
       @slug = slug.to_s.strip.downcase
+      @company = company
     end
 
     def call
-      company = find_active_company
+      company = @company || find_active_company
       build_payload(company)
     end
 
@@ -68,23 +73,30 @@ module Storefront
       }
     end
 
+    # Spec 027 (T017): só projetos publicados em `company_projects` e só quando o plano libera `projects_showcase`.
     def build_projects(company)
-      return [] unless company.respond_to?(:projects)
+      return [] unless company.feature_enabled?('projects_showcase')
 
-      company.projects.limit(6).map do |p|
+      company.company_projects.published.ordered.limit(PROJECTS_LIMIT).map do |project|
         {
-          id: p.id,
-          title: p.respond_to?(:title) ? p.title : "Projeto #{p.id}",
-          power_kwp: p.respond_to?(:power_kwp) ? p.power_kwp.to_f : 0.0,
-          city: p.respond_to?(:city) ? (p.city || company.city) : company.city,
-          uf: p.respond_to?(:state) ? (p.state || company.state) : company.state,
-          photo_urls: p.respond_to?(:photo_urls) ? Array(p.photo_urls) : [],
-          completion_year: p.respond_to?(:completion_date) && p.completion_date ? p.completion_date.year : Time.current.year
+          id: project.id,
+          title: project.title,
+          power_kwp: project.capacity_value.to_f,
+          city: project.city.presence || company.city,
+          uf: project.state.presence || company.state,
+          photo_urls: project_photo_urls(company, project),
+          completion_year: (project.completion_date || project.published_at).year
         }
       end
     rescue StandardError => e
       Rails.logger.warn("[Storefront::PublicProfileService] Falha ao carregar projetos da empresa #{company.id}: #{e.message}")
       []
+    end
+
+    def project_photo_urls(company, project)
+      project.digital_assets.published.where(company_id: company.id, kind: 'image')
+             .with_attached_file.order(id: :asc).limit(PROJECT_IMAGES_LIMIT)
+             .filter_map { |asset| Mcp::Public::MediaUrl.allowed(asset.file_url) if asset.file.attached? }.uniq
     end
 
     def build_products(company)

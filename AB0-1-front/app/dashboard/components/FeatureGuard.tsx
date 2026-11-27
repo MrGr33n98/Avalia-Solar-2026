@@ -242,16 +242,36 @@ export default function FeatureGuard({
       ? benefits
       : (featureId && DEFAULT_BENEFITS[featureId]) || DEFAULT_BENEFITS.generic;
 
+  // Spec 027 (T020): o backend decide qual plano libera o recurso (`unlock_plan`).
+  // `null` = nenhum plano público libera → contato comercial. Sem o campo, cai no
+  // fallback das props, mas nunca sugere o plano que a empresa já tem.
+  const hasBackendUnlock = Boolean(entry && 'unlock_plan' in entry);
+  const unlockPlan = entry?.unlock_plan ?? null;
+  const commercialOnly = hasBackendUnlock && !unlockPlan;
+  const fallbackIsCurrent =
+    !!currentPlanTier && !!targetPlanSlug && targetPlanSlug === currentPlanTier.toLowerCase();
+  const fallbackPlanName = fallbackIsCurrent ? undefined : targetPlanName;
+  const targetName = hasBackendUnlock ? unlockPlan?.name : fallbackPlanName;
+
   const handleUpgradeClick = () => {
-    if (onUpgrade) {
+    if (commercialOnly) {
+      window.location.href = '/contact';
+    } else if (onUpgrade) {
       onUpgrade();
     } else {
       window.location.href = '/pricing';
     }
   };
 
-  const planLabel = targetPlanName || (targetPlanSlug ? `Plano ${targetPlanSlug.toUpperCase()}` : 'Plano Pro');
-  const ctaText = targetPlanName ? `Desbloquear com ${targetPlanName}` : 'Fazer Upgrade Agora';
+  const planLabel = commercialOnly
+    ? 'Plano sob consulta'
+    : targetName ||
+      (targetPlanSlug && !fallbackIsCurrent ? `Plano ${targetPlanSlug.toUpperCase()}` : 'Upgrade de plano');
+  const ctaText = commercialOnly
+    ? 'Falar com o comercial'
+    : targetName
+      ? `Desbloquear com ${targetName}`
+      : 'Fazer Upgrade Agora';
 
   return (
     <div
@@ -294,7 +314,7 @@ export default function FeatureGuard({
 
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/80 text-xs font-medium">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                <span>Recurso Pro</span>
+                <span>Recurso premium</span>
               </div>
             </div>
 

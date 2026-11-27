@@ -29,11 +29,6 @@ class CompanyUploadLimiter
     }
   }.freeze
 
-  PRICING = {
-    'pro' => { monthly: 49, yearly: 499 },
-    'enterprise' => { monthly: 99, yearly: 999 }
-  }.freeze
-
   attr_reader :company
 
   def initialize(company)
@@ -102,12 +97,12 @@ class CompanyUploadLimiter
     company.company_projects.count
   end
 
-  # Tier atual
+  # Tier atual: vem do plano real da empresa (Spec 027, T014). As chaves
+  # `projects_showcase_pro/enterprise` não existem no catálogo e rebaixavam o Pro para Essencial.
   def current_tier
-    return 'enterprise' if company.feature_enabled?('projects_showcase_enterprise')
-    return 'pro' if company.feature_enabled?('projects_showcase_pro')
-    return 'essential' if company.feature_enabled?('projects_showcase')
-    'free'
+    return 'free' if company.plan.blank?
+
+    PlanFeatureCatalog.normalize_plan_tier(company.inferred_plan_tier)
   end
 
   # Próximo tier recomendado
@@ -120,12 +115,13 @@ class CompanyUploadLimiter
     end
   end
 
-  # Preço do próximo tier
+  # Plano público mais barato do próximo tier, com o preço do catálogo (sem valores fixos no código).
   def next_tier_pricing
     tier = next_tier
     return nil unless tier
 
-    PRICING[tier]
+    plan = Plan.where(is_public: true).order(:price, :id).find { |candidate| candidate.inferred_plan_tier == tier }
+    plan && { plan_id: plan.id, name: plan.name, price: plan.price.to_f }
   end
 
   # Verifica se está próximo do limite (80% ou mais)

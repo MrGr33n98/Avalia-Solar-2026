@@ -18,18 +18,18 @@ Convenções:
 ## F1 — Promessa = entrega
 
 ### Backend
-- [ ] **T010** Validação no `Plan`: price IDs de 6m e 12m distintos. **Teste:** spec de model. **US-01**
+- [x] **T010** Validação no `Plan`: price IDs de 6m e 12m distintos ([spec](../../AB0-1-back/spec/models/plan_stripe_price_ids_spec.rb); também recusa ID de outro plano; só valida quando o campo muda). **Teste:** spec de model. **US-01**
 - [ ] **T011** Atributos `enforced_by` / `display_only` no `PlanFeatureCatalog` + teste de CI "toda chave vendida tem aplicação". **Teste:** spec que percorre `FEATURE_DEFINITIONS`. **US-04**
 - [ ] **T012** 🔒(D6) Marcar `local_seo_visibility`, `premium_profile` e `forum_highlight` como `display_only` e retirá-las da lista de ativos do `/pricing`. **US-04**
 - [ ] **T013** Matriz de conformidade: request specs plano × chave para os endpoints `company_admin/*` e os públicos. **US-04**
-- [ ] **T014** `CompanyUploadLimiter#current_tier` usa o tier real do plano; remover `PRICING`. **Teste:** Pro → limites Pro. **US-06**
-- [ ] **T015** `feature_access` devolve `unlock_plan` (menor plano público que libera a chave; `null` → "comercial"). **Teste:** Free/Essencial/Pro × chaves. **US-09**
+- [x] **T014** ([spec](../../AB0-1-back/spec/services/company_upload_limiter_spec.rb); obs.: o controller `company_upload_limits` não tem rota) `CompanyUploadLimiter#current_tier` usa o tier real do plano; remover `PRICING`. **Teste:** Pro → limites Pro. **US-06**
+- [x] **T015** ([spec](../../AB0-1-back/spec/services/company_feature_access_unlock_plan_spec.rb)) `feature_access` devolve `unlock_plan` (menor plano público que libera a chave; `null` → "comercial"). **Teste:** Free/Essencial/Pro × chaves. **US-09**
 - [ ] **T016** 🔒(D3) Estado `pending_verification` no resolver para `verified_product`, `social_proof` e `featured_review`. **US-05**
-- [ ] **T017** Vitrine: `company_projects.published.ordered.limit(6)` + entitlement `projects_showcase`. **Teste:** WEG-like (Pro com 1 projeto) e Essencial. **US-07**
-- [ ] **T018** MCP `show_storefront_profile`: corrigir a assinatura; teste que **executa** a ferramenta (sucesso, não encontrado, inativo). **US-08**
+- [x] **T017** ([spec](../../AB0-1-back/spec/services/storefront/public_profile_projects_spec.rb)) Vitrine: `company_projects.published.ordered.limit(6)` + entitlement `projects_showcase`. **Teste:** WEG-like (Pro com 1 projeto) e Essencial. **US-07**
+- [x] **T018** ([spec](../../AB0-1-back/spec/services/mcp/public/storefront_tool_execution_spec.rb)) MCP `show_storefront_profile`: corrigir a assinatura; teste que **executa** a ferramenta (sucesso, não encontrado, inativo). **US-08**
 
 ### Frontend (dashboard)
-- [ ] **T020** `FeatureGuard` usa `unlock_plan` do backend; remover `targetPlanName` fixo de `DASHBOARD_TAB_GUARD_COPY`. **Teste:** Jest para Free/Essencial/Pro; nunca "Desbloquear com <plano atual>". **US-09**
+- [x] **T020** ([teste](../../AB0-1-front/__tests__/components/FeatureGuardUnlockPlan.test.tsx)) `FeatureGuard` usa `unlock_plan` do backend; remover `targetPlanName` fixo de `DASHBOARD_TAB_GUARD_COPY`. **Teste:** Jest para Free/Essencial/Pro; nunca "Desbloquear com <plano atual>". **US-09**
 - [ ] **T021** UI do estado `pending_verification`. **Teste:** RTL. **US-05**
 - [ ] **T022** E2E Playwright com fixtures Free/Essencial/Pro: cada aba travada mostra o plano certo, e as abas liberadas abrem. **US-04, US-09**
 

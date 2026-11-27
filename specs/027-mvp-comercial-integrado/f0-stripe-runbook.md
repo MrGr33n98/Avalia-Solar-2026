@@ -29,6 +29,8 @@ Hoje o admin aponta: plano 2 → `…RT2265bB` (nos 2 campos); plano 3 → `…Q
 | 4 · Essencial 6 meses | apagar | apagar + desmarcar "Exibir no /pricing" |
 
    Preencher o motivo: "Separar preços de 6 e 12 meses (auditoria 27/11)".
+
+   **Ordem:** limpar primeiro o plano 4. Depois do deploy da T010, o admin recusa um price ID que já esteja em outro plano ou repetido nos dois campos do mesmo plano.
 3. **Opcional:** arquivar (não excluir) os 4 preços que sobram, depois de trocar o preço padrão do produto.
 4. **Teste sem cobrar:** iniciar o checkout das 4 combinações e parar na tela do Stripe. Esperado: R$ 330/6m, R$ 590/ano, R$ 840/6m + setup R$ 499, R$ 1.500/ano + setup R$ 499.
 
